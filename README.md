@@ -7,7 +7,7 @@ Repository for eVTOL simulation leveraging MATLAB-Simulink
 You may refer to the MATLAB provided tutorial:
 
 ```MATLAB
-open utilities\TuneControlDesignForUAVInHoverExample.mlx
+open utilities\TuneControlDesignForUAVInHoverExample.mlx;
 ```
 
 From the project root directory, open the MATLAB-Simulink Project:
@@ -23,7 +23,7 @@ Opening the project already runs <code>setupPlant.m</code>.
 From the project root directory, run the following command:
 
 ```MATLAB
-run src\main.m
+run src\main.m;
 ```
 
 This may take some time as the simulation runs in the background without visualization.
