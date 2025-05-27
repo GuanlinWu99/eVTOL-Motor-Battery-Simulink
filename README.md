@@ -2,6 +2,15 @@
 
 Repository for eVTOL simulation leveraging MATLAB-Simulink
 
+## Required MATLAB packages
+
+* UAV Toolbox
+* Control System Toolbox
+* Aerospace Blockset
+* Aerospace Toolbox
+* Simulink
+* Simulink Control Design
+
 ## Get Started
 
 You may refer to the MATLAB provided tutorial:
