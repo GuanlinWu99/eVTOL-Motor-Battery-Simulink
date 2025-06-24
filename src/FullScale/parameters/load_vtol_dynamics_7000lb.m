@@ -7,11 +7,7 @@
 
 function uavParam = load_vtol_dynamics_7000lb()
 
-%% Define Aerodynamics
-%.. constants
-uavParam.aero.rho   =   1.225;                          
-uavParam.aero.g     =   9.806;
-
+%% define aerodynamics
 %.. lift coefficients
 % uavParam.aero.CL0   =   0.81857;                                            % [-] CL @ AOA = 0
 % uavParam.aero.CLa   =   4.09127;                                            % [-] CL-alpha slope
@@ -69,7 +65,6 @@ uavParam.aero.CM        =   CM_temp;
 uavParam.aero.CY        =   CY_temp;
 uavParam.aero.CR        =   CR_temp;
 uavParam.aero.CN        =   CN_temp;
-
 
 %% scale up the parameters
 n                   =   14/2;                                               % [-] lenth scale parameter

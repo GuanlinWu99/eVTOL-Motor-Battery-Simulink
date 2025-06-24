@@ -123,18 +123,16 @@ function Derivatives(block)
                                     Ixz/(Ixx*Izz-Ixz*Ixz)*Mx+...
                                     Ixx/(Ixx*Izz-Ixz*Ixz)*Mz;
         
-    %.. constraints for trim computation
-    %.. trim speed constraint
-    block.Derivatives.Data(10)  =   vt-vt_trim;
-
-    %..	rate-of-climb constraint
-    a       =   cos(alpha)*cos(beta);
-    b       =   sin(phi)*sin(beta)+cos(phi)*sin(alpha)*cos(beta);
-    block.Derivatives.Data(11)  =   sin(gamma_trim)-a*sin(theta)+b*cos(theta);
-    
-    %.. turn coordination constraint
-    g_turn      =   block.Derivatives.Data(9)*vt_trim/g;
-    block.Derivatives.Data(12)  =   sin(phi)-g_turn*cos(beta)*(sin(alpha)*tan(theta)+cos(alpha)*cos(phi));
+    %.. translational kinematics
+    block.Derivatives.Data(10)  =   cos(psi)*cos(theta)*u+...
+                                    (-cos(phi)*sin(psi)+cos(psi)*sin(phi)*sin(theta))*v+...
+                                    (sin(phi)*sin(psi)+cos(phi)*cos(psi)*sin(theta))*w;
+    block.Derivatives.Data(11)  =   cos(theta)*sin(psi)*u+...
+                                    (cos(psi)*cos(phi)+sin(psi)*sin(theta)*sin(phi))*v+...
+                                    (-cos(psi)*sin(phi)+sin(psi)*sin(theta)*cos(phi))*w;
+    block.Derivatives.Data(12)  =   -sin(theta)*u+...
+                                    cos(theta)*sin(phi)*v+...
+                                    cos(theta)*cos(phi)*w;
 
 %endfunction
 
