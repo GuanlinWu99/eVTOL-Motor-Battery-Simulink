@@ -1,0 +1,27 @@
+component C2
+% C2
+
+    nodes
+        p = foundation.electrical.electrical; %  +:left
+        n = foundation.electrical.electrical; %  -:right
+    end
+
+    parameters
+        C2 = {3000, 'F'}; % Capacitance
+    end
+
+    variables
+        i = {0, 'A'};
+        q = {0, 'C'};
+    end
+
+    branches
+        i: p.i -> n.i;
+    end
+
+    equations
+        i == q.der;
+        p.v - n.v == q / C2;
+    end
+
+end

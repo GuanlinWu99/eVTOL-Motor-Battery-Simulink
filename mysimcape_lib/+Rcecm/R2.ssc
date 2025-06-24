@@ -1,0 +1,30 @@
+component R2
+% R2
+
+    nodes
+        p = foundation.electrical.electrical; %  +:left
+        n = foundation.electrical.electrical; %  -:right
+    end
+
+    parameters
+        R2 = {0.01, 'Ohm'}; % Resistance value
+    end
+    
+    outputs
+        pow = {0,'W'}; % POW:right
+    end
+    
+    branches
+        i: p.i -> n.i; % Define the current branch
+    end
+
+    variables(Access=private)
+        i = {0, 'A'};  % Declare current variable
+    end
+
+    equations
+        p.v - n.v == R2 * i;
+        pow == R2 * i * i;
+    end
+
+end
