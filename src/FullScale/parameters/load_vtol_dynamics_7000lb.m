@@ -51,18 +51,19 @@ uavParam.aero.ClDr      =   0.013407;                                       % [-
 uavParam.aero.Cnp       =   -0.13267;                                       % [-] Cn-p slope
 uavParam.aero.Cnr       =   -0.08829;                                       % [-] Cn-r slope
 uavParam.aero.CnDa      =   0.0049274;                                      % [-] Cn-aileron slope
-uavParam.aero.CnDr      =   -0.067036;                                      % [-] Cn-rudder slope
+uavParam.aero.CnDr      =   -0.067036*3;                                      % [-] Cn-rudder slope
 
 % .. load custom aerodynamic coefficients from openVSPaero
-[alpha_temp, CL_temp, CD_temp, CM_temp]     =   eVTOL_data_alpha();
-[beta_temp, CY_temp, CR_temp, CN_temp]      =   eVTOL_data_beta();          % [-] CR = Cl
+[alpha_lon_temp, CL_temp, CD_temp, CM_temp]                         =   eVTOL_data_lon();
+[alpha_latdir_temp, beta_latdir_temp, CS_temp, CR_temp, CN_temp]    =   eVTOL_data_latdir();        % [-] CR = Cl
 
-uavParam.aero.alpha     =   alpha_temp/180*pi;
-uavParam.aero.beta      =   beta_temp/180*pi;
+uavParam.aero.alpha_lon     =   alpha_lon_temp/180*pi;
+uavParam.aero.alpha_latdir  =   alpha_latdir_temp/180*pi;
+uavParam.aero.beta_latdir   =   beta_latdir_temp/180*pi;
 uavParam.aero.CL        =   CL_temp;
 uavParam.aero.CD        =   CD_temp;
 uavParam.aero.CM        =   CM_temp;
-uavParam.aero.CY        =   CY_temp;
+uavParam.aero.CS        =   CS_temp;
 uavParam.aero.CR        =   CR_temp;
 uavParam.aero.CN        =   CN_temp;
 

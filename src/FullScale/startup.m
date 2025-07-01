@@ -42,6 +42,9 @@ define_ctrl_interface;
 %.. load bus interfaces for plant
 define_digital_twin_interface;
 
+%.. load constants
+const       =   load_const;
+
 %.. set up vtol dynamics parameters
 uavParam    =   load_vtol_dynamics_7000lb;
 
@@ -61,7 +64,10 @@ vIni = 0;
 disp("Initialized VTOL model.")
 % Initialize hover configuration
 setupHoverConfiguration
-setupHoverGuidanceMission_mod
+% setupHoverGuidanceMission_mod
+setupTransitionGuidanceMission_mod
+
+transition_throttle = 0.2;
 
 % Setup configuration set
 configObj = getActiveConfigSet('VTOLAutopilotController');
@@ -71,5 +77,117 @@ set_param(configObj, 'SourceName', 'VTOLConfiguration');
 outTuned = sim(mdl);
 
 %% Plot results
-exampleHelperPlotHoverControlTrackingResults(outTuned);
-EVTOL_Plots_update(outTuned)
+% exampleHelperPlotHoverControlTrackingResults(outTuned);
+% EVTOL_Plots_update(outTuned)
+
+
+figure
+hold on
+plot3(outTuned.UAV_State.Xe.Data(1,:),-outTuned.UAV_State.Xe.Data(2,:),-outTuned.UAV_State.Xe.Data(3,:),'LineWidth',2)
+plot3([0, 0, 20, 1000, 4000, 8000, 10000, 15000, 17000],-[0, 0, 0, 0, 0, 0, 0, 0, 0],-[0, -100, -100, -150, -1000, -1000, -1000, -100, -100],'LineWidth',1.5,'LineStyle','--')
+hold off
+grid on
+xlabel('North (m)')
+ylabel('West (m)')
+zlabel('Up (m)')
+legend('UAV-3D Trajectory', 'P4-profile (Modified)')
+ylim([-250, 250])
+title('eVTOL trajectory (P4 profile)')
+
+v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
+v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
+v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1])./reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
+
+figure
+subplot(3,1,1)
+hold on
+plot(outTuned.UAV_State.airspeed.Time, outTuned.UAV_State.airspeed.Data, 'Linewidth', 1.5)
+hold off
+grid on
+ylabel('Airspeed (m/s)')
+title('eVTOL AirData (P4 profile)')
+subplot(3,1,2)
+plot(outTuned.UAV_State.airspeed.Time, atand(v1./v2), 'Linewidth', 1.5)
+hold off
+grid on
+ylim([-5 35])
+ylabel('AoA (deg)')
+subplot(3,1,3)
+plot(outTuned.UAV_State.airspeed.Time, atand(v3), 'Linewidth', 1.5)
+hold off
+grid on
+ylim([-20 20])
+ylabel('AoS (deg)')
+xlabel('Time (sec)')
+
+figure
+subplot(3,1,1)
+hold on
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
+hold off
+grid on
+ylabel('Roll (deg)')
+ylim([-30 30])
+title('eVTOL Attitude (P4 profile)')
+subplot(3,1,2)
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
+hold off
+grid on
+ylabel('Pitch (deg)')
+ylim([-40 40])
+subplot(3,1,3)
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
+hold off
+grid on
+ylabel('Yaw (deg)')
+ylim([-30 30])
+xlabel('Time (sec)')
+
+figure
+subplot(2,1,1)
+hold on
+plot(outTuned.UAV_State.RotorParameters.w1.Time, outTuned.UAV_State.RotorParameters.w1.Data, 'Linewidth', 1.5)
+plot(outTuned.UAV_State.RotorParameters.w2.Time, outTuned.UAV_State.RotorParameters.w2.Data, 'Linewidth', 1.5,'LineStyle','--')
+hold off
+grid on
+ylabel('Rotor SPD (rad/s)')
+legend('1: front/right','2: front/left')
+title('eVTOL Rotor Speed (P4 profile)')
+subplot(2,1,2)
+hold on
+plot(outTuned.UAV_State.RotorParameters.w3.Time, outTuned.UAV_State.RotorParameters.w3.Data, 'Linewidth', 1.5)
+plot(outTuned.UAV_State.RotorParameters.w4.Time, outTuned.UAV_State.RotorParameters.w4.Data, 'Linewidth', 1.5,'LineStyle','--')
+hold off
+grid on
+ylabel('Rotor SPD (rad/s)')
+legend('3: rear/left','4: rear/right')
+xlabel('Time (sec)')
+
+% TransitionMission = struct;
+% TransitionMission(1).mode = 1;
+% TransitionMission(1).position = [0; 0; 0];
+% TransitionMission(1).params = [0; 0; 0; 0];
+% TransitionMission(2).mode = 2;
+% TransitionMission(2).position = [0; 0; -100];
+% TransitionMission(2).params = [0; 0; 0; 0];
+% TransitionMission(3).mode = 2;
+% TransitionMission(3).position = [20; 0; -100];
+% TransitionMission(3).params = [0; 0; 0; 0];
+% TransitionMission(4).mode = 6;
+% TransitionMission(4).position = [1;1;1];
+% TransitionMission(4).params = [1; 1; 1; 1];
+% TransitionMission(5).mode = 2;
+% TransitionMission(5).position = [1000; 0; -150];
+% TransitionMission(5).params = [0; 0; 0; 0];
+% TransitionMission(6).mode = 2;
+% TransitionMission(6).position = [8000; 0; -1000];
+% TransitionMission(6).params = [0; 0; 0; 0];
+% TransitionMission(7).mode = 2;
+% TransitionMission(7).position = [10000; 0; -1000];
+% TransitionMission(7).params = [0; 0; 0; 0];
+% TransitionMission(8).mode = 2;
+% TransitionMission(8).position = [15000; 0; -100];
+% TransitionMission(8).params = [0; 0; 0; 0];
+% TransitionMission(9).mode = 2;
+% TransitionMission(9).position = [17000; 0; -100];
+% TransitionMission(9).params = [0; 0; 0; 0];

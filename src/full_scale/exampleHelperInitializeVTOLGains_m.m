@@ -58,19 +58,19 @@ FWControlParams.I_AIRSPD=0;
 FWControlParams.D_AIRSPD=0;
 FWControlParams.N_AIRSPD=100;
 %% Roll 
-FWControlParams.P_FW_ROLL=2;
+FWControlParams.P_FW_ROLL=2*5;
 %Pitch
 FWControlParams.P_FW_PITCH=10;
 FWControlParams.I_FW_PITCH=0;
 FWControlParams.D_FW_PITCH=0;
 FWControlParams.N_FW_PITCH=2.18933823147713;
 %Roll Rate
-FWControlParams.P_FW_ROLLRATE=0.4;
-FWControlParams.I_FW_ROLLRATE=0.8;
+FWControlParams.P_FW_ROLLRATE=0.4*10;
+FWControlParams.I_FW_ROLLRATE=0.8*4;
 %% Pitch rate
-FWControlParams.P_FW_PITCHRATE=0.15;
+FWControlParams.P_FW_PITCHRATE=0.15*3;
 %Yaw rate
-FWControlParams.P_FW_YAWRATE=0.01;
+FWControlParams.P_FW_YAWRATE=0.01*80;
 %% Back Transition Gains
 controlParams.P_BACK=0.1;
 %Tilt Max

@@ -1,5 +1,8 @@
-function quadrotor_6dof_dynamics(block)
-% level-2 MATLAB file S-Function
+function vtol_trim_dynamics(block)
+%.. level-2 s-function to trim fixed-wing model
+%.. setup method is used to setup the basic attributes of the
+%.. s-function such as ports, parameters, etc
+%.. do not add any other calls to the main body of the function
 
   setup(block);
 
@@ -7,26 +10,42 @@ function quadrotor_6dof_dynamics(block)
 
 function setup(block)
 
-    block.NumDialogPrms     =   1;
-
-    block.NumInputPorts     =   1;
-    block.NumOutputPorts    =   1;
-
+    %.. register number of ports
+    block.NumInputPorts  = 1;
+    block.NumOutputPorts = 1;
+  
+    %.. setup port properties to be inherited or dynamic
     block.SetPreCompInpPortInfoToDynamic;
     block.SetPreCompOutPortInfoToDynamic;
 
-    block.InputPort(1).Dimensions   =   4;
-    block.OutputPort(1).Dimensions  =   12;
+    %. override input port properties
+    block.InputPort(1).DatatypeID           =   0;
+    block.InputPort(1).Complexity           =   'Real';
+    block.InputPort(1).Dimensions           =   6;
+    block.InputPort(1).DirectFeedthrough    =   false;
 
-    block.NumContStates = 12;
-    block.NumDiscStates = 0;
-    block.SampleTimes = [0 0];  % continuous-time
+    %.. override output port properties
+    block.OutputPort(1).DatatypeID          =   0; 
+    block.OutputPort(1).Complexity          =   'Real';
+    block.OutputPort(1).Dimensions          =   12;
 
-    block.SimStateCompliance = 'DefaultSimState';
+    %.. register parameters
+    block.NumDialogPrms     =   8;
 
-    block.RegBlockMethod('InitializeConditions', @InitConditions);
-    block.RegBlockMethod('Derivatives',          @Derivatives);
-    block.RegBlockMethod('Outputs',              @Outputs);
+    %.. register sample times
+    block.SampleTimes       =   [0 0];
+  
+    %.. set number of continuous states
+    block.NumContStates     =   12;
+
+    %.. options
+    %.. specify if accelerator should use TLC or call back into MATLAB file
+    block.SetAccelRunOnTLC(false);
+    
+    %.. register methods
+    block.RegBlockMethod('InitializeConditions', @InitializeConditions);
+    block.RegBlockMethod('Derivatives', @Derivatives);
+    block.RegBlockMethod('Outputs', @Outputs);
 
 %endfunction
 

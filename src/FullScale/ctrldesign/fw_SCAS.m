@@ -19,12 +19,12 @@ uavParam    =   load_vtol_dynamics_7000lb;
 
 %.. trim speed
 trimspd     =   [60 75 82 100]*const.kts2mps;                               % [m/s] trim speed
-trimalt     =   [3000]*const.ft2m;                                        % [m] trim altitude
+trimalt     =   [3000]*const.ft2m;                                          % [m] trim altitude
 
 trim_data   =   struct('alt_trim',{},'eas_trim',{},'tas_trim',{},...
                        'aoa_trim',{},'aos_trim',{},...
                        'roll_trim',{},'pitch_trim',{},'heading_trim',{},'flight_path_trim',{},...
-                        'thr_trim',{},'rot_spd_trim',{},'elevator_trim',{},'aileron_trim',{},'rudder_trim',{});
+                       'thr_trim',{},'rot_spd_trim',{},'elevator_trim',{},'aileron_trim',{},'rudder_trim',{});
 
 lin_model   =   struct();
 
@@ -80,7 +80,7 @@ figure;
 set(gcf,'color','w');
 hold on;
 grid on;
-plot(plot_trimspd,plot_thr_trim);
+plot(plot_trimspd,plot_thr_trim,'LineWidth',1.5);
 ylabel('Throttle (%)');
 xlabel('EAS (kts)');
 title('Throttle Trim Results')
@@ -89,7 +89,7 @@ figure;
 set(gcf,'color','w');
 hold on;
 grid on;
-plot(plot_trimspd,plot_aoa_trim);
+plot(plot_trimspd,plot_aoa_trim,'LineWidth',1.5);
 ylabel('AoA (deg)');
 xlabel('EAS (kts)');
 title('AoA Trim Results')
@@ -98,7 +98,7 @@ figure;
 set(gcf,'color','w');
 hold on;
 grid on;
-plot(plot_trimspd,plot_elevator_trim);
+plot(plot_trimspd,plot_elevator_trim,'LineWidth',1.5);
 ylabel('dElevator (deg)');
 xlabel('EAS (kts)');
 title('Elevator Trim Results')
