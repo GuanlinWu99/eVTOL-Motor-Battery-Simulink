@@ -11,7 +11,7 @@ component R2
     end
     
     outputs
-        pow = {0,'W'}; % POW:right
+        pow = {0, 'W'}; % POW:right
     end
     
     branches

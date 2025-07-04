@@ -1,5 +1,6 @@
 component C2
 % C2
+% C2 = C2
 
     nodes
         p = foundation.electrical.electrical; %  +:left

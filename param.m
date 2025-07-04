@@ -67,13 +67,12 @@ HEV_Param.Battery_Cell.Taup = 3; % (s)
 HEV_Param.Battery_Cell.Emo = 3.5; % (V) [max o.c. volts per cell]
 HEV_Param.Battery_Cell.Ke = 0.0006; %(V/°C)
 HEV_Param.Battery_Cell.Ao = -0.6; % ()
-HEV_Param.Battery_Cell.Roo = 0.042; % (Ohm)
-HEV_Param.Battery_Cell.R10 = 0.0030; %(Ohm)
-HEV_Param.Battery_Cell.A21 = -10.0; %()
-HEV_Param.Battery_Cell.A22 = -8.75; %()
-HEV_Param.Battery_Cell.R20 = 0.01; %(Ohm)
-HEV_Param.Battery_Cell.Tau1 = 30; %(s)
-   
+HEV_Param.Battery_Cell.R0 = 0.0042; % (Ohm)
+HEV_Param.Battery_Cell.R1 = 0.003; %(Ohm)
+HEV_Param.Battery_Cell.R2 = 0.01; %(Ohm)
+HEV_Param.Battery_Cell.C1 = 10000; % (F)
+HEV_Param.Battery_Cell.C2 = 3000; % (F)
+HEV_Param.Battery_Cell.Tau1 = 30; % (s)
     
 % Compute initial extracted charge
 HEV_Param.Battery_Cell.Qe_init = (1-HEV_Param.Battery_Cell.SOC_init)*HEV_Param.Battery_Cell.Kc*HEV_Param.Battery_Cell.Costar*interp1([HEV_Param.Battery_Cell.theta_f HEV_Param.Battery_Cell.Kt_Temps],[0 HEV_Param.Battery_Cell.Kt],HEV_Param.Battery_Cell.theta_init,'spline');

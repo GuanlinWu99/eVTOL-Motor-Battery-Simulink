@@ -1,0 +1,50 @@
+component C1
+% C1
+% C1 = C1
+
+
+% Copyright 2008-2017 The MathWorks, Inc.
+    
+    % inputs
+    %     R1 = {1, 'Ohm'}; % R1:left
+    % end
+    
+    nodes
+        p = foundation.electrical.electrical; %  +:left
+        n = foundation.electrical.electrical; %  -:right
+    end
+    
+    parameters
+        Tau1 = {30, 's'};   % Main branch time constant, Tau1>0
+        Cmin = {1e-6,'F'}; % Minimum capacitance, Cmin>0
+        % C1 = {10000, 'F'}; % Capacitance
+        R1 = {0.003, 'Ohm'}; % R1:left
+    end
+    
+    variables(Access=private)
+        i = { 1, 'A' }; % Current through variable
+        Q = {value={0, 'C'}, priority=priority.high}; % Charge
+        
+    end
+    
+    branches
+        i: p.i -> n.i; % Through variable i from node p to node n
+    end
+    
+    equations
+        assert(Cmin > 0)
+        assert(Tau1 > 0)
+        let
+            v =  p.v - n.v;  % Across variable v from p to n
+        in
+            if (Tau1/Cmin > R1)
+                v == Q*R1/Tau1;
+            else
+                v == Q/Cmin;
+            end
+        end
+        i == Q.der;
+        % p.v - n.v == Q / C1;
+    end
+    
+end
