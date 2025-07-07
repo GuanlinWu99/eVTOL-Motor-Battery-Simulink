@@ -1,0 +1,21 @@
+myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
+dDataSectObj = getSection(myDictionaryObj,'Design Data');
+
+ControlSampleTime_retrieve = getValue(getEntry(dDataSectObj, 'ControlSampleTime'))
+FWTrimSpeed_retrieve = getValue(getEntry(dDataSectObj, 'FWTrimSpeed'))
+UAVSampleTime_retrieve = getValue(getEntry(dDataSectObj, 'UAVSampleTime'))
+Vcruise_retrieve = getValue(getEntry(dDataSectObj, 'Vcruise'))
+Vt_retrieve = getValue(getEntry(dDataSectObj, 'Vt'))
+control_retrieve = getValue(getEntry(dDataSectObj,'control'))
+tilt_trim_retrieve = getValue(getEntry(dDataSectObj,'tilt_trim'))
+uavParam_Works_retrieve = getValue(getEntry(dDataSectObj,'uavParam_Works'))
+w_trim_retrieve = getValue(getEntry(dDataSectObj,'w_trim'))
+windVel_retrieve = getValue(getEntry(dDataSectObj,'windVel'))
+FWControl_retrieve = getValue(getEntry(dDataSectObj,'FWControl'))
+MaxTilt_retrieve = getValue(getEntry(dDataSectObj,'MaxTilt'))
+TiltScheduleRate_retrieve = getValue(getEntry(dDataSectObj,'TiltScheduleRate'))
+CriticalTiltAngle_retrieve = getValue(getEntry(dDataSectObj,'CriticalTiltAngle'))
+WindDownRate_retrieve = getValue(getEntry(dDataSectObj,'WindDownRate'))
+env_retrieve = getValue(getEntry(dDataSectObj,'env'))
+MAVLink_Input_Read_Size_retrieve = getValue(getEntry(dDataSectObj,'MAVLink_Input_Read_Size'))
+simTime_retrieve = getValue(getEntry(dDataSectObj,'simTime'))

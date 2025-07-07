@@ -4,48 +4,48 @@
 
 %Hover Default Control Based Gains
 %% Roll rate
-controlParams.P_ROLL_RATE=160;%2.589;
-controlParams.D_ROLL_RATE=320;%0.0166;
-controlParams.I_ROLL_RATE=0;
-controlParams.N_ROLL_RATE=100;
+VTOLcontrolGains.P_ROLL_RATE=160;%2.589;
+VTOLcontrolGains.D_ROLL_RATE=320;%0.0166;
+VTOLcontrolGains.I_ROLL_RATE=0;
+VTOLcontrolGains.N_ROLL_RATE=100;
 %% Pitch rate
-controlParams.P_PITCH_RATE=160;%4.4;
-controlParams.D_PITCH_RATE=320;%0.0217;
-controlParams.I_PITCH_RATE=0;
-controlParams.N_PITCH_RATE=100;
+VTOLcontrolGains.P_PITCH_RATE=160;%4.4;
+VTOLcontrolGains.D_PITCH_RATE=320;%0.0217;
+VTOLcontrolGains.I_PITCH_RATE=0;
+VTOLcontrolGains.N_PITCH_RATE=100;
 %% Yaw rate
-controlParams.P_YAW_RATE=1.77*100;
-controlParams.D_YAW_RATE=320;%0;
-controlParams.I_YAW_RATE=0;
-controlParams.N_YAW_RATE=100;
+VTOLcontrolGains.P_YAW_RATE=1.77*150;
+VTOLcontrolGains.D_YAW_RATE=250;%100;
+VTOLcontrolGains.I_YAW_RATE=0;
+VTOLcontrolGains.N_YAW_RATE=100;
 %% Design outer loop after designing inner loop.
 %% Roll
-controlParams.P_ROLL=8.79;
+VTOLcontrolGains.P_ROLL=8.79;
 %% Pitch
-controlParams.P_PITCH=8.79; %100.0;%
+VTOLcontrolGains.P_PITCH=8.79; %100.0;%
 %% Yaw
-controlParams.P_YAW=8;%1;
+VTOLcontrolGains.P_YAW=1;%1;
 %% X Rate Controller
-controlParams.P_VX=0.2;%1*2.5;
-controlParams.I_VX = 0;
-controlParams.D_VX = 0;
-controlParams.N_VX = 1.07046911218118;
+VTOLcontrolGains.P_VX=0.2;%1*2.5;
+VTOLcontrolGains.I_VX = 0;
+VTOLcontrolGains.D_VX = 0;
+VTOLcontrolGains.N_VX = 1.07046911218118;
 %% Y Rate Controller
-controlParams.P_VY= 0.2;
-controlParams.I_VY = 0;
-controlParams.D_VY = 0.5518;
-controlParams.N_VY = 1.07046911218118;
+VTOLcontrolGains.P_VY= 0.2;
+VTOLcontrolGains.I_VY = 0;
+VTOLcontrolGains.D_VY = 0.5518;
+VTOLcontrolGains.N_VY = 1.07046911218118;
 %% Z Rate Controller
-controlParams.P_VZ=15;
-controlParams.I_VZ=0;
-controlParams.D_VZ=90;
-controlParams.N_VZ=8.4215;
+VTOLcontrolGains.P_VZ=15;
+VTOLcontrolGains.I_VZ=0;
+VTOLcontrolGains.D_VZ=90;
+VTOLcontrolGains.N_VZ=8.4215;
 %% X Controller
-controlParams.P_X=-1.03;%0.5*1.5;
+VTOLcontrolGains.P_X=-1.03;%0.5*1.5;
 %% Y Controller
-controlParams.P_Y=-1.03;
+VTOLcontrolGains.P_Y=-1.03;
 %% Z Controller
-controlParams.P_Z= 1.97*7.0;
+VTOLcontrolGains.P_Z= 1.97*7.0;
 %% Hover Guidance Controls
 R_WAYPOINTTRANSITION=1;
 R_LOOKAHEAD=5;
@@ -71,6 +71,10 @@ FWControlParams.I_FW_ROLLRATE=0.8*4;
 FWControlParams.P_FW_PITCHRATE=0.15*3;
 %Yaw rate
 FWControlParams.P_FW_YAWRATE=0.01*80;
+
+FWControlParams.P_FW_AOS = 0.5;
+FWControlParams.I_FW_AOS = 0.0;
+
 %% Back Transition Gains
 controlParams.P_BACK=0.1;
 %Tilt Max

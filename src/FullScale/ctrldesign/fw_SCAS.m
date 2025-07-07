@@ -60,6 +60,8 @@ for idx1 = 1:size(trimspd,2)
     end
 end
 
+
+
 plot_trimspd        =   trimspd*const.mps2kts;
 plot_trimalt        =   trimalt*const.m2ft;
 plot_thr_trim       =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));

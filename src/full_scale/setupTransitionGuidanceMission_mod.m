@@ -16,10 +16,10 @@ exampleHelperTransitionMissionData_mod;
 disp("Enabled transition guidance mission.")
 
 %Open data dictionary
-myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
-dDataSectObj = getSection(myDictionaryObj,'Design Data');
+% myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
+% dDataSectObj = getSection(myDictionaryObj,'Design Data');
 %Set Time for Simulation
 myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
 dDataSectObj = getSection(myDictionaryObj,'Design Data');
 simTimeParam = getEntry(dDataSectObj,'simTime');
-setValue(simTimeParam,500)
+setValue(simTimeParam,50)
