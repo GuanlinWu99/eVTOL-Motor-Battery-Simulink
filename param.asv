@@ -64,7 +64,7 @@ HEV_Param.Battery_Cell.Ap = 2.0; %()
 HEV_Param.Battery_Cell.Taup = 3; % (s)
     
 % Battery Block Main Branch Parameters
-HEV_Param.Battery_Cell.Emo = 3.5; % (V) [max o.c. volts per cell]
+HEV_Param.Battery_Cell.Emo = 10; % (V) [max o.c. volts per cell]
 HEV_Param.Battery_Cell.Ke = 0.0006; %(V/°C)
 HEV_Param.Battery_Cell.Ao = -0.6; % ()
 HEV_Param.Battery_Cell.R0 = 0.0042; % (Ohm)
@@ -102,7 +102,7 @@ HEV_Param.Motor.Efficiency = 91;
 
 
 %% DC-DC CONVERTER PARAMETERS
-HEV_Param.DCDCConv.Output_Voltage = 100;      % Volts
+HEV_Param.DCDCConv.Output_Voltage = 50;      % Volts
 HEV_Param.DCDCConv.Resistance_Losses = 1000/40^2;      % Ohm
 HEV_Param.DCDCConv.Kp = 0.01;
 HEV_Param.DCDCConv.Ki = 10;
