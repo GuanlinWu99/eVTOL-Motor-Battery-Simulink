@@ -7,9 +7,15 @@
 
 function controlParams = load_controller_parameters(uavParam, const)
 
+simParams.simTime                   =   500;
+simParams.UAVTimeStep               =   0.001;
+
 %% define controller parameters
+
+
 % sampling time for controller
-controlParams.ControlSampleTime=   0.005;
+
+controlParams.ControlSampleTime     =   0.005;
 controlParams.UAVSampleTime=   0.005;
 
 controlParams.maxPWM                =   1.0;
@@ -20,14 +26,31 @@ controlParams.FWElevatorTrim        =   -11*const.deg2rad;                  % [r
 controlParams.TiltScheduleRate      =   3/180*pi;                          % [rad/s] tilt rate for forward transition
 controlParams.CriticalTiltAngle     =   60/180*pi;                          % [rad] critical tilt angle for forward transition
 controlParams.Vtransition           =   50*const.kts2mps;                   % [m/s] critical 
-controlParams.WindDownRate          =   10;                                  
+controlParams.Pitchtransition       =   11*const.deg2rad;                     %                 
+controlParams.WindDownRate          =   10;                        %                             
+controlParams.VTOLmaxPitch          =   20/180*pi;                   %
+controlParams.VTOLminPitch          =   -20/180*pi;                   %
+controlParams.VTOLmaxPitchSlewrate  =   200/180*pi;                   %
+controlParams.VTOLminPitchSlewrate  =   -200/180*pi;                   %
+controlParams.VTOLmaxRoll           =   20/180*pi;                   %
+controlParams.VTOLminRoll           =   -20/180*pi;                   %
+controlParams.VTOLmaxRollSlewrate   =   200/180*pi;                   %
+controlParams.VTOLminRollSlewrate   =   -200/180*pi;                   %
+controlParams.maxAileron            =   30*const.deg2rad;
+controlParams.minAileron            =   -30*const.deg2rad;
+controlParams.maxElevator           =   30*const.deg2rad;
+controlParams.minElevator           =   -30*const.deg2rad;
+controlParams.maxRudder             =   30*const.deg2rad;
+controlParams.minRudder             =   -30*const.deg2rad;
 
-controlParams.Vcruise               =   16;
 
-controlParams.turningRadius         =   60;
-controlParams.L1                    =   60;
-controlParams.minThrottle           =   0;
-controlParams.maxThrottle           =   1;
+
+controlParams.Vcruise = 16;
+controlParams.L1                    =   300;                                % [m]
+controlParams.turningRadius =   60;
+
+controlParams.minThrottle =   0;
+controlParams.maxThrottle =   1;
 controlParams.slewRateThrottle= 1;
 controlParams.slewRateServos= 5;
 controlParams.maxPitch= 0.1745;
@@ -64,8 +87,8 @@ controlParams.MaxTilt = 1.0472;
 
 
 %% define simulation parameters
-simParams.simTime                   =   500;
-simParams.UAVTimeStep               =   0.001;
+
+
 
 
 

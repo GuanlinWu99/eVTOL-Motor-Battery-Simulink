@@ -14,7 +14,7 @@ VTOLcontrolGains.D_PITCH_RATE=320;%0.0217;
 VTOLcontrolGains.I_PITCH_RATE=0;
 VTOLcontrolGains.N_PITCH_RATE=100;
 %% Yaw rate
-VTOLcontrolGains.P_YAW_RATE=1.77*150;
+VTOLcontrolGains.P_YAW_RATE=1.77*200;
 VTOLcontrolGains.D_YAW_RATE=250;%100;
 VTOLcontrolGains.I_YAW_RATE=0;
 VTOLcontrolGains.N_YAW_RATE=100;
@@ -24,7 +24,7 @@ VTOLcontrolGains.P_ROLL=8.79;
 %% Pitch
 VTOLcontrolGains.P_PITCH=8.79; %100.0;%
 %% Yaw
-VTOLcontrolGains.P_YAW=1;%1;
+VTOLcontrolGains.P_YAW=8;%1;
 %% X Rate Controller
 VTOLcontrolGains.P_VX=0.2;%1*2.5;
 VTOLcontrolGains.I_VX = 0;
