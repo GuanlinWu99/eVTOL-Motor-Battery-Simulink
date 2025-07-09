@@ -67,8 +67,8 @@ vIni = 0;
 disp("Initialized VTOL model.")
 % Initialize hover configuration
 setupHoverConfiguration
-setupHoverGuidanceMission_mod
-% setupTransitionGuidanceMission_mod
+% setupHoverGuidanceMission_mod
+setupTransitionGuidanceMission_mod
 
 transition_throttle = 0.2;
 
