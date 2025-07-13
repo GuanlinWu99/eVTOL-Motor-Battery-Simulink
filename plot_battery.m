@@ -3,7 +3,7 @@ tl = tiledlayout(9,1,'TileSpacing','compact','Padding','compact');
 
 
 % Battery Power
-nexttile; plot(Batt_power.Time, Batt_power.Data(:,1),'LineWidth',1.5);
+nexttile; plot(Batt_meas.Batt.Current__A_.Time, Batt_meas.Batt.Current__A_.Data .* Batt_meas.Batt.Voltage__V_.Data,'LineWidth',1.5);
 ylabel('W'); title('Battery Power'); grid on;
 
 % Battery Temperature
@@ -46,9 +46,9 @@ ylabel('RPM'); title('Motor 4 Speed'); grid on;
 
 
 % % plot input
-% figure;
-% plot(thrust1.Time, thrust1.Data, 'LineWidth', 1.5);
-% ylabel('Torque(N·m)');
-% xlabel('Time(s)');
-% title('Motor Torque');
-% grid on;
+figure;
+plot(thrust1.Time, thrust1.Data, 'LineWidth', 1.5);
+ylabel('Torque(N·m)');
+xlabel('Time(s)');
+title('Motor Torque');
+grid on;
