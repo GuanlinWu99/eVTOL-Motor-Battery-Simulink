@@ -12,21 +12,42 @@ clc;
 close all;
 
 %.. load constants
-const       =   load_const;
+const       =   load_const();
 
 %.. set up vtol dynamics parameters
-uavParam    =   load_vtol_dynamics_7000lb;
+uavParams   =   load_vtol_dynamics_7000lb(const);
 
 %.. trim speed
-trimspd     =   [60 75 82 100]*const.kts2mps;                               % [m/s] trim speed
-trimalt     =   [3000]*const.ft2m;                                          % [m] trim altitude
+trimspd     =   [65 75 90 100]*const.kts2mps;                               % [m/s] trim speed
+trimalt     =   [10]*const.ft2m;                                          % [m] trim altitude
 
-trim_data   =   struct('alt_trim',{},'eas_trim',{},'tas_trim',{},...
-                       'aoa_trim',{},'aos_trim',{},...
-                       'roll_trim',{},'pitch_trim',{},'heading_trim',{},'flight_path_trim',{},...
-                       'thr_trim',{},'rot_spd_trim',{},'elevator_trim',{},'aileron_trim',{},'rudder_trim',{});
+%.. level flight conditions
+gamma_trim      =   0.0*const.deg2rad;                                      %.. [rad] flight path angle for level-wing trim
+turn_rate_trim  =   0.0*const.deg2rad;                                      %.. [rad/s] turning rate for level coordinated-turn trim
+heading_trim    =   0.0*const.deg2rad;                                      %.. [rad] initial heading of aircraft
+alpha_trim      =   15.0*const.deg2rad;                                     %.. [rad] angle of attack constraint (might be used for climb) - initial guess for level trim
 
-lin_model   =   struct();
+%.. model specific data and parameters
+%.. disable wind
+Wind        =   0;
+
+%.. initialize landing gear model
+load("data\contact.mat")
+% contact = struct('spring', 1.28931184836e5, 'vd', 0.02, ...
+%                  'slidingFriction', 0.8, 'rollingFriction', 0.2, ...
+%                  'gLimit', 100);
+
+%.. load bus interfaces for plant
+load_digital_twin_interface();
+
+trim_data   =   struct('alt_trim_fw',{},'eas_trim_fw',{},'tas_trim_fw',{},...
+                       'aoa_trim_fw',{},'aos_trim_fw',{},...
+                       'roll_trim_fw',{},'pitch_trim_fw',{},'heading_trim_fw',{},'flight_path_trim_fw',{},...
+                       'thr_trim_fw',{},'rot_spd_trim_fw',{},'elevator_trim_fw',{},'aileron_trim_fw',{},'rudder_trim_fw',{});
+
+lin_model   =   struct('A_fw',{},'B_fw',{},'C_fw',{},'D_fw',{},...
+                       'A_LON_fw',{},'B_LON_fw',{},'C_LON_fw',{},'D_LON_fw',{},...
+                       'A_LAT_fw',{},'B_LAT_fw',{},'C_LAT_fw',{},'D_LAT_fw',{});
 
 %.. trim batch
 for idx1 = 1:size(trimspd,2)
@@ -37,7 +58,7 @@ for idx1 = 1:size(trimspd,2)
 
         trim_validity   =   true;
 
-        fw_trim_lin_analysis;
+        fw_trim_linearization_analysis;
 
         if trim_validity
             trim_data(idx1,idx2).alt_trim       =   H_trim;

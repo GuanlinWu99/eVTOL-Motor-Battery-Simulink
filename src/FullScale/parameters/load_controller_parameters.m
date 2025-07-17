@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Topic: Update UAV parameters for AAM Battery Project                   %
+% Update UAV parameters for AAM Battery Project                   %
 % Author(s): Minhyun                                                     %
 % Description:                                                           %
 % 1.                                                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function controlParams = load_controller_parameters(uavParam, const)
+function [controlParams, simParams] = load_controller_parameters(uavParams, const)
 
 simParams.simTime                   =   500;
 simParams.UAVTimeStep               =   0.001;
@@ -20,13 +20,14 @@ controlParams.UAVSampleTime=   0.005;
 
 controlParams.maxPWM                =   1.0;
 controlParams.minPWM                =   0.1;
-controlParams.VTOLthrCoefficient    =   (uavParam.rotor.Ct*const.rho0*pi*(uavParam.geom.PropDiameter/2)^4);   % [N/(rad/s)^2] Thrust coefficients for VTOL mode
+controlParams.VTOLthrCoefficient    =   (uavParams.rotor.Ct*const.rho0*pi*(uavParams.geom.PropDiameter/2)^4);   % [N/(rad/s)^2] Thrust coefficients for VTOL mode
 controlParams.FWTrimThrottle        =   2800*const.rpm2rps;                 % [rps] trim throttle for fixed-wing mode (~ 62kts)           
 controlParams.FWElevatorTrim        =   -11*const.deg2rad;                  % [rad] elevator trim for fixed-wing mode (~ 62kts)
 controlParams.TiltScheduleRate      =   3/180*pi;                          % [rad/s] tilt rate for forward transition
 controlParams.CriticalTiltAngle     =   60/180*pi;                          % [rad] critical tilt angle for forward transition
-controlParams.Vtransition           =   50*const.kts2mps;                   % [m/s] critical 
-controlParams.Pitchtransition       =   11*const.deg2rad;                     %                 
+controlParams.VtransitionFWD2       =   60*const.kts2mps;                   % [m/s] critical 
+controlParams.VtransitionFWD1       =   40*const.kts2mps;
+controlParams.PitchtransitionFWD    =   11*const.deg2rad;                     %                 
 controlParams.WindDownRate          =   10;                        %                             
 controlParams.VTOLmaxPitch          =   20/180*pi;                   %
 controlParams.VTOLminPitch          =   -20/180*pi;                   %
@@ -43,7 +44,8 @@ controlParams.minElevator           =   -30*const.deg2rad;
 controlParams.maxRudder             =   30*const.deg2rad;
 controlParams.minRudder             =   -30*const.deg2rad;
 
-
+controlParams.R_WAYPOINTTRANSITION_VTOL =   1.0;
+controlParams.R_LOOKAHEAD_VTOL          =   5.0;
 
 controlParams.Vcruise = 16;
 controlParams.L1                    =   300;                                % [m]

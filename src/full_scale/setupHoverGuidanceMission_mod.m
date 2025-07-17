@@ -81,8 +81,7 @@ load_system('VTOLAutopilotController');
 set_param('VTOLAutopilotController/Mission', 'PortDimensions', 'length(HoverMission)');
 
 %Set waypoint guidance parameters
-R_WAYPOINTTRANSITION=1;
-R_LOOKAHEAD=5;
+
 disp("Enabled hover guidance mission.")
 
 

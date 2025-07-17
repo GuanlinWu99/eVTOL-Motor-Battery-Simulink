@@ -1,11 +1,11 @@
-function fixedwing_6dof_dynamics(block)
-%.. level-2 s-function to trim fixed-wing model
+function vtol_linearization_dynamics(block)
+%.. level-2 s-function to linearize vtol model
 %.. setup method is used to setup the basic attributes of the
 %.. s-function such as ports, parameters, etc
 %.. do not add any other calls to the main body of the function
 
 setup(block);
-  
+
 %endfunction
 
 function setup(block)
@@ -30,7 +30,7 @@ function setup(block)
     block.OutputPort(1).Dimensions          =   12;
 
     %.. register parameters
-    block.NumDialogPrms     =   8;
+    block.NumDialogPrms     =   6;
 
     %.. register sample times
     block.SampleTimes       =   [0 0];
@@ -53,7 +53,6 @@ function InitializeConditions(block)
     
     %.. initialize continuous states  
     block.ContStates.Data       =   zeros(12,1);
-    block.ContStates.Data(1)    =   1.0;
 
 function Derivatives(block)
 
@@ -63,9 +62,7 @@ function Derivatives(block)
     Iyy             =   block.DialogPrm(3).Data;
     Izz             =   block.DialogPrm(4).Data;
     Ixz             =   block.DialogPrm(5).Data;
-    vt_trim         =   block.DialogPrm(6).Data;
-    gamma_trim      =   block.DialogPrm(7).Data;
-    g               =   block.DialogPrm(8).Data;
+    g               =   block.DialogPrm(6).Data;
 
     %.. force and moment inputs: Fx, Fy, Fz, Mx, My, Mz
     U   =   block.InputPort(1).Data;
@@ -78,66 +75,59 @@ function Derivatives(block)
 
     %.. states
     X       =   block.ContStates.Data;
-    vt      =   X(1);
-    alpha   =   X(2);
-    beta    =   X(3);
-    phi     =   X(4);
-    theta   =   X(5);
-    psi     =   X(6);        
-    p       =   X(7);
-    q       =   X(8);
-    r       =   X(9);   
+    x       =   X(1);
+    y       =   X(2);
+    z       =   X(3);
+    u       =   X(4);
+    v       =   X(5);
+    w       =   X(6);
+    phi     =   X(7);
+    theta   =   X(8);
+    psi     =   X(9);
+    p       =   X(10);
+    q       =   X(11);
+    r       =   X(12);
 
     %.. set up initial outputs
     block.Derivatives.Data  =   zeros(12,1);
 
-    %.. velocity component in body frame
-    u       =   vt*cos(alpha)*cos(beta);
-    v       =   vt*sin(beta);
-    w       =   vt*sin(alpha)*cos(beta);
-        
-    %.. translational dynamics
-    uvwdot  =   -cross([p; q; r],[u; v; w])+[Fx; Fy; Fz]/mass;
-    udot    =   uvwdot(1);
-    vdot    =   uvwdot(2);
-    wdot    =   uvwdot(3);
-        
-    %.. differential equation reprented in vt, alpha, beta        
-    block.Derivatives.Data(1)   =   (u*udot+v*vdot+w*wdot)/vt;
-    block.Derivatives.Data(2)   =   (u*wdot-w*udot)/(u^2+w^2);
-    block.Derivatives.Data(3)   =   (vt*vdot-v*(u*udot+v*vdot+w*wdot)/vt)/(vt*sqrt(u^2+w^2));    
-        
-    %.. rotation kinematics
-    block.Derivatives.Data(4)   =   p+tan(theta)*(q*sin(phi)+r*cos(phi));
-    block.Derivatives.Data(5)   =   q*cos(phi)-r*sin(phi);
-    block.Derivatives.Data(6)   =   (q*sin(phi)+r*cos(phi))/cos(theta);     
+    %.. rotation matrix (body to inertial)
+    R       =   [cos(theta)*cos(psi), ...
+                 sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi), ...
+                 cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi);
+                 cos(theta)*sin(psi), ...
+                 sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi), ...
+                 cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi);
+                 -sin(theta), ...
+                 sin(phi)*cos(theta), ...
+                 cos(phi)*cos(theta)];
 
-    %.. moment equations
-    block.Derivatives.Data(7)   =   ((Ixx-Iyy+Izz)*Ixz)/(Ixx*Izz-Ixz*Ixz)*p*q-...
+    %.. inertial kinematics
+    block.Derivatives.Data(1:3) =   R*[u; v; w];
+
+    %.. translational dynamics in body frame
+    block.Derivatives.Data(4:6) =   -cross([p; q; r],[u; v; w])+[Fx; Fy; Fz]/mass;              
+
+    %.. rotation kinematics
+    block.Derivatives.Data(7)   =   p+tan(theta)*(q*sin(phi)+r*cos(phi));
+    block.Derivatives.Data(8)   =   q*cos(phi)-r*sin(phi);
+    block.Derivatives.Data(9)   =   (q*sin(phi)+r*cos(phi))/cos(theta); 
+
+    % Angular dynamics (Euler)
+    block.Derivatives.Data(10)  =   ((Ixx-Iyy+Izz)*Ixz)/(Ixx*Izz-Ixz*Ixz)*p*q-...
                                     (Izz*(Izz-Iyy)+Ixz*Ixz)/(Ixx*Izz-Ixz*Ixz)*q*r+...
                                     Izz/(Ixx*Izz-Ixz*Ixz)*Mx+...
                                     Ixz/(Ixx*Izz-Ixz*Ixz)*Mz;
-    block.Derivatives.Data(8)   =   (Izz-Ixx)/Iyy*p*r-Ixz/Iyy*(p^2-r^2)+1/Iyy*My;
-    block.Derivatives.Data(9)   =   -((Ixx-Iyy+Izz)*Ixz)/(Ixx*Izz-Ixz*Ixz)*r*q+...
+    block.Derivatives.Data(11)  =   (Izz-Ixx)/Iyy*p*r-Ixz/Iyy*(p^2-r^2)+1/Iyy*My;
+    block.Derivatives.Data(12)  =   -((Ixx-Iyy+Izz)*Ixz)/(Ixx*Izz-Ixz*Ixz)*r*q+...
                                     (Ixx*(Ixx-Iyy)+Ixz*Ixz)/(Ixx*Izz-Ixz*Ixz)*p*q+...
                                     Ixz/(Ixx*Izz-Ixz*Ixz)*Mx+...
                                     Ixx/(Ixx*Izz-Ixz*Ixz)*Mz;
-        
-    %.. translational kinematics
-    block.Derivatives.Data(10)  =   cos(psi)*cos(theta)*u+...
-                                    (-cos(phi)*sin(psi)+cos(psi)*sin(phi)*sin(theta))*v+...
-                                    (sin(phi)*sin(psi)+cos(phi)*cos(psi)*sin(theta))*w;
-    block.Derivatives.Data(11)  =   cos(theta)*sin(psi)*u+...
-                                    (cos(psi)*cos(phi)+sin(psi)*sin(theta)*sin(phi))*v+...
-                                    (-cos(psi)*sin(phi)+sin(psi)*sin(theta)*cos(phi))*w;
-    block.Derivatives.Data(12)  =   -sin(theta)*u+...
-                                    cos(theta)*sin(phi)*v+...
-                                    cos(theta)*cos(phi)*w;
 
 %endfunction
 
 function Outputs(block)
-  
+
   block.OutputPort(1).Data = block.ContStates.Data;
   
 %endfunction

@@ -37,19 +37,19 @@ load("data\contact.mat")
 %                  'gLimit', 100);
 
 %.. load bus interfaces for controller
-define_ctrl_interface;
+load_ctrl_interface();
 
 %.. load bus interfaces for plant
-define_digital_twin_interface;
+load_digital_twin_interface;
 
 %.. load constants
-const       =   load_const();
+const           =   load_const();
 
 %.. set up vtol dynamics parameters
-uavParam    =   load_vtol_dynamics_7000lb();
+uavParams       =   load_vtol_dynamics_7000lb(const);
 
 %.. load controller parameters
-controlParams   =   load_controller_parameters(uavParam, const);
+controlParams   =   load_controller_parameters(uavParams, const);
 
 % Flag to enable/disable visualization
 Visualization = 1;

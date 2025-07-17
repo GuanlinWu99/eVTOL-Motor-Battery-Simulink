@@ -1,4 +1,10 @@
-function define_digital_twin_interface()
+%=========================================================================%
+% Define buses for digital twin module                                    %
+% author(s): minhyun                                                      %
+% description:                                                            %
+%=========================================================================%
+
+function load_digital_twin_interface()
 %exampleHelperDefineDigitalTwinInterface define digital twin interface for
 %VTOL.
 

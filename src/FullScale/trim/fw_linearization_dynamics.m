@@ -1,5 +1,5 @@
-function fixedwing_trim_dynamics(block)
-%.. level-2 s-function to trim fixed-wing model
+function fw_linearization_dynamics(block)
+%.. level-2 s-function to linearize fixed-wing model
 %.. setup method is used to setup the basic attributes of the
 %.. s-function such as ports, parameters, etc
 %.. do not add any other calls to the main body of the function
@@ -30,7 +30,7 @@ function setup(block)
     block.OutputPort(1).Dimensions          =   12;
 
     %.. register parameters
-    block.NumDialogPrms     =   8;
+    block.NumDialogPrms     =   6;
 
     %.. register sample times
     block.SampleTimes       =   [0 0];
@@ -63,9 +63,7 @@ function Derivatives(block)
     Iyy             =   block.DialogPrm(3).Data;
     Izz             =   block.DialogPrm(4).Data;
     Ixz             =   block.DialogPrm(5).Data;
-    vt_trim         =   block.DialogPrm(6).Data;
-    gamma_trim      =   block.DialogPrm(7).Data;
-    g               =   block.DialogPrm(8).Data;
+    g               =   block.DialogPrm(6).Data;
 
     %.. force and moment inputs: Fx, Fy, Fz, Mx, My, Mz
     U   =   block.InputPort(1).Data;
@@ -123,18 +121,16 @@ function Derivatives(block)
                                     Ixz/(Ixx*Izz-Ixz*Ixz)*Mx+...
                                     Ixx/(Ixx*Izz-Ixz*Ixz)*Mz;
         
-    %.. constraints for trim computation
-    %.. trim speed constraint
-    block.Derivatives.Data(10)  =   vt-vt_trim;
-
-    %..	rate-of-climb constraint
-    a       =   cos(alpha)*cos(beta);
-    b       =   sin(phi)*sin(beta)+cos(phi)*sin(alpha)*cos(beta);
-    block.Derivatives.Data(11)  =   sin(gamma_trim)-a*sin(theta)+b*cos(theta);
-    
-    %.. turn coordination constraint
-    g_turn      =   block.Derivatives.Data(9)*vt_trim/g;
-    block.Derivatives.Data(12)  =   sin(phi)-g_turn*cos(beta)*(sin(alpha)*tan(theta)+cos(alpha)*cos(phi));
+    %.. translational kinematics
+    block.Derivatives.Data(10)  =   cos(theta)*cos(psi)*u+...
+                                    (-cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi))*v+...
+                                    (sin(phi)*sin(psi)+cos(phi)*sin(theta)*cos(psi))*w;
+    block.Derivatives.Data(11)  =   cos(theta)*sin(psi)*u+...
+                                    (cos(phi)*cos(psi)+sin(phi)*sin(theta)*sin(psi))*v+...
+                                    (-sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi))*w;
+    block.Derivatives.Data(12)  =   -sin(theta)*u+...
+                                    sin(phi)*cos(theta)*v+...
+                                    cos(phi)*cos(theta)*w;
 
 %endfunction
 
