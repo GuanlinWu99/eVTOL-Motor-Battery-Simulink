@@ -6,5 +6,5 @@ FSState=flightState.Hover;
 myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
 dDataSectObj = getSection(myDictionaryObj,'Design Data');
 simTimeParam = getEntry(dDataSectObj,'simTime');
-setValue(simTimeParam,400);
+setValue(simTimeParam,200);
 disp("Enabled hover configuration.")

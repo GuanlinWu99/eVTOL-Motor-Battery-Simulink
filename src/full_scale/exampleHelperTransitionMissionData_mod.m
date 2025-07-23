@@ -19,17 +19,24 @@ TransitionMission(5).mode = 2;
 TransitionMission(5).position = [2000; 0; -200];
 TransitionMission(5).params = [0; 0; 0; 70*const.kts2mps];
 TransitionMission(6).mode = 2;
-TransitionMission(6).position = [2400; 0; -200];
-TransitionMission(6).params = [0; 0; 0; 62*const.kts2mps];
-TransitionMission(7).mode = 6;
-TransitionMission(7).position = [1;1;1];
-TransitionMission(7).params = [1; 1; 1; 1];
-TransitionMission(8).mode = 2;
-TransitionMission(8).position = [3600; 0; -200];
-TransitionMission(8).params = [0; 0; 0; 0];
-TransitionMission(9).mode = 4;
-TransitionMission(9).position = [3600; 0; 0];
-TransitionMission(9).params = [0; 0; 0; 0];
+TransitionMission(6).position = [4200; 0; -200];
+TransitionMission(6).params = [0; 0; 0; 65*const.kts2mps];
+TransitionMission(7).mode = 2;
+TransitionMission(7).position = [8200; 100; -2200];
+TransitionMission(7).params = [0; 0; 0; 65*const.kts2mps];
+
+% TransitionMission(7).mode = 6;
+% TransitionMission(7).position = [1;1;1];
+% TransitionMission(7).params = [1; 1; 1; 1];
+% TransitionMission(8).mode = 2;
+% TransitionMission(8).position = [4200; 0; -200];
+% TransitionMission(8).params = [0; 0; 0; 0];
+% TransitionMission(9).mode = 2;
+% TransitionMission(9).position = [4200; 0; -30];
+% TransitionMission(9).params = [0; 0; 0; 0];
+% TransitionMission(10).mode = 4;
+% TransitionMission(10).position = [4200; 0; 0];
+% TransitionMission(10).params = [0; 0; 0; 0];
 
 % TransitionMission(6).mode = 2;
 % TransitionMission(6).position = [2000; 0; -300];
@@ -53,5 +60,5 @@ TransitionMission(9).params = [0; 0; 0; 0];
 % TransitionMission(8)=struct('mode',2,'position',[300,300,-20]','params',[0;0;0;0]);
 % TransitionMission(9)=struct('mode',4,'position',[300,300,0]','params',[0;0;0;0]);
 load_system('VTOLAutopilotController');
-set_param('VTOLAutopilotController/Mission', 'PortDimensions', '9')
+set_param('VTOLAutopilotController/Mission', 'PortDimensions', 'length(TransitionMission)')
 

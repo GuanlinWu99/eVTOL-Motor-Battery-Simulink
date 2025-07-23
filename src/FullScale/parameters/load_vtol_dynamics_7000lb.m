@@ -111,14 +111,15 @@ uavParams.geom.Propblroot   =   14.5990*const.deg2rad;                      % [r
 uavParams.geom.Propbltwist  =   -7.7980*const.deg2rad;                      % [rad] blade tip aoa
 
 %.. servo/actuators
-uavParams.tiltservo.tfnum       =   [1];
-uavParams.tiltservo.tfden       =   [0.1 1];
-uavParams.ctrlsurfservo.tfnum   =   [1];
-uavParams.ctrlsurfservo.tfden   =   [1/(5*2*pi)^2 2*0.707/(5*2*pi) 1];
+uavParams.tiltservo.tfnum       =   [1.0];
+uavParams.tiltservo.tfden       =   [0.1 1.0];
+uavParams.ctrlsurfservo.tfnum   =   [1.0];
+uavParams.ctrlsurfservo.tfden   =   [1/(5*2*pi)^2 2*0.707/(5*2*pi) 1.0];
 uavParams.maxAileron            =   30*const.deg2rad;
 uavParams.minAileron            =   -30*const.deg2rad;
 uavParams.maxElevator           =   30*const.deg2rad;
 uavParams.minElevator           =   -30*const.deg2rad;
 uavParams.maxRudder             =   30*const.deg2rad;
 uavParams.minRudder             =   -30*const.deg2rad;
+
 end

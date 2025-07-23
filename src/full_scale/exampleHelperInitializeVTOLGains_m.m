@@ -4,59 +4,60 @@
 
 %Hover Default Control Based Gains
 %% Roll rate
-VTOLcontrolGains.P_ROLL_RATE=160;%2.589;
-VTOLcontrolGains.D_ROLL_RATE=320;%0.0166;
-VTOLcontrolGains.I_ROLL_RATE=0;
-VTOLcontrolGains.N_ROLL_RATE=100;
+VTOLcontrolGains.P_ROLL_RATE    =   0.5*5.8920e+3;                              %160;%2.589;
+VTOLcontrolGains.D_ROLL_RATE    =   1.0*139.4433;%320;%0.0166;
+VTOLcontrolGains.I_ROLL_RATE    =   0.01*4.2450e+4;%0;
+VTOLcontrolGains.N_ROLL_RATE    =   83.1175;%100;
 %% Pitch rate
-VTOLcontrolGains.P_PITCH_RATE=160;%4.4;
-VTOLcontrolGains.D_PITCH_RATE=320;%0.0217;
-VTOLcontrolGains.I_PITCH_RATE=0;
-VTOLcontrolGains.N_PITCH_RATE=100;
+VTOLcontrolGains.P_PITCH_RATE   =   0.5*5.8936e+3;%160;%4.4;
+VTOLcontrolGains.D_PITCH_RATE   =   1.0*139.6983;%320;%0.0217;
+VTOLcontrolGains.I_PITCH_RATE   =   0.01*4.2439e+4;%0;
+VTOLcontrolGains.N_PITCH_RATE   =   83.1175;%100;
 %% Yaw rate
-VTOLcontrolGains.P_YAW_RATE=1.77*200;
-VTOLcontrolGains.D_YAW_RATE=250;%100;
-VTOLcontrolGains.I_YAW_RATE=0;
-VTOLcontrolGains.N_YAW_RATE=100;
+VTOLcontrolGains.P_YAW_RATE     =   0.005*2.4721e+5;%1.77*200;
+VTOLcontrolGains.D_YAW_RATE     =   0.5*5.8759e+3;%250;%100;
+VTOLcontrolGains.I_YAW_RATE     =   0.00001*1.7784e+6;%0;
+VTOLcontrolGains.N_YAW_RATE     =   83.1175;%100;
 %% Design outer loop after designing inner loop.
 %% Roll
-VTOLcontrolGains.P_ROLL=8.79;
+VTOLcontrolGains.P_ROLL         =   1.0*5.9255;%8.79;
 %% Pitch
-VTOLcontrolGains.P_PITCH=8.79; %100.0;%
+VTOLcontrolGains.P_PITCH        =   1.0*5.9253;%8.79; %100.0;%
 %% Yaw
-VTOLcontrolGains.P_YAW=8;%1;
-%% X Rate Controller
-VTOLcontrolGains.P_VX=0.2;%1*2.5;
-VTOLcontrolGains.I_VX = 0;
-VTOLcontrolGains.D_VX = 0;
-VTOLcontrolGains.N_VX = 1.07046911218118;
-%% Y Rate Controller
-VTOLcontrolGains.P_VY= 0.2;
-VTOLcontrolGains.I_VY = 0;
-VTOLcontrolGains.D_VY = 0.5518;
-VTOLcontrolGains.N_VY = 1.07046911218118;
-%% Z Rate Controller
-VTOLcontrolGains.P_VZ=15;
-VTOLcontrolGains.I_VZ=0;
-VTOLcontrolGains.D_VZ=90;
-VTOLcontrolGains.N_VZ=8.4215;
-%% X Controller
-VTOLcontrolGains.P_X=-1.03;%0.5*1.5;
-%% Y Controller
-VTOLcontrolGains.P_Y=-1.03;
-%% Z Controller
-VTOLcontrolGains.P_Z= 1.97*7.0;
+VTOLcontrolGains.P_YAW          =   0.05*180.3320;%8;%1;
+
+%.. VTOL horizontal/lateral velocity control
+VTOLcontrolGains.P_VX   =   9.8*0.0958;                                     % [-] original: 0.2, 2.5
+VTOLcontrolGains.I_VX   =   1.2*0.0558;                                     % [-] original: 0
+VTOLcontrolGains.D_VX   =   9.8*0.0395;                                     % [-] original: 0
+VTOLcontrolGains.N_VX   =   88.8873;                                        % [-] original: 1.07046911218118
+VTOLcontrolGains.P_VY   =   9.8*0.0953;                                     % [-] original: 0.2
+VTOLcontrolGains.I_VY   =   1.2*0.0573;                                     % [-] original: 0
+VTOLcontrolGains.D_VY   =   9.8*0.0375;                                     % [-] original: 0.5518
+VTOLcontrolGains.N_VY   =   88.8873;                                        % [-] original: 1.07046911218118
+%.. VTOL vertical velocity control
+VTOLcontrolGains.P_VZ   =   0.7*345.0381;                                   % [-] original: 15
+VTOLcontrolGains.I_VZ   =   0.01*526.2230;                                  % [-] original: 0
+VTOLcontrolGains.D_VZ   =   0.9*136.1529;                                   % [-] original: 90
+VTOLcontrolGains.N_VZ   =   10.2217;                                        % [-] original: 8.4215
+
+%.. VTOL horizontal/lateral position control
+VTOLcontrolGains.P_X    =   1.5*0.2001;                                     % [-] original: 1.03, 0.75
+VTOLcontrolGains.P_Y    =   1.5*0.2071;                                     % [-] original: 1.03
+%.. VTOL altitude control
+VTOLcontrolGains.P_Z    =   0.3*1.4317;                                     % [-] original: 13.79
+
 %% Hover Guidance Controls
-R_WAYPOINTTRANSITION=1;
-R_LOOKAHEAD=5;
+% R_WAYPOINTTRANSITION=1;
+% R_LOOKAHEAD=5;
 %% Fixed Wing Default Control Gains
 %Altitude
-FWControlParams.P_CLIMBRATE = 0.1;
-FWControlParams.P_ALT=0.4;
-FWControlParams.P_AIRSPD=10;
-FWControlParams.I_AIRSPD=0;
-FWControlParams.D_AIRSPD=0;
-FWControlParams.N_AIRSPD=100;
+FWControlParams.P_CLIMBRATE =   10*0.1; % 0.1
+FWControlParams.P_ALT       =   0.3; %0.4
+FWControlParams.P_AIRSPD    =   360;%10;
+FWControlParams.I_AIRSPD    =   5;%0;
+FWControlParams.D_AIRSPD    =   120;%%0;
+FWControlParams.N_AIRSPD    =   100;
 %% Roll 
 FWControlParams.P_FW_ROLL=2*2;%*4
 %Pitch
@@ -89,7 +90,7 @@ ReferenceFilterNum = 0.04877;
 ReferenceFilterDen = [1 -0.9512];
 
 %% Custom
-controlParams.fwd_max_slewrate = 300/180*pi;
-controlParams.fwd_max_angle = 30/180*pi;
-controlParams.swd_max_slewrate = 300/180*pi;
-controlParams.swd_max_angle = 15/180*pi;
+% controlParams.fwd_max_slewrate = 300/180*pi;
+% controlParams.fwd_max_angle = 30/180*pi;
+% controlParams.swd_max_slewrate = 300/180*pi;
+% controlParams.swd_max_angle = 15/180*pi;
