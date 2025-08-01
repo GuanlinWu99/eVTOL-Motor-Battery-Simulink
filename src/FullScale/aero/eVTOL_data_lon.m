@@ -53,7 +53,7 @@ function [alpha_lon, CL, CD, CM] = eVTOL_data_lon()
 
     alpha_lon   =   reshape(dataMap('Alpha'), [nAlpha, nBeta]);
     CL          =   reshape(dataMap('CL'), [nAlpha, nBeta]);
-    CD          =   reshape(dataMap('CDtot'), [nAlpha, nBeta]);
+    CD          =   1.2*reshape(dataMap('CDtot'), [nAlpha, nBeta]);
     CM          =   reshape(dataMap('CMm'),  [nAlpha, nBeta]);
 
 end

@@ -27,6 +27,7 @@ controlParams.TiltScheduleRate      =   6/180*pi;                          % [ra
 controlParams.CriticalTiltAngle     =   60/180*pi;                          % [rad] critical tilt angle for forward transition
 controlParams.VtransitionFWD2       =   60*const.kts2mps;                   % [m/s] critical 
 controlParams.VtransitionFWD1       =   40*const.kts2mps;
+controlParams.tempVtransitionFWD    =   20*const.kts2mps;
 controlParams.PitchtransitionFWD    =   0*const.deg2rad;                     %                 
 controlParams.WindDownRate          =   10;                        %                             
 controlParams.VTOLmaxPitch          =   20/180*pi;                   %

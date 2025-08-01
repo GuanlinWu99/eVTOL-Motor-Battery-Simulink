@@ -47,6 +47,11 @@ VTOLcontrolGains.P_Y    =   1.5*0.2071;                                     % [-
 %.. VTOL altitude control
 VTOLcontrolGains.P_Z    =   0.3*1.4317;                                     % [-] original: 13.79
 
+TransitioncontrolGains.zeta     =    0.505;
+TransitioncontrolGains.L        =    50;
+TransitioncontrolGains.P_YAW    =    1;
+
+
 %% Hover Guidance Controls
 % R_WAYPOINTTRANSITION=1;
 % R_LOOKAHEAD=5;

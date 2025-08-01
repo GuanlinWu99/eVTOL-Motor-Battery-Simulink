@@ -23,4 +23,4 @@ disp("Enabled transition guidance mission.")
 myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
 dDataSectObj = getSection(myDictionaryObj,'Design Data');
 simTimeParam = getEntry(dDataSectObj,'simTime');
-setValue(simTimeParam,300)
+setValue(simTimeParam,600)

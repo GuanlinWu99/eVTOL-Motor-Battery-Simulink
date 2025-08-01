@@ -16,8 +16,10 @@ mdl     =   'VTOLTiltrotor';
 load_system(mdl);
 
 %.. define the aircraft modes of flight
+% Simulink.clearIntEnumType('flightState');
 Simulink.defineIntEnumType('flightState',...
-{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3]);
+{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3],...
+'StorageType','uint8');
 
 %.. initialize simulator: velocity defined later
 xGround     =   0;
@@ -52,7 +54,7 @@ uavParams       =   load_vtol_dynamics_7000lb(const);
 controlParams   =   load_controller_parameters(uavParams, const);
 
 % Flag to enable/disable visualization
-Visualization = 1;
+% Visualization = 1;
 % Disable Wind
 Wind=0;
 % Disable Sensors
@@ -63,12 +65,14 @@ Deployment = false;
 % Initialize Control and Guidance gains for Tiltrotor
 exampleHelperInitializeVTOLGains_m;
 % Initialize initial velocity
-vIni = 0;
+vIni = 0*const.kts2mps;%0;
 disp("Initialized VTOL model.")
 % Initialize hover configuration
-setupHoverConfiguration
+setupHoverConfiguration_mod
+% setupFixedWingConfiguration_mod
 % setupHoverGuidanceMission_mod
 setupTransitionGuidanceMission_mod
+% setupFixedWingGuidanceMission_mod
 
 transition_throttle = 0.2;
 
@@ -235,7 +239,7 @@ grid on
 ylabel('AOA/AOS (deg)')
 ax2(3) = subplot(4,1,3)
 hold on
-plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(3,:,:),[size(outTuned.UAV_State.Xe.Data(2,:,:),3),1]), 'Linewidth', 1.5)
+plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(3,:,:),[size(outTuned.UAV_State.Xe.Data(3,:,:),3),1]), 'Linewidth', 1.5)
 hold off
 grid on
 ylabel('Z (m)')
@@ -251,6 +255,31 @@ legend('AIL','ELE','RUD')
 ylabel('CtrlSurf (deg)')
 linkaxes(ax2,'x')
 
+figure
+ax3(1) = subplot(4,1,1)
+hold on
+plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(1,:,:),[size(outTuned.UAV_State.Xe.Data(1,:,:),3),1]), 'Linewidth', 1.5)
+hold off
+grid on
+ylabel('X (m)')
+ax3(2) = subplot(4,1,2)
+hold on
+plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(2,:,:),[size(outTuned.UAV_State.Xe.Data(2,:,:),3),1]), 'Linewidth', 1.5)
+hold off
+grid on
+ylabel('Y (m)')
+ylim([-5, 5])
+ax3(3) = subplot(4,1,3)
+hold on
+hold off
+grid on
+ylabel('')
+ax3(4) = subplot(4,1,4)
+hold on
+hold off
+grid on
+ylabel('')
+linkaxes(ax3,'x')
 
 % subplot(3,1,2)
 % 

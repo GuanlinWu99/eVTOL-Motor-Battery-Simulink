@@ -37,29 +37,45 @@ HoverMission(2).mode = 2;
 HoverMission(2).position = [0; 0; -100];
 HoverMission(2).params = [0; 0; 0; 0];
 
-% HoverMission(3).mode = 4;
-% HoverMission(3).position = [0; 0; 0];
+% HoverMission(3).mode = 2;
+% HoverMission(3).position = [100; 0; -100];
 % HoverMission(3).params = [0; 0; 0; 0];
-
-HoverMission(3).mode = 2;
-HoverMission(3).position = [100; 0; -100];
-HoverMission(3).params = [0; 0; 0; 0];
 % 
-HoverMission(4).mode = 2;
-HoverMission(4).position = [100; 0; -100];
-HoverMission(4).params = [-pi/2; 0; 0; 0];
+% HoverMission(4).mode = 2;
+% HoverMission(4).position = [100; 100; -100];
+% HoverMission(4).params = [-pi/2; 0; 0; 0];
 % 
-HoverMission(5).mode = 2;
-HoverMission(5).position = [100; 0; -100];
-HoverMission(5).params = [0; 0; 0; 0];
+% HoverMission(5).mode = 2;
+% HoverMission(5).position = [150; 50; -100];
+% HoverMission(5).params = [0; 0; 0; 0];
 % 
 % HoverMission(6).mode = 2;
-% HoverMission(6).position = [150; -50; -50];
+% HoverMission(6).position = [150; -50; -100];
 % HoverMission(6).params = [0; 0; 0; 0];
 % 
 % HoverMission(7).mode = 2;
-% HoverMission(7).position = [200; -50; -50];
+% HoverMission(7).position = [200; 0; -100];
 % HoverMission(7).params = [0; 0; 0; 0];
+% 
+% HoverMission(8).mode = 4;
+% HoverMission(8).position = [200; 0; -100];
+% HoverMission(8).params = [0; 0; 0; 0];
+% 
+% HoverMission(9).mode = 4;
+% HoverMission(9).position = [200; 0; 0];
+% HoverMission(9).params = [0; 0; 0; 0];
+
+HoverMission(3).mode = 6;
+HoverMission(3).position = [1000; 0; -100];
+HoverMission(3).params = [0; 0; 0; 0];
+
+HoverMission(4).mode = 2;
+HoverMission(4).position = [1500; 0; -100];
+HoverMission(4).params = [0; 0; 0; 0];
+
+HoverMission(5).mode = 2;
+HoverMission(5).position = [1500; 0; -100];
+HoverMission(5).params = [0; 0; 0; 0];
 
 % HoverMission(8).mode = 2;
 % HoverMission(8).position = [2000; 0; -80];
@@ -73,9 +89,7 @@ HoverMission(5).params = [0; 0; 0; 0];
 % HoverMission(8).position = [200; 0; -50];
 % HoverMission(8).params = [0; 0; 0; 0];
 % 
-% HoverMission(9).mode = 4;
-% HoverMission(9).position = [200; 0; 0];
-% HoverMission(9).params = [0; 0; 0; 0];
+
 
 load_system('VTOLAutopilotController');
 set_param('VTOLAutopilotController/Mission', 'PortDimensions', 'length(HoverMission)');
