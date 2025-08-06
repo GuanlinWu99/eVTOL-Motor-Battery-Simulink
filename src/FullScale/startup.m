@@ -2,7 +2,7 @@
 % topic: start up script for simulator                                   %
 % author(s): minhyun                                                     %
 % description:                                                           %
-% 1.                                                                     %
+% 1. Based on Commits on Jul 17, 2025feat: update transition logics commit                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %.. clear workspace, command window and close fiugres
@@ -14,6 +14,28 @@ cleanup;
 %.. load the model
 mdl     =   'VTOLTiltrotor';
 load_system(mdl);
+
+%.. set up motor parameters
+uav_param;
+% motorctrl.p=0.12638;motorctrl.i=0;motorctrl.d=0.0020935;motorctrl.n=34.7712;
+motorctrl.p = 0.22; motorctrl.i = 0.05; motorctrl.d = 0.1; motorctrl.n = 100;
+
+cfgRefTop = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
+cfgTop    = getRefConfigSet(cfgRefTop);
+set_param(cfgTop, 'SolverType','Variable-step', 'Solver','ode23t');
+% save_system(mdl);
+
+mdlSub = 'VTOLDynamics';
+load_system(mdlSub);
+cfgSubActive = getActiveConfigSet(mdlSub);
+
+if isa(cfgSubActive, 'Simulink.ConfigSetRef')
+    cfgSub = getRefConfigSet(cfgSubActive);  
+else
+    cfgSub = cfgSubActive;                   
+end
+
+set_param(cfgSub, 'SolverType','Variable-step', 'Solver','ode23t');
 
 %.. define the aircraft modes of flight
 Simulink.defineIntEnumType('flightState',...
@@ -166,7 +188,7 @@ outTuned = sim(mdl);
 % legend('3: rear/left','4: rear/right')
 % xlabel('Time (sec)')
 
-figure
+figure(1); clf; drawnow;
 hold on
 plot3(outTuned.UAV_State.Xe.Data(1,:),-outTuned.UAV_State.Xe.Data(2,:),-outTuned.UAV_State.Xe.Data(3,:),'LineWidth',2)
 % plot3([0, 0, 20, 1000, 4000, 8000, 10000, 15000, 17000],-[0, 0, 0, 0, 0, 0, 0, 0, 0],-[0, -100, -100, -150, -1000, -1000, -1000, -100, -100],'LineWidth',1.5,'LineStyle','--')
@@ -179,7 +201,7 @@ zlabel('Up (m)')
 ylim([-250, 250])
 % title('eVTOL trajectory (P4 profile)')
 
-figure
+figure(2); clf; drawnow;
 ax1(1) = subplot(4,1,1)
 hold on
 plot(outTuned.UAV_State.RotorParameters.Tilt1.Time, outTuned.UAV_State.RotorParameters.Tilt1.Data/pi*180, 'Linewidth', 1.5)
@@ -219,7 +241,7 @@ v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(
 v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
 v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1])./reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
 
-figure
+figure(3); clf; drawnow;
 ax2(1) = subplot(4,1,1)
 hold on
 plot(outTuned.UAV_State.airspeed.Time, outTuned.UAV_State.airspeed.Data, 'Linewidth', 1.5)
@@ -294,3 +316,14 @@ linkaxes(ax2,'x')
 % TransitionMission(9).mode = 2;
 % TransitionMission(9).position = [17000; 0; -100];
 % TransitionMission(9).params = [0; 0; 0; 0];
+% figure;
+% subplot(2,1,1);
+% plot(outTuned.UAV_State.Vb.Time, AOA, 'LineWidth', 1.5);
+% ylabel('AOA (deg)');
+% grid on;
+% 
+% subplot(2,1,2);
+% plot(outTuned.UAV_State.Vb.Time, AOS, 'LineWidth', 1.5);
+% ylabel('AOS (deg)');
+% xlabel('Time (sec)');
+% grid on;
