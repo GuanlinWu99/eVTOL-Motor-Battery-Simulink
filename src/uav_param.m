@@ -60,7 +60,7 @@ HEV_Param.Battery_Cell.theta_f = -40; %(°C) Electrolyte Freezing Temp
 % HEV_Param.Battery_Cell.Taup = 3; % (s)
 
 % Battery Block Main Branch Parameters
-HEV_Param.Battery_Cell.Emo = 4.8 * 2; % (V) [max o.c. volts per cell]
+HEV_Param.Battery_Cell.Emo = 4.8 * 4; % (V) [max o.c. volts per cell]
 HEV_Param.Battery_Cell.Ke = 0.0006; %(V/°C)
 HEV_Param.Battery_Cell.Ao = -0.6; % ()
 HEV_Param.Battery_Cell.R0 = 0.001; % (Ohm)
@@ -88,20 +88,20 @@ HEV_Param.Motor.Stator_Resistance = 0.0065*14;
 
 % HEV_Param.Motor.TorqSpdLUT.SpeedRPM = [0 1000 2000 3000 4000 5000];
 % HEV_Param.Motor.TorqSpdLUT.TorqueNm = [20 18 15 10 3 0.01];
-HEV_Param.Motor.TorqSpdLUT.SpeedRPM = [0  1000 2000 3000 4000 5000 6000 7000 8000];
-HEV_Param.Motor.TorqSpdLUT.TorqueNm = [40 38   35   31   21   15   11   8    0.01];
+HEV_Param.Motor.TorqSpdLUT.SpeedRPM = [0  1000 2000 3000 4000 5000 6000 7000 8000 9000 10000];
+HEV_Param.Motor.TorqSpdLUT.TorqueNm = [40 40   40   40   40   40   35   30   20   15    0.01]*1.4;
 % HEV_Param.Motor.TorqSpdLUT.SpeedRPM = [0  1000 2000 3000 4000 5000 6000 7000 8000];
 % HEV_Param.Motor.TorqSpdLUT.TorqueNm = [30 28   25   21   18   15   11   8    0.01];
-HEV_Param.Motor.Damping = 1e-4; %N*m/(rad/s)
+HEV_Param.Motor.Damping = 5e-5; %N*m/(rad/s)
 HEV_Param.Motor.TorqueControl_TimeConst = 0.02*2/1.5;
-HEV_Param.Motor.Shaft_Inertia = 0.005;
-HEV_Param.Motor.Series_Resistance = 0.01; %CHG
+HEV_Param.Motor.Shaft_Inertia = 0.002;
+HEV_Param.Motor.Series_Resistance = 0.001; %CHG
 HEV_Param.Motor.Inductances = [0.001597972349731   0.002057052250467];
 HEV_Param.Motor.Efficiency = 91;
 
 
 %% DC-DC CONVERTER PARAMETERS
-HEV_Param.DCDCConv.Output_Voltage = 300;      % Volts
+HEV_Param.DCDCConv.Output_Voltage = 500;      % Volts
 HEV_Param.DCDCConv.Resistance_Losses = 1000/40^2;      % Ohm
 HEV_Param.DCDCConv.Kp = 0.01;
 HEV_Param.DCDCConv.Ki = 10;

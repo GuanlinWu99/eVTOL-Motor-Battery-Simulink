@@ -18,7 +18,7 @@ load_system(mdl);
 %.. set up motor parameters
 uav_param;
 % motorctrl.p=0.12638;motorctrl.i=0;motorctrl.d=0.0020935;motorctrl.n=34.7712;
-motorctrl.p = 0.22; motorctrl.i = 0.05; motorctrl.d = 0.1; motorctrl.n = 100;
+motorctrl.p = 3; motorctrl.i = 0.5; motorctrl.d = 0.1; motorctrl.n = 100;
 
 cfgRefTop = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
 cfgTop    = getRefConfigSet(cfgRefTop);

@@ -20,6 +20,6 @@ Battery_Cell_Det.slx   ──►  HEV_Battery_Lib.slx
 
 
 How to Run:
-Intergation: open prj, then run the src/uav_param first, then run startup.m.
+Intergation: open prj, then run the src/uav_param, then run startup.m.
 Four motor testing: Run src/uav_param.m, then run Test_FourMotor.slx
 Four motor with PID testing: Run src/uav_param.m, then run Test_FourMotor_PID.slx.
