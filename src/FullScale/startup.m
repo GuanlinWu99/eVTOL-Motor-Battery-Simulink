@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% topic: start up script for simulator                                   %
-% author(s): minhyun                                                     %
-% description:                                                           %
+% Topic: start up script for simulator                                   %
+% Author(s): minhyun                                                     %
+% Description:                                                           %
 % 1.                                                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -15,11 +15,34 @@ cleanup;
 mdl     =   'VTOLTiltrotor';
 load_system(mdl);
 
+% Call battery pack parameters
+uav_param
+
+motorctrl.p = 0.003; 
+motorctrl.i = 0.001;
+motorctrl.d = 0.1;
+motorctrl.n = 100;
+
+cfgRefTop = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
+cfgTop    = getRefConfigSet(cfgRefTop);
+set_param(cfgTop, 'SolverType','Variable-step', 'Solver','ode23t');
+% save_system(mdl);
+
+mdlSub = 'VTOLDynamics';
+load_system(mdlSub);
+cfgSubActive = getActiveConfigSet(mdlSub);
+
+if isa(cfgSubActive, 'Simulink.ConfigSetRef')
+    cfgSub = getRefConfigSet(cfgSubActive);  
+else
+    cfgSub = cfgSubActive;                   
+end
+
+set_param(cfgSub, 'SolverType','Variable-step', 'Solver','ode23t');
+
 %.. define the aircraft modes of flight
 % Simulink.clearIntEnumType('flightState');
-Simulink.defineIntEnumType('flightState',...
-{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3],...
-'StorageType','uint8');
+Simulink.defineIntEnumType('flightState',{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3],'StorageType','uint8');
 
 %.. initialize simulator: velocity defined later
 xGround     =   0;
@@ -34,9 +57,7 @@ iniR        =   0;
 
 %.. initialize landing gear model
 load("data\contact.mat")
-% contact = struct('spring', 1.28931184836e5, 'vd', 0.02, ...
-%                  'slidingFriction', 0.8, 'rollingFriction', 0.2, ...
-%                  'gLimit', 100);
+% contact = struct('spring', 1.28931184836e5, 'vd', 0.02, 'slidingFriction', 0.8, 'rollingFriction', 0.2, 'gLimit', 100);
 
 %.. load bus interfaces for controller
 load_ctrl_interface();
@@ -54,24 +75,31 @@ uavParams       =   load_vtol_dynamics_7000lb(const);
 controlParams   =   load_controller_parameters(uavParams, const);
 
 % Flag to enable/disable visualization
-% Visualization = 1;
+Visualization   =   0;
+
 % Disable Wind
-Wind=0;
+Wind            =   0;
+
 % Disable Sensors
-SensorType=0;
+SensorType      =   0;
+
 % Setup tuning flag
-TuningMode = 0;
-Deployment = false;
+TuningMode      =   0;
+Deployment      =   false;
+
 % Initialize Control and Guidance gains for Tiltrotor
 exampleHelperInitializeVTOLGains_m;
+
 % Initialize initial velocity
-vIni = 0*const.kts2mps;%0;
+vIni = 0*const.kts2mps;
 disp("Initialized VTOL model.")
+
 % Initialize hover configuration
 setupHoverConfiguration_mod
 % setupFixedWingConfiguration_mod
 % setupHoverGuidanceMission_mod
-setupTransitionGuidanceMission_mod
+
+setupTransitionGuidanceMission_mod;
 % setupFixedWingGuidanceMission_mod
 
 transition_throttle = 0.2;
@@ -82,6 +110,66 @@ set_param(configObj, 'SourceName', 'VTOLConfiguration');
 
 %% Run SIMULINK
 outTuned = sim(mdl);
+keyboard;
+
+%% Plot Simulation Results
+% [1] : Battery Powertrain Performance (SOC, Voltage, Current, C-rate)
+figure(1);
+set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 0.7 0.4]);
+title('ddddd')
+
+subplot(1,4,1)
+plot(outTuned.Battery_Data.Batt.SOC____.Time,outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',2);
+grid on
+ylabel('SOC')
+xlabel('Time (s)')
+
+subplot(1,4,2)
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time,outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',2);
+grid on
+ylabel('Voltage (V)')
+xlabel('Time (s)')
+
+subplot(1,4,3)
+plot(outTuned.Battery_Data.Batt.Current__A_.Time,outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',2);
+grid on
+ylabel('Current (A)')
+xlabel('Time (s)')
+
+subplot(1,4,4)
+plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data, 'Linewidth', 2)
+grid on
+ylabel('C-rate')
+xlabel('Time (s)')
+
+keyboard
+
+%% [2] : Flight Performance (motor angular velocity, tilting angle, and altitude)
+figure(2);
+set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 0.7 0.4]);
+subplot(1,3,1)
+plot(outTuned.UAV_State.RotorParameters.w1.Time, outTuned.UAV_State.RotorParameters.w1.Data, 'Linewidth', 2,'LineStyle','-'); hold on;
+plot(outTuned.UAV_State.RotorParameters.w2.Time, outTuned.UAV_State.RotorParameters.w2.Data, 'Linewidth', 2,'LineStyle','--'); hold on;
+plot(outTuned.UAV_State.RotorParameters.w3.Time, outTuned.UAV_State.RotorParameters.w3.Data, 'Linewidth', 2,'LineStyle','-'); hold on;
+plot(outTuned.UAV_State.RotorParameters.w4.Time, outTuned.UAV_State.RotorParameters.w4.Data, 'Linewidth', 2,'LineStyle','--'); hold on;
+grid on
+ylabel('w (rad/s)')
+xlabel('Time (s)')
+
+subplot(1,3,2)
+plot(outTuned.UAV_State.RotorParameters.Tilt1.Time, outTuned.UAV_State.RotorParameters.Tilt1.Data/pi*180, 'Linewidth', 2); hold on;
+plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorParameters.Tilt2.Data/pi*180, 'Linewidth', 2, 'LineStyle', '--'); hold on;
+grid on
+ylabel('Tilt (deg)')
+xlabel('Time (sec)')
+
+subplot(1,3,3)
+plot(outTuned.UAV_State.Xe.Time, -reshape(outTuned.UAV_State.Xe.Data(3,:,:),[size(outTuned.UAV_State.Xe.Data(2,:,:),3),1]), 'Linewidth', 1.5);
+grid on
+ylabel('Altitude (m)')
+xlabel('Time (sec)')
+
+keyboard;
 
 %% Plot results
 % exampleHelperPlotHoverControlTrackingResults(outTuned);
