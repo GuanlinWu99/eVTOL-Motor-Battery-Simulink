@@ -25,7 +25,7 @@ TransitionMission(3).params    = [1; 1; 1; 1];
 TransitionMission(4).mode      = 2;
 TransitionMission(4).position  = [0.62*const.nm2m; 0; -500*const.ft2m];
 TransitionMission(4).params    = [0; 0; 0; 75*const.kts2mps];
-
+ 
 TransitionMission(5).mode      = 2;
 TransitionMission(5).position  = [(3.76+0.62)*const.nm2m; 0; -2500*const.ft2m];
 TransitionMission(5).params    = [0; 0; 0; 90*const.kts2mps];
