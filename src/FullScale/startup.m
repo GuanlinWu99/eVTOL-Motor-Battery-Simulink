@@ -1,37 +1,35 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Topic: start up script for simulator                                   %
-% Author(s): minhyun                                                     %
-% Description:                                                           %
-% 1.                                                                     %
+% Author(s): Minhyun                                                     %
+% Description and updates (09/12/2025):                                  %
+% 1. Include drag torque calculation in the powertrain
+% 2. Upgrade battery pack in the powertrain                         
+% 3. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%.. clear workspace, command window and close fiugres
+%... Clear workspace, command window and close fiugres
 clear all;
 clc;
 close all;
 cleanup;
 
-% Load the model
-mdl     =   'VTOLTiltrotor';
+%... Load the model
+mdl ='VTOLTiltrotor';
 load_system(mdl);
 
-% Call battery pack parameters
-%uav_param
+%... Call motor speed PID controller gains
+motorctrl.p  = 0.4;
+motorctrl.i  = 0.001;
+motorctrl.d  = 0;
+motorctrl.n  = 100;
+Limit        = 700;
 
-%HEV_Param.Motor.Shaft_Inertia = 0.001;
-
-motorctrl.p = 0.2;
-motorctrl.i = 0.001;
-motorctrl.d = 0;
-motorctrl.n = 100;
-Limit       = 500;
-
-cfgRefTop = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
-cfgTop    = getRefConfigSet(cfgRefTop);
+cfgRefTop    = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
+cfgTop       = getRefConfigSet(cfgRefTop);
 set_param(cfgTop, 'SolverType','Variable-step', 'Solver','ode23t');
 % save_system(mdl);
 
-mdlSub = 'VTOLDynamics';
+mdlSub       = 'VTOLDynamics';
 load_system(mdlSub);
 cfgSubActive = getActiveConfigSet(mdlSub);
 
@@ -43,11 +41,16 @@ end
 
 set_param(cfgSub, 'SolverType','Variable-step', 'Solver','ode23t');
 
-%.. define the aircraft modes of flight
+%... Define the aircraft modes of flight
 % Simulink.clearIntEnumType('flightState');
 Simulink.defineIntEnumType('flightState',{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3],'StorageType','uint8');
 
-%.. initialize simulator: velocity defined later
+% Hover mode : 0
+% Transition mode : 1
+% Fixedwing mode : 2
+% Back Transition mode : 3
+
+%... Initialize simulator: velocity defined later
 xGround     =   0;
 yGround     =   0;
 zGround     =   0;
@@ -58,46 +61,46 @@ iniP        =   0;
 iniQ        =   0;
 iniR        =   0;
 
-%.. initialize landing gear model
+%... Initialize landing gear model
 load("data\contact.mat")
 % contact = struct('spring', 1.28931184836e5, 'vd', 0.02, 'slidingFriction', 0.8, 'rollingFriction', 0.2, 'gLimit', 100);
 
-%.. load bus interfaces for controller
+%... Load bus interfaces for controller
 load_ctrl_interface();
 
-%.. load bus interfaces for plant
+%... Load bus interfaces for plant
 load_digital_twin_interface;
 
-%.. load constants
+%... Load constants
 const                  =   load_const();
 
-%.. set up vtol dynamics parameters
+%... Set up vtol dynamics parameters
 [uavParams, HEV_Param] =   load_vtol_dynamics_7000lb(const);
 
-%.. load controller parameters
+%... Load controllercontrolParams.TiltScheduleRate parameters
 controlParams          =   load_controller_parameters(uavParams, const);
 
-% Flag to enable/disable visualization
+%... Flag to enable/disable visualization
 Visualization          =   1;
 
-% Disable Wind
+%... Disable Wind
 Wind                   =   0;
 
-% Disable Sensors
+%... Disable Sensors
 SensorType             =   0;
 
-% Setup tuning flag
+%... Setup tuning flag
 TuningMode             =   0;
 Deployment             =   false;
 
-% Initialize Control and Guidance gains for Tiltrotor
+%... Initialize Control and Guidance gains for Tiltrotor
 exampleHelperInitializeVTOLGains_m;
 
-% Initialize initial velocity
+%... Initialize initial velocity
 vIni = 0*const.kts2mps;
 disp("Initialized VTOL model.")
 
-% Initialize hover configuration
+%... Initialize hover configuration
 setupHoverConfiguration_mod
 % setupFixedWingConfiguration_mod
 % setupHoverGuidanceMission_mod
@@ -105,66 +108,67 @@ setupHoverConfiguration_mod
 setupTransitionGuidanceMission_mod;
 % setupFixedWingGuidanceMission_mod
 
-transition_throttle = 0.2;
-
-% Setup configuration set
+%... Setup configuration set
 configObj = getActiveConfigSet('VTOLAutopilotController');
 set_param(configObj, 'SourceName', 'VTOLConfiguration');
+transition_throttle = 0.2;
+
+fprintf('Forward TiltAngle Rate %.2f [deg/s]\n', controlParams.TiltScheduleRate*57.295);
+fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', 0.5*controlParams.TiltScheduleRate*57.295);
 
 keyboard;
 
-%% Run SIMULINK
+%%... Run SIMULINK
 tic
 outTuned = sim(mdl);
 toc
 
-%% Read data
-Time                 = outTuned.Rotor1_RPM_Reference.Time;
-Time_motor           = outTuned.Motor1_Current.Time;
-Time_torque          = outTuned.Rotor1_Drag_Tq.Time;
-Time_battery         = outTuned.Battery_Data.Batt.SOC____.Time;
-Time_flight          = outTuned.UAV_State.Xe.Time;
+%% Read Simulation data
+Time                   =   outTuned.Rotor1_RPM_Reference.Time;
+Time_motor             =   outTuned.Motor1_Current.Time;
+Time_torque            =   outTuned.Rotor1_Drag_Tq.Time;
+Time_battery           =   outTuned.Battery_Data.Batt.SOC____.Time;
+Time_flight            =   outTuned.UAV_State.Xe.Time;
 
-Rotor1_RPM_Reference = outTuned.Rotor1_RPM_Reference.Data;
-Rotor2_RPM_Reference = outTuned.Rotor2_RPM_Reference.Data;
-Rotor3_RPM_Reference = outTuned.Rotor3_RPM_Reference.Data;
-Rotor4_RPM_Reference = outTuned.Rotor4_RPM_Reference.Data;
+Rotor1_RPM_Reference   =   outTuned.Rotor1_RPM_Reference.Data;
+Rotor2_RPM_Reference   =   outTuned.Rotor2_RPM_Reference.Data;
+Rotor3_RPM_Reference   =   outTuned.Rotor3_RPM_Reference.Data;
+Rotor4_RPM_Reference   =   outTuned.Rotor4_RPM_Reference.Data;
 
-Rotor1_RPM           = outTuned.Rotor1_RPM.Data;
-Rotor2_RPM           = outTuned.Rotor2_RPM.Data;
-Rotor3_RPM           = outTuned.Rotor3_RPM.Data;
-Rotor4_RPM           = outTuned.Rotor4_RPM.Data;
+Rotor1_RPM             =   outTuned.Rotor1_RPM.Data;
+Rotor2_RPM             =   outTuned.Rotor2_RPM.Data;
+Rotor3_RPM             =   outTuned.Rotor3_RPM.Data;
+Rotor4_RPM             =   outTuned.Rotor4_RPM.Data;
 
-Motor1_Current       = outTuned.Motor1_Current.Data;
-Motor2_Current       = outTuned.Motor2_Current.Data;
-Motor3_Current       = outTuned.Motor3_Current.Data;
-Motor4_Current       = outTuned.Motor4_Current.Data;
+Motor1_Current         =   outTuned.Motor1_Current.Data;
+Motor2_Current         =   outTuned.Motor2_Current.Data;
+Motor3_Current         =   outTuned.Motor3_Current.Data;
+Motor4_Current         =   outTuned.Motor4_Current.Data;
 
-Motor1_Voltage       = outTuned.Motor1_Voltage.Data;
-Motor2_Voltage       = outTuned.Motor2_Voltage.Data;
-Motor3_Voltage       = outTuned.Motor3_Voltage.Data;
-Motor4_Voltage       = outTuned.Motor4_Voltage.Data;
+Motor1_Voltage         =   outTuned.Motor1_Voltage.Data;
+Motor2_Voltage         =   outTuned.Motor2_Voltage.Data;
+Motor3_Voltage         =   outTuned.Motor3_Voltage.Data;
+Motor4_Voltage         =   outTuned.Motor4_Voltage.Data;
 
-Motor1_Power         = outTuned.Motor1_Power.Data;
-Motor2_Power         = outTuned.Motor2_Power.Data;
-Motor3_Power         = outTuned.Motor3_Power.Data;
-Motor4_Power         = outTuned.Motor4_Power.Data;
+Motor1_Power           =   outTuned.Motor1_Power.Data;
+Motor2_Power           =   outTuned.Motor2_Power.Data;
+Motor3_Power           =   outTuned.Motor3_Power.Data;
+Motor4_Power           =   outTuned.Motor4_Power.Data;
 
-Motor1_Drag_Tq       = outTuned.Rotor1_Drag_Tq.Data;
-Motor2_Drag_Tq       = outTuned.Rotor2_Drag_Tq.Data;
-Motor3_Drag_Tq       = outTuned.Rotor3_Drag_Tq.Data;
-Motor4_Drag_Tq       = outTuned.Rotor4_Drag_Tq.Data;
+Motor1_Drag_Tq         =   outTuned.Rotor1_Drag_Tq.Data;
+Motor2_Drag_Tq         =   outTuned.Rotor2_Drag_Tq.Data;
+Motor3_Drag_Tq         =   outTuned.Rotor3_Drag_Tq.Data;
+Motor4_Drag_Tq         =   outTuned.Rotor4_Drag_Tq.Data;
 
-Battery_SOC          = outTuned.Battery_Data.Batt.SOC____.Data;
-Battery_Crate        = outTuned.Battery_Data.Batt.C_rate.Data;
-Battery_Current      = outTuned.Battery_Data.Batt.Current__A_.Data;
+Battery_SOC            =   outTuned.Battery_Data.Batt.SOC____.Data;
+Battery_Crate          =   outTuned.Battery_Data.Batt.C_rate.Data;
+Battery_Current        =   outTuned.Battery_Data.Batt.Current__A_.Data;
 
 keyboard
 
-%% Plot Simulations (09/07/2025) 
+%% Plot Simulations (09/12/2025) 
 
 % [1] 4 Rotor Performance
-
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.9], 'Color','w');
 t = tiledlayout(4,4,'TileSpacing','compact','Padding','compact');
 names = ["Motor1","Motor2","Motor3","Motor4"];
@@ -176,7 +180,7 @@ ax1 = gobjects(1,4);
 for k = 1:4
     ax1(k) = nexttile(k);
     plot(Time, eval("Rotor"+k+"_RPM"), 'LineWidth',Width); hold on;
-    plot(Time, eval("Rotor"+k+"_RPM_Reference"), 'LineWidth', Width);
+    plot(Time, eval("Rotor"+k+"_RPM_Reference"), '-.', 'LineWidth', Width);
     grid on; box on;
     title(names(k) + " Speed");
     if k==1, ylabel('RPM','FontSize',AxisFont); end
@@ -219,78 +223,135 @@ for k = 1:4
 end
 linkaxes(ax4,'y');
 
-sgtitle('Tilted-Rotor eVTOL (4 Rotors: Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
+sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
 
-keyboard;
+% % [2] Drag Torque
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.3], 'Color','w'); 
+% subplot(1,4,1)
+% plot(Time_torque, Motor1_Drag_Tq, 'LineWidth', Width); grid on;
+% xlabel('Time (s)')
+% ylabel('(Nm)')
+% title('Motor1 Drag Torque')
+% 
+% subplot(1,4,2)
+% plot(Time_torque, Motor2_Drag_Tq, 'LineWidth', Width); grid on;
+% xlabel('Time (s)')
+% ylabel('(Nm)')
+% title('Motor2 Drag Torque')
+% 
+% subplot(1,4,3)
+% plot(Time_torque, Motor3_Drag_Tq, 'LineWidth', Width); grid on;
+% xlabel('Time (s)')
+% ylabel('(Nm)')
+% title('Motor3 Drag Torque')
+% 
+% subplot(1,4,4)
+% plot(Time_torque, Motor4_Drag_Tq, 'LineWidth', Width); grid on;
+% xlabel('Time (s)')
+% ylabel('(Nm)')
+% title('Motor4 Drag Torque')
 
-% [2] Drag Torque
+% [3] Battery Pack Electrical Performance
+L            = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
+Pack_Power   = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
+Pack_Energy  = zeros(L,1);
 
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.3], 'Color','w'); 
-subplot(1,4,1)
-plot(Time_torque, Motor1_Drag_Tq, 'LineWidth', Width); grid on;
-xlabel('Time (s)')
-ylabel('(Nm)')
-title('Motor1 Drag Torque')
+for i = 2 : length(outTuned.Battery_Data.Batt.Voltage__V_.Time)
+    Energy_tmp     = Pack_Power(i)*0.001;
+    Pack_Energy(i) = Energy_tmp + Pack_Energy(i-1); 
+end
 
-subplot(1,4,2)
-plot(Time_torque, Motor2_Drag_Tq, 'LineWidth', Width); grid on;
-xlabel('Time (s)')
-ylabel('(Nm)')
-title('Motor2 Drag Torque')
-
-subplot(1,4,3)
-plot(Time_torque, Motor3_Drag_Tq, 'LineWidth', Width); grid on;
-xlabel('Time (s)')
-ylabel('(Nm)')
-title('Motor3 Drag Torque')
-
-subplot(1,4,4)
-plot(Time_torque, Motor4_Drag_Tq, 'LineWidth', Width); grid on;
-xlabel('Time (s)')
-ylabel('(Nm)')
-title('Motor4 Drag Torque')
-
-% [3] Battery Pack Performance
-
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.35], 'Color','w'); 
-subplot(1,4,1)
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.4 0.5], 'Color','w'); 
+subplot(2,3,1)
 plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',2); grid on;
 title('SOC')
 ylabel('(%)')
 xlabel('Time (s)')
 
-subplot(1,4,2)
+subplot(2,3,2)
 plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',2); grid on;
 title('C-rate')
 ylabel('(-)')
 xlabel('Time (s)')
 
-subplot(1,4,3)
+subplot(2,3,3)
 plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',2); grid on;
 title('Current')
 ylabel('(A)')
 xlabel('Time (s)')
 
-subplot(1,4,4)
+subplot(2,3,4)
 plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',2); grid on;
 title('Voltage')
 ylabel('(V)')
 xlabel('Time (s)')
 
+subplot(2,3,5)
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',2); grid on;
+title('Power')
+ylabel('(kW)')
+xlabel('Time (s)')
+
+subplot(2,3,6)
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',2); grid on;
+title('Energy')
+ylabel('(kWh)')
+xlabel('Time (s)')
+
 sgtitle('Battery Pack Electrical Performance','FontSize',15,'FontWeight','bold');
 
-
-% [4] Flight trajectory 
-figure('Color','w'); 
+% [4] Flight Dynamics Simulations 
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.4 0.5], 'Color','w'); 
+subplot(2,3,1)
 plot(Time_flight, -reshape(outTuned.UAV_State.Xe.Data(3,:,:),[size(outTuned.UAV_State.Xe.Data(2,:,:),3),1]), 'Linewidth', 2);
 grid on
 title('Altitude')
 ylabel('(m)')
 xlabel('Time (s)')
+
+subplot(2,3,2)
+plot3(outTuned.UAV_State.Xe.Data(1,:),-outTuned.UAV_State.Xe.Data(2,:),-outTuned.UAV_State.Xe.Data(3,:),'LineWidth',2); grid on;
+xlabel('North (m)')
+ylabel('West (m)')
+zlabel('Up (m)')
+title('West vs. North')
+ylim([-200, 200])
+view(0,90)
+
+subplot(2,3,3)
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 2); hold on; grid on;
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', 2); hold on;
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', 2); hold on;
+xlabel('Time (s)')
+ylabel('(deg)')
+title('Euler Angles')
+legend('Roll','Pitch','Yaw','Location','southwest')
+
+subplot(2,3,4)
+plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]), 'Linewidth', 2); hold on; grid on;
+plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,2,:),3),1]), 'Linewidth', 2); hold on;
+plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,3,:),3),1]), 'Linewidth', 2); hold on;
+xlabel('Time (s)')
+ylabel('(m/s)')
+title('Body Velocity')
+legend('Vbx','Vby','Vbz','Location','southwest')
+
+subplot(2,3,5)
+plot(outTuned.UAV_State.RotorParameters.Tilt1.Time, outTuned.UAV_State.RotorParameters.Tilt1.Data/pi*180, 'Linewidth', 2); hold on; grid on
+plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorParameters.Tilt2.Data/pi*180, 'Linewidth', 2, 'LineStyle', '--')
+xlabel('Time (s)')
+ylabel('Tilt (deg)')
+title('Tilt Angles')
+sgtitle('Flight Dynamics Simulations','FontSize',15,'FontWeight','bold');
+
+% subplot(2,3,6)
+% plot(outTuned.UAV_State.airspeed.Time, atand(v1./v2), 'Linewidth', 2); hold on; grid on
+% plot(outTuned.UAV_State.airspeed.Time, atand(v3), 'Linewidth', 2);
+% xlabel('Time (s)')
+% ylabel('(deg)')
+% title('AOA/AOS Angles')
+
 keyboard;
-
-
-
 
 %% Previous code
 plot(MotorRPM.Time, MotorRPM.Data,'LineWidth',2); hold on; grid on;

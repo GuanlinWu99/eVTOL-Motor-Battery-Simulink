@@ -7,8 +7,8 @@
 
 function [uavParams, HEV_Param] = load_vtol_dynamics_7000lb(const)
 
-%% [1] Define aerodynamics
-% .. load custom aerodynamic coefficients from openVSPaero
+%% [1] Define Aerodynamics
+% ... Load custom aerodynamic coefficients from openVSPaero
 [alpha_lon_temp, CL_temp, CD_temp, CM_temp]                         =   eVTOL_data_lon();
 [alpha_latdir_temp, beta_latdir_temp, CS_temp, CR_temp, CN_temp]    =   eVTOL_data_latdir();        % [-] CR = Cl
 
@@ -17,7 +17,7 @@ uavParams.aero.alpha_latdir     =   alpha_latdir_temp*const.deg2rad;
 uavParams.aero.beta_latdir      =   beta_latdir_temp*const.deg2rad;
 uavParams.aero.air_density      =   1.225;                                  % [kg/m^3] Air density
 
-%.. lift coefficients
+%... Lift coefficients
 % uavParams.aero.CL0      =   0.81857;                                      % [-] CL @ AOA = 0
 % uavParams.aero.CLa      =   4.09127;                                      % [-] CL-alpha slope
 uavParams.aero.CL               =   CL_temp;                                % [-] CL
@@ -25,10 +25,10 @@ uavParams.aero.CLadot           =   0;                                      % [-
 uavParams.aero.CLq              =   7.31097;                                % [-] CL-q slope
 uavParams.aero.CLDe             =   0.50787;                                % [-] CL-elevator slope
 uavParams.aero.CLDa             =   -0.85291;                               % [-] CL-aileron slope
-uavParams.aero.CLadot_tfnum     =   [1 0];
-uavParams.aero.CLadot_tfden     =   [0.1 1];
+uavParams.aero.CLadot_tfnum     =   [1 0];                                  % [-] Transfer function (numerator)
+uavParams.aero.CLadot_tfden     =   [0.1 1];                                % [-] Transfer function (denominator)
 
-%.. drag coefficients
+%... Drag coefficients
 % uavParams.aero.CDmin    =   0.06047;                                      % [-] minimum drag 
 % uavParams.aero.K        =   0.1328;                                       % [-] drag polar quadratic coefficient
 % uavParams.aero.CL_CDmin =   0.4806;                                       % [-] CL at minimum CD point
@@ -39,7 +39,7 @@ uavParams.aero.CdDa              =   0.092132;                              % [-
 uavParams.aero.CdDr              =   0.0097403;                             % [-] CD-rudder slope
 % uavParams.aero.dragCoeffMov =   0.027;                                    % [-] fuselage moving part drag coefficient
 
-%.. moment coefficient
+%... Moment coefficient
 % uavParams.aero.Cm0      =   0.00763;                                      % [-] CM @ AOA = 0
 % uavParams.aero.Cma      =   -1.76966;                                     % [-] CM-alpha slope
 uavParams.aero.CM                =   CM_temp;                               % CM
@@ -47,14 +47,14 @@ uavParams.aero.Cmq               =   -19.22663;                             % [-
 uavParams.aero.CmDe              =   -1.83747*1.4;                          % [-] CM-elevator slope
 % uavParams.aero.CmDr     =   0.02991;                                      % [-] CM-rudder slope
 
-%.. side force
+%... Side force
 % uavParams.aero.CYb      =   -0.001570;                                    % [-] CY-beta slope
 uavParams.aero.CS               =   CS_temp;                                % [-] CS
 uavParams.aero.CYp              =   -0.001570;                              % [-] CY-p slope
 uavParams.aero.CYr              =   0.18368;                                % [-] CY-r slope
 uavParams.aero.CYDr             =   0.128915;                               % [-] CY-rudder slope
 
-%.. roll moment
+%... Roll moment
 % uavParams.aero.Clb      =   -0.001610;                                    % [-] Cl-beta slope
 uavParams.aero.CR               =   CR_temp;                                % CR
 uavParams.aero.Clp              =   -0.47584;                               % [-] Cl-p slope
@@ -62,7 +62,7 @@ uavParams.aero.Clr              =   0.27153;                                % [-
 uavParams.aero.ClDa             =   0.286593;                               % [-] Cl-aileron slope
 uavParams.aero.ClDr             =   0.013407;                               % [-] Cl-rudder slope
 
-%.. yaw moment
+%... Yaw moment
 % uavParams.aero.Cnb      =   0.09180;                                      % [-] Cn-beta slope
 uavParams.aero.CN               =   CN_temp;                                % CN
 uavParams.aero.Cnp              =   -0.13267;                               % [-] Cn-p slope
@@ -166,7 +166,7 @@ HEV_Param.Battery_Cell.theta_f            = -40;                     % (°C) Ele
 
 %% *Editted by Sounghwan (Battery cell to pack scaling)*
 Ns                                        = 200;                      % number of series
-Np                                        = 150;                      % number of parallel
+Np                                        = 200;                      % number of parallel
 
 % Samsung INR18650-300 cell 
 % Scaling law from Prof. Jung's group
@@ -232,7 +232,7 @@ HEV_Param.Motor.Efficiency                   = 95;          % motor efficiency
 
 % [5] DC-DC Converter Parameters
 HEV_Param.DCDCConv.Output_Voltage            = 500;         % [V]
-HEV_Param.DCDCConv.Resistance_Losses         = 0.00625;      % [Ohm]
+HEV_Param.DCDCConv.Resistance_Losses         = 0.00625;     % [Ohm]
 HEV_Param.DCDCConv.Kp                        = 0.01;
 HEV_Param.DCDCConv.Ki                        = 10;
 HEV_Param.DCDCConv.MinVin                    = 50;

@@ -2,7 +2,7 @@
 % Set Test Bench to execute complex guidance mission
 TestMode      = 1;
 
-% Set guidance type to execute fixed wing mission.
+% Set guidance type to execute transition mission 
 guidanceType  = 3;
 
 % Enable Visualization
@@ -22,7 +22,7 @@ disp("Enabled transition guidance mission.")
 % dDataSectObj = getSection(myDictionaryObj,'Design Data');
 
 % Set Time for Simulation
-Total_sim_time  = 300;
+Total_sim_time  = 400;
 myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
 dDataSectObj    = getSection(myDictionaryObj,'Design Data');
 simTimeParam    = getEntry(dDataSectObj,'simTime');
