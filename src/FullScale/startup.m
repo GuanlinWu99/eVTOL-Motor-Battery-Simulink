@@ -104,8 +104,6 @@ grid on; xlabel('\alpha [deg]'); ylabel('C_M');
 title('Pitching Moment');
 legend('Location','best');
 
-keyboard;
-
 %%
 %... Load controllercontrolParams.TiltScheduleRate parameters
 controlParams          =   load_controller_parameters(uavParams, const);
@@ -147,7 +145,7 @@ configObj = getActiveConfigSet('VTOLAutopilotController');
 set_param(configObj, 'SourceName', 'VTOLConfiguration');
 transition_throttle = 0.2;
 
-Back_Transition_Rate = 0.4*controlParams.TiltScheduleRate;
+Back_Transition_Rate = 0.5*controlParams.TiltScheduleRate;
 
 fprintf('Forward TiltAngle Rate %.2f [deg/s]\n', controlParams.TiltScheduleRate*57.295);
 fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', Back_Transition_Rate*57.295);
@@ -156,7 +154,7 @@ fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', Back_Transition_Rate*57.295);
 
 keyboard;
 
-Flap_Activate  =  5000;
+Flap_Activate  =  16000;
 
 %%... Run SIMULINK
 tic
@@ -377,16 +375,46 @@ sgtitle('Battery Pack Electrical Performance','FontSize',15,'FontWeight','bold')
 
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.7], 'Color','w'); 
 subplot(3,3,1)
+yyaxis right
+plot(outTuned.Flight_Mode.Time, outTuned.Flight_Mode.Data,'LineWidth',2); 
+xlabel('Time (s)'); ylabel('(-)'); grid on; title('North & Flight Mode') 
+
+yyaxis left
 plot(outTuned.PositionCmdFdbk.time,positionFeedbackData(4,:)/1000,'LineWidth',2)
-grid on; xlabel('Time (s)'); ylabel('(km)'); title('North'); xlim([0 Total_sim_time])
+ylabel('(km)'); legend('North','Mode','Location','best'); xlim([0 Total_sim_time])
+
+ax = gca;
+ax.YAxis(1).Color = 'k';  
+ax.YAxis(2).Color = 'k';  
+ax.XAxis.Color = 'k';  
 
 subplot(3,3,2)
+yyaxis right
+plot(outTuned.Flight_Mode.Time, outTuned.Flight_Mode.Data,'LineWidth',2); 
+xlabel('Time (s)'); ylabel('(-)'); grid on; title('West & Flight Mode') 
+
+yyaxis left
 plot(outTuned.PositionCmdFdbk.time,positionFeedbackData(5,:),'LineWidth',2)
-grid on; xlabel('Time (s)'); ylabel('(m)'); title('West'); ylim([-100 100]); xlim([0 Total_sim_time])
+ylabel('(km)'); legend('West','Mode','Location','best'); xlim([0 Total_sim_time]); ylim([-50 50]);
+
+ax = gca;
+ax.YAxis(1).Color = 'k';  
+ax.YAxis(2).Color = 'k';  
+ax.XAxis.Color = 'k';  
 
 subplot(3,3,3)
+yyaxis right
+plot(outTuned.Flight_Mode.Time, outTuned.Flight_Mode.Data,'LineWidth',2); 
+xlabel('Time (s)'); ylabel('(-)'); grid on; title('Altitude & Flight Mode') 
+
+yyaxis left
 plot(outTuned.PositionCmdFdbk.time,-positionFeedbackData(6,:),'LineWidth',2); 
-grid on; ylabel('(m)'); xlabel('Time (s)'); title('Altitude'); xlim([0 Total_sim_time])
+ylabel('(m)'); legend('Altitude','Mode','Location','best'); xlim([0 Total_sim_time])
+
+ax = gca;
+ax.YAxis(1).Color = 'k';  
+ax.YAxis(2).Color = 'k';  
+ax.XAxis.Color = 'k';  
 
 subplot(3,3,4)
 plot(outTuned.UAV_State.airspeed.Time, atand(v1./v2), 'Linewidth', 2); 
@@ -410,7 +438,7 @@ grid on; xlabel('Time (s)'); ylabel('(-)'); title('Body Velocity & Flight Mode')
 
 yyaxis left
 plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,1,:), [size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]), 'LineWidth', 2);
-ylabel('(m/s)'); legend('Vx','Mode','Location','southwest'); xlim([0 Total_sim_time])
+ylabel('(m/s)'); legend('Vx','Mode','Location','southwest'); xlim([0 Total_sim_time]); 
 
 ax = gca;
 ax.YAxis(1).Color = 'k';  
@@ -424,7 +452,7 @@ xlabel('Time (s)'); ylabel('(-)'); grid on; title('Body Velocity & Flight Mode')
 
 yyaxis left
 plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,2,:), [size(outTuned.UAV_State.Vb.Data(:,2,:),3),1]), 'LineWidth', 2);
-ylabel('(m/s)'); legend('Vy','Mode','Location','southwest'); xlim([0 Total_sim_time])
+ylabel('(m/s)'); legend('Vy','Mode','Location','southwest'); xlim([0 Total_sim_time]);
 
 ax = gca;
 ax.YAxis(1).Color = 'k';  
@@ -438,7 +466,7 @@ xlabel('Time (s)'); ylabel('(-)'); grid on; title('Body Velocity & Flight Mode')
 
 yyaxis left
 plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,3,:), [size(outTuned.UAV_State.Vb.Data(:,3,:),3),1]), 'LineWidth', 2);
-ylabel('(m/s)'); legend('Vz','Mode','Location','southwest'); xlim([0 Total_sim_time])
+ylabel('(m/s)'); legend('Vz','Mode','Location','southwest'); xlim([0 Total_sim_time]);
 
 ax = gca;
 ax.YAxis(1).Color = 'k';  
@@ -447,7 +475,7 @@ ax.XAxis.Color = 'k';
 
 sgtitle('Flight Dynamics Simulations','FontSize',15,'FontWeight','bold');
 
-%% [5] Flight Dynamics Simulations (3D)
+% [5] Flight Dynamics Simulations (3D)
 
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.3 0.45], 'Color','w'); 
 plot3(positionFeedbackData(4,:),-positionFeedbackData(5,:),-positionFeedbackData(6,:),'LineWidth',2); grid on
