@@ -8,8 +8,8 @@
 %    moment coefficients are w.r.t body axes                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [alpha_l_0, CL_l_0, CD_l_0, CM_l_0 ] = eVTOL_data_lon()
-   csvFileName =   'Data_eVTOL_alpha_lowlift_Flap0.csv';
+function [alpha_l_30, CL_Flap_30, CD_Flap_30, CM_Flap_30] = eVTOL_data_lon_flap_30()
+    csvFileName =   'Data_eVTOL_alpha_lowlift_Flap30.csv';
 
     opts    =   detectImportOptions(csvFileName, 'NumHeaderLines', 1);
     rawData =   readcell(csvFileName, opts);
@@ -52,9 +52,10 @@ function [alpha_l_0, CL_l_0, CD_l_0, CM_l_0 ] = eVTOL_data_lon()
     CD_ex       =   T.MeanValue(CD_tot_row);
     CMy_ex      =   T.MeanValue(CMy_row);
 
-    alpha_l_0   =   alpha_ex(1:numberofpoints);
-    CL_l_0      =   CL_ex(1:numberofpoints);
-    CD_l_0      =   CD_ex(1:numberofpoints);
-    CM_l_0      =   CMy_ex(1:numberofpoints);
+    alpha_l_30  =   alpha_ex(1:numberofpoints);
+
+    CL_Flap_30  =   CL_ex(1:numberofpoints);
+    CD_Flap_30  =   CD_ex(1:numberofpoints);
+    CM_Flap_30  =   CMy_ex(1:numberofpoints);
 
 end

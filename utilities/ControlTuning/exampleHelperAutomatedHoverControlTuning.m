@@ -1,25 +1,25 @@
 
-%exampleHelperAutomatedHoverControlTuningWind tune all control gains for hover mode in steady wind.
+% exampleHelperAutomatedHoverControlTuningWind tune all control gains for hover mode in steady wind.
 
 % Copyright 2023-2024 The MathWorks, Inc.
 % Disable linearization warning
-state = warning('off', 'Simulink:blocks:BmathSqrtOfNegativeNumber');
-cleanup = onCleanup(@()warning(state));
-pidWarningSuppression = warning('off', 'Control:design:pidtune11');
-cleanupPIDWarning = onCleanup(@()warning(pidWarningSuppression));
+state                    = warning('off', 'Simulink:blocks:BmathSqrtOfNegativeNumber');
+cleanup                  = onCleanup(@()warning(state));
+pidWarningSuppression    = warning('off', 'Control:design:pidtune11');
+cleanupPIDWarning        = onCleanup(@()warning(pidWarningSuppression));
 
-options = linearizeOptions('SampleTime',0.005);
-ctrloptions= pidtuneOptions;
-ctrloptions.PhaseMargin=60;
-ctrloptions.DesignFocus = 'balanced';
+options                  = linearizeOptions('SampleTime',0.005);
+ctrloptions              = pidtuneOptions;
+ctrloptions.PhaseMargin  = 60;
+ctrloptions.DesignFocus  = 'balanced';
 
 %% Enable/Disable Tuning of Loops
-TuneXY = true;
-TuneVxVy = true;
-TunePR = true;
-TunePrRr = true;
-TuneZ = true;
-TuneVZ = true;
+TuneXY                   = true;
+TuneVxVy                 = true;
+TunePR                   = true;
+TunePrRr                 = true;
+TuneZ                    = true;
+TuneVZ                   = true;
 
 %% Roll rate
 if TunePrRr
@@ -175,7 +175,6 @@ if TuneXY
     end
     N_Y=1/C.Tf;
 end
-
 
 %% Z Rate Controller
 if TuneVZ

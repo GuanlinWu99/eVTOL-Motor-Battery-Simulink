@@ -9,8 +9,22 @@ function [uavParams, HEV_Param] = load_vtol_dynamics_7000lb(const)
 
 %% [1] Define Aerodynamics
 % ... Load custom aerodynamic coefficients from openVSPaero
-[alpha_lon_temp, CL_temp, CD_temp, CM_temp]                         =   eVTOL_data_lon();
-[alpha_latdir_temp, beta_latdir_temp, CS_temp, CR_temp, CN_temp]    =   eVTOL_data_latdir();        % [-] CR = Cl
+[alpha_lon_temp, CL_temp, CD_temp, CM_temp]                          =   eVTOL_data_lon();
+[alpha_latdir_temp, beta_latdir_temp, CS_temp, CR_temp, CN_temp]     =   eVTOL_data_latdir();        % [-] CR = Cl
+[alpha_l_20, CL_flap_20, CD_flap_20, CM_flap_20]                     =   eVTOL_data_lon_flap_20();
+[alpha_l_30, CL_flap_30, CD_flap_30, CM_flap_30]                     =   eVTOL_data_lon_flap_30();
+
+%... Flap (20 degree) data
+uavParams.aero.CL_flap_20       =   CL_flap_20;                             % [-] CL with flap 20 degree
+uavParams.aero.CD_flap_20       =   CD_flap_20;                             % [-] CL with flap 20 degree
+uavParams.aero.CM_flap_20       =   CM_flap_20;                             % [-] CL with flap 20 degree
+uavParams.aero.alpha_lon_20     =   alpha_l_20*const.deg2rad;
+
+%... Flap (30 degree) data
+uavParams.aero.CL_flap_30       =   CL_flap_30;                             % [-] CL with flap 30 degree
+uavParams.aero.CD_flap_30       =   CD_flap_30;                             % [-] CL with flap 30 degree
+uavParams.aero.CM_flap_30       =   CM_flap_30;                             % [-] CL with flap 30 degree
+uavParams.aero.alpha_lon_30     =   alpha_l_30*const.deg2rad;
 
 uavParams.aero.alpha_lon        =   alpha_lon_temp*const.deg2rad;
 uavParams.aero.alpha_latdir     =   alpha_latdir_temp*const.deg2rad;
@@ -53,6 +67,27 @@ uavParams.aero.CS               =   CS_temp;                                % [-
 uavParams.aero.CYp              =   -0.001570;                              % [-] CY-p slope
 uavParams.aero.CYr              =   0.18368;                                % [-] CY-r slope
 uavParams.aero.CYDr             =   0.128915;                               % [-] CY-rudder slope
+
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.4 0.25], 'Color','w'); 
+% subplot(1,3,1)
+% plot(uavParams.aero.alpha_lon*180/pi,uavParams.aero.CL,'LineWidth',2); grid on;
+% xlabel('AoA')
+% ylabel('(-)')
+% title('CL')
+% 
+% subplot(1,3,2)
+% plot(uavParams.aero.alpha_lon*180/pi,uavParams.aero.CD,'LineWidth',2); grid on;
+% xlabel('AoA')
+% ylabel('(-)')
+% title('CD')
+% 
+% subplot(1,3,3)
+% plot(uavParams.aero.alpha_lon*180/pi,uavParams.aero.CM,'LineWidth',2); grid on;
+% xlabel('AoA')
+% ylabel('(-)')
+% title('CM')
+% 
+% sgtitle('Aerodynamic Coefficients','FontSize',15,'FontWeight','bold');
 
 %... Roll moment
 % uavParams.aero.Clb      =   -0.001610;                                    % [-] Cl-beta slope
