@@ -20,7 +20,7 @@ uavParams   =   load_vtol_dynamics_7000lb(const);
 
 %.. trim speed
 trimspd     =   [65 75 90 100]*const.kts2mps;                               % [m/s] trim speed
-trimalt     =   [10]*const.ft2m;                                          % [m] trim altitude
+trimalt     =   [10]*const.ft2m;                                            % [m] trim altitude
 
 %.. level flight conditions
 gamma_trim      =   0.0*const.deg2rad;                                      %.. [rad] flight path angle for level-wing trim
@@ -72,7 +72,7 @@ for idx1 = 1:size(trimspd,2)
             trim_data(idx1,idx2).heading_trim   =   x_trim(6);
             trim_data(idx1,idx2).flight_path_trim   =   gamma_trim;
             trim_data(idx1,idx2).thr_trim       =   u_trim(1);
-            trim_data(idx1,idx2).rot_spd_trim   =   u_trim(1)*uavParam.motor.RPMMAX;
+            trim_data(idx1,idx2).rot_spd_trim   =   u_trim(1)*uavParams.motor.RPMMAX;
             trim_data(idx1,idx2).elevator_trim  =   u_trim(2);
             trim_data(idx1,idx2).aileron_trim   =   u_trim(3);
             trim_data(idx1,idx2).rudder_trim    =   u_trim(4);

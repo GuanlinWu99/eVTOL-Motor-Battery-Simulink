@@ -24,6 +24,8 @@ Thrust          = 7800;    % [N] (when vertical takeoff)
 RPM             = 7000;    % [-]
 Limit           = 500;     % [Nm]
 
+Ts              = 0.001;
+
 required_torque = Thrust*(uavParams.rotor.Cq/uavParams.rotor.Ct)*(uavParams.geom.PropDiameter/2);     
 step_index      = 5;
 

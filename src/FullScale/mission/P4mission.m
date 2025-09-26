@@ -71,34 +71,34 @@ switch Mode
         TransitionMission(6).params    = [0; 0; 0; 75*const.kts2mps];
 
         TransitionMission(7).mode      = 2;
-        TransitionMission(7).position  = [(3.76+0.62+1.2+2.61)*const.nm2m; 0; -900*const.ft2m];
-        TransitionMission(7).params    = [0; 0; 0; 59*const.kts2mps];
+        TransitionMission(7).position  = [(3.76+0.62+1.2+2.61)*const.nm2m; 0; -1500*const.ft2m];
+        TransitionMission(7).params    = [0; 0; 0; 55*const.kts2mps];
 
         TransitionMission(8).mode      = 2;
-        TransitionMission(8).position  = [(3.76+0.62+1.2+2.61+1.5)*const.nm2m-1100; 0; -900*const.ft2m];
-        TransitionMission(8).params    = [0; 0; 0; 59*const.kts2mps];
+        TransitionMission(8).position  = [(3.76+0.62+1.2+2.61+1.5)*const.nm2m-1100; 0; -1500*const.ft2m];
+        TransitionMission(8).params    = [0; 0; 0; 55*const.kts2mps];
         
         %% Back transition
         TransitionMission(9).mode      = 6;
-        TransitionMission(9).position  = [(3.76+0.62+1.2+2.61+1.5 + 0.1)*const.nm2m-0*550; 0; -900*const.ft2m];
+        TransitionMission(9).position  = [(3.76+0.62+1.2+2.61+1.5 + 0.1)*const.nm2m-0*550; 0; -1500*const.ft2m];
         TransitionMission(9).params    = [1; 1; 1; 1];
         
         %% Hover Mode
-        % TransitionMission(10).mode     = 2;
-        % TransitionMission(10).position = [(3.76+0.62+1.2+2.61+1.5)*const.nm2m; 0; -450*const.ft2m];
-        % TransitionMission(10).params   = [0; 0; 0; 0];
-        % 
-        % TransitionMission(11).mode     = 2;
-        % TransitionMission(11).position = [(3.76+0.62+1.2+2.61+1.5+0.5)*const.nm2m; 0; -450*const.ft2m];
-        % TransitionMission(11).params   = [0; 0; 0; 0];
-        % 
-        % TransitionMission(12).mode     = 2;
-        % TransitionMission(12).position = [(3.76+0.62+1.2+2.61+1.5+0.5)*const.nm2m; 0; -100*const.ft2m];
-        % TransitionMission(12).params   = [0; 0; 0; 0];
-        % 
-        % TransitionMission(13).mode     = 4;
-        % TransitionMission(13).position = [(3.76+0.62+1.2+2.61+1.5+0.5)*const.nm2m; 0; 0];
-        % TransitionMission(13).params   = [0; 0; 0; 0];
+        TransitionMission(10).mode     = 2;
+        TransitionMission(10).position = [(3.76+0.62+1.2+2.61+1.5)*const.nm2m; 0; -900*const.ft2m];
+        TransitionMission(10).params   = [0; 0; 0; 0];
+
+        TransitionMission(11).mode     = 2;
+        TransitionMission(11).position = [(3.76+0.62+1.2+2.61+1.5+0.5)*const.nm2m; 0; -450*const.ft2m];
+        TransitionMission(11).params   = [0; 0; 0; 0];
+
+        TransitionMission(12).mode     = 2;
+        TransitionMission(12).position = [(3.76+0.62+1.2+2.61+1.5+0.5)*const.nm2m; 0; -100*const.ft2m];
+        TransitionMission(12).params   = [0; 0; 0; 0];
+
+        TransitionMission(13).mode     = 4;
+        TransitionMission(13).position = [(3.76+0.62+1.2+2.61+1.5+0.5)*const.nm2m; 0; 0];
+        TransitionMission(13).params   = [0; 0; 0; 0];
 
     case 2
         %% Original 3 (latest long version)

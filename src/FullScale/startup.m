@@ -1,13 +1,15 @@
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Topic: start up script for simulator                                   %
-% Author(s): Minhyun                                                     %
+% Author(s): Minhyun, Sounghwan, and Guanlin                             %
 % Description and updates (09/12/2025):                                  %
-% 1. Include drag torque calculation in the powertrain
-% 2. Upgrade battery pack in the powertrain                         
-% 3. 
+% 1. Include drag torque calculation in the powertrain                   %
+% 2. Upgrade battery pack in the powertrain                              %
+% 3. Changed from Variable-Type to Fixed-Type Ts = 0.001 (09/26/2025)    %
+%   $
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%... Clear workspace, command window and close fiugres
+%... Clear workspace, command window and close figures
 clear all;
 clc;
 close all;
@@ -26,20 +28,17 @@ Limit        = 700;
 
 cfgRefTop    = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
 cfgTop       = getRefConfigSet(cfgRefTop);
-set_param(cfgTop, 'SolverType','Variable-step', 'Solver','ode23t');
-% save_system(mdl);
-
+set_param(cfgTop,'SolverType','Fixed-step','Solver','ode4');
+Ts           = 0.001;
 mdlSub       = 'VTOLDynamics';
 load_system(mdlSub);
 cfgSubActive = getActiveConfigSet(mdlSub);
 
-if isa(cfgSubActive, 'Simulink.ConfigSetRef')
-    cfgSub = getRefConfigSet(cfgSubActive);  
-else
-    cfgSub = cfgSubActive;                   
-end
-
-set_param(cfgSub, 'SolverType','Variable-step', 'Solver','ode23t');
+% if isa(cfgSubActive, 'Simulink.ConfigSetRef')
+%     cfgSub = getRefConfigSet(cfgSubActive);  
+% else
+%     cfgSub = cfgSubActive;                   
+% end
 
 %... Define the aircraft modes of flight
 % Simulink.clearIntEnumType('flightState');
@@ -84,25 +83,19 @@ subplot(1,3,1)
 plot(uavParams.aero.alpha_lon*180/pi, uavParams.aero.CL, 'b-o', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 0° NACA23013'); hold on;
 plot(uavParams.aero.alpha_lon_20*180/pi, uavParams.aero.CL_flap_20, 'r-s', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 20° NACA23013'); hold on;
 plot(uavParams.aero.alpha_lon_30*180/pi, uavParams.aero.CL_flap_30, 'c-*', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 30° NACA23013');
-grid on; xlabel('\alpha [deg]'); ylabel('C_L');
-title('Lift Curve');
-legend('Location','best');
+grid on; xlabel('\alpha [deg]'); ylabel('C_L'); title('Lift Curve'); legend('Location','best');
 
 subplot(1,3,2)
 plot(uavParams.aero.alpha_lon*180/pi, uavParams.aero.CD, 'b-o', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 0° NACA23013'); hold on;
 plot(uavParams.aero.alpha_lon_20*180/pi, uavParams.aero.CD_flap_20, 'r-s', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 20° NACA23013'); hold on;
 plot(uavParams.aero.alpha_lon_30*180/pi, uavParams.aero.CD_flap_30, 'c-*', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 30° NACA23013');
-grid on; xlabel('\alpha [deg]'); ylabel('C_D');
-title('Drag Curve');
-legend('Location','best');
+grid on; xlabel('\alpha [deg]'); ylabel('C_D'); title('Drag Curve'); legend('Location','best');
 
 subplot(1,3,3)
 plot(uavParams.aero.alpha_lon*180/pi, uavParams.aero.CM, 'b-o', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 0° NACA23013'); hold on;
 plot(uavParams.aero.alpha_lon_20*180/pi, uavParams.aero.CM_flap_20, 'r-s', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 20° NACA23013'); hold on;
 plot(uavParams.aero.alpha_lon_30*180/pi, uavParams.aero.CM_flap_30, 'c-*', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 30° NACA23013');
-grid on; xlabel('\alpha [deg]'); ylabel('C_M');
-title('Pitching Moment');
-legend('Location','best');
+grid on; xlabel('\alpha [deg]'); ylabel('C_M'); title('Pitching Moment');legend('Location','best');
 
 %%
 %... Load controllercontrolParams.TiltScheduleRate parameters
@@ -154,14 +147,21 @@ fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', Back_Transition_Rate*57.295);
 
 keyboard;
 
-Flap_Activate  =  16000;
+Flap_Activate  =  15000;
+Fading_time    =  0.1;
 
 %%... Run SIMULINK
 tic
 outTuned = sim(mdl);
 toc
 
-%% Read Simulation data
+% V = squeeze(outTuned.Body_Velocity.Data);
+% plot(outTuned.Body_Velocity.Time,V(1,:),'LineWidth',2); hold on; grid on
+% plot(outTuned.Body_Velocity.Time,V(2,:),'LineWidth',2); hold on
+% plot(outTuned.Body_Velocity.Time,V(3,:),'LineWidth',2);
+% legend('Vx','Vy','Vz')
+
+%% Read Simulation 
 Time                   =   outTuned.Rotor1_RPM_Reference.Time;
 Time_motor             =   outTuned.Motor1_Current.Time;
 Time_torque            =   outTuned.Rotor1_Drag_Tq.Time;
@@ -210,34 +210,9 @@ v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(
 
 keyboard
 
-
-% % figure
-% % subplot(3,1,1)
-% % hold on
-% % plot(outTuned.UAV_State.airspeed.Time, outTuned.UAV_State.airspeed.Data, 'Linewidth', 1.5)
-% % hold off
-% % grid on
-% % ylabel('Airspeed (m/s)')
-% % title('eVTOL AirData (P4 profile)')
-% % subplot(3,1,2)
-% % plot(outTuned.UAV_State.airspeed.Time, atand(v1./v2), 'Linewidth', 1.5)
-% % hold off
-% % grid on
-% % ylim([-5 35])
-% % ylabel('AoA (deg)')
-% % subplot(3,1,3)
-% % plot(outTuned.UAV_State.airspeed.Time, atand(v3), 'Linewidth', 1.5)
-% % hold off
-% % grid on
-% % ylim([-20 20])
-% % ylabel('AoS (deg)')
-% % xlabel('Time (sec)')
-
-
 %% Plot Simulations (09/12/2025) 
 
 %% [1] 4 Rotor Performance
-
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.9], 'Color','w');
 t = tiledlayout(4,4,'TileSpacing','compact','Padding','compact');
 names = ["Motor1","Motor2","Motor3","Motor4"];
@@ -295,7 +270,6 @@ linkaxes(ax4,'y');
 sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
 
 %% [2] Drag Torque
-
 % figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.3], 'Color','w'); 
 % subplot(1,4,1)
 % plot(Time_torque, Motor1_Drag_Tq, 'LineWidth', Width); grid on;
@@ -322,7 +296,6 @@ sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'F
 % title('Motor4 Drag Torque')
 
 %% [3] Battery Pack Electrical Performance
-
 L = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
 Pack_Power = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
 Pack_Energy = zeros(L,1);
@@ -334,45 +307,32 @@ end
 
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.4 0.5], 'Color','w'); 
 subplot(2,3,1)
-plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',2); grid on;
-title('SOC')
-ylabel('(%)')
-xlabel('Time (s)')
+plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',2); 
+title('SOC'); ylabel('(%)'); xlabel('Time (s)'); grid on;
 
 subplot(2,3,2)
-plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',2); grid on;
-title('C-rate')
-ylabel('(-)')
-xlabel('Time (s)')
+plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',2); 
+title('C-rate'); ylabel('(-)'); xlabel('Time (s)'); grid on;
 
 subplot(2,3,3)
-plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',2); grid on;
-title('Current')
-ylabel('(A)')
-xlabel('Time (s)')
+plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',2); 
+title('Current'); ylabel('(A)'); xlabel('Time (s)'); grid on;
 
 subplot(2,3,4)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',2); grid on;
-title('Voltage')
-ylabel('(V)')
-xlabel('Time (s)')
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',2); 
+title('Voltage'); ylabel('(V)'); xlabel('Time (s)'); grid on;
 
 subplot(2,3,5)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',2); grid on;
-title('Power')
-ylabel('(kW)')
-xlabel('Time (s)')
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',2); 
+title('Power'); ylabel('(kW)'); xlabel('Time (s)'); grid on;
 
 subplot(2,3,6)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',2); grid on;
-title('Energy')
-ylabel('(kWh)')
-xlabel('Time (s)')
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',2); 
+title('Energy'); ylabel('(kWh)'); xlabel('Time (s)'); grid on;
 
 sgtitle('Battery Pack Electrical Performance','FontSize',15,'FontWeight','bold');
 
 %% [4] Flight Dynamics Simulations 
-
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.7], 'Color','w'); 
 subplot(3,3,1)
 yyaxis right
@@ -381,7 +341,7 @@ xlabel('Time (s)'); ylabel('(-)'); grid on; title('North & Flight Mode')
 
 yyaxis left
 plot(outTuned.PositionCmdFdbk.time,positionFeedbackData(4,:)/1000,'LineWidth',2)
-ylabel('(km)'); legend('North','Mode','Location','best'); xlim([0 Total_sim_time])
+ylabel('(km)'); legend('North','Mode','Location','southwest'); xlim([0 Total_sim_time])
 
 ax = gca;
 ax.YAxis(1).Color = 'k';  
@@ -395,7 +355,7 @@ xlabel('Time (s)'); ylabel('(-)'); grid on; title('West & Flight Mode')
 
 yyaxis left
 plot(outTuned.PositionCmdFdbk.time,positionFeedbackData(5,:),'LineWidth',2)
-ylabel('(km)'); legend('West','Mode','Location','best'); xlim([0 Total_sim_time]); ylim([-50 50]);
+ylabel('(km)'); legend('West','Mode','Location','southwest'); xlim([0 Total_sim_time]); ylim([-50 50]);
 
 ax = gca;
 ax.YAxis(1).Color = 'k';  
@@ -409,7 +369,7 @@ xlabel('Time (s)'); ylabel('(-)'); grid on; title('Altitude & Flight Mode')
 
 yyaxis left
 plot(outTuned.PositionCmdFdbk.time,-positionFeedbackData(6,:),'LineWidth',2); 
-ylabel('(m)'); legend('Altitude','Mode','Location','best'); xlim([0 Total_sim_time])
+ylabel('(m)'); legend('Altitude','Mode','Location','southwest'); xlim([0 Total_sim_time])
 
 ax = gca;
 ax.YAxis(1).Color = 'k';  
@@ -426,10 +386,20 @@ plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorPara
 grid on; xlabel('Time (s)'); ylabel('(deg)'); title('Tilt Angles'); xlim([0 Total_sim_time])
 
 subplot(3,3,6)
-plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 2); hold on; grid on;
-plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', 2); hold on;
-plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', 2); hold on;
-xlabel('Time (s)'); ylabel('(deg)') ;title('Euler Angles'); legend('Roll','Pitch','Yaw','Location','southwest'); xlim([0 Total_sim_time])
+yyaxis right
+plot(outTuned.Flight_Mode.Time, outTuned.Flight_Mode.Data,'k','LineWidth',2); 
+grid on; xlabel('Time (s)'); ylabel('(-)'); title('Body Velocity & Flight Mode')
+
+yyaxis left
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'r', 'Linewidth', 2); hold on; grid on;
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'g', 'Linewidth', 2); hold on;
+plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'b', 'Linewidth', 2); hold on;
+xlabel('Time (s)'); ylabel('(deg)'); title('Euler Angles'); legend('Roll','Pitch','Yaw','Mode','Location','southwest'); xlim([0 Total_sim_time])
+
+ax = gca;
+ax.YAxis(1).Color = 'k';  
+ax.YAxis(2).Color = 'k';  
+ax.XAxis.Color   = 'k';  
 
 subplot(3,3,7)
 yyaxis right
@@ -479,10 +449,26 @@ sgtitle('Flight Dynamics Simulations','FontSize',15,'FontWeight','bold');
 
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.3 0.45], 'Color','w'); 
 plot3(positionFeedbackData(4,:),-positionFeedbackData(5,:),-positionFeedbackData(6,:),'LineWidth',2); grid on
-xlabel('North (m)')
-ylabel('West (m)')
-zlabel('Altitude (m)')
-ylim([-200 200])
+xlabel('North (m)'); ylabel('West (m)'); zlabel('Altitude (m)'); ylim([-200 200])
+
+% [6] Thrust
+
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.25 0.35], 'Color','w'); 
+
+yyaxis right
+plot(outTuned.Flight_Mode.Time, outTuned.Flight_Mode.Data,'k','LineWidth',2); 
+xlabel('Time (s)'); ylabel('(-)'); grid on; title('Thrust & Flight Mode')
+
+yyaxis left
+plot(outTuned.Rotor_Force.Time, outTuned.Rotor_Force.Data(:,1)/1000, 'r', 'LineWidth', 2); grid on; hold on;
+plot(outTuned.Rotor_Force.Time, outTuned.Rotor_Force.Data(:,2)/1000, 'g','LineWidth', 2); hold on;
+plot(outTuned.Rotor_Force.Time, outTuned.Rotor_Force.Data(:,3)/1000, 'b','LineWidth', 2); hold on;
+xlabel('Time (s)'); ylabel('(kN)'); legend('Fx','Fy','Fz','location','best')
+
+ax = gca;
+ax.YAxis(1).Color = 'k';  
+ax.YAxis(2).Color = 'k';  
+ax.XAxis.Color = 'k'; 
 
 keyboard;
 
