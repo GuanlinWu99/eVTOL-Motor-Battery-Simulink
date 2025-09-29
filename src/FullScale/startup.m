@@ -76,27 +76,6 @@ const                  =   load_const();
 %... Set up vtol dynamics parameters
 [uavParams, HEV_Param] =   load_vtol_dynamics_7000lb(const);
 
-%% Check CM, CL, CD
-
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.35], 'Color','w'); 
-subplot(1,3,1)
-plot(uavParams.aero.alpha_lon*180/pi, uavParams.aero.CL, 'b-o', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 0° NACA23013'); hold on;
-plot(uavParams.aero.alpha_lon_20*180/pi, uavParams.aero.CL_flap_20, 'r-s', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 20° NACA23013'); hold on;
-plot(uavParams.aero.alpha_lon_30*180/pi, uavParams.aero.CL_flap_30, 'c-*', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 30° NACA23013');
-grid on; xlabel('\alpha [deg]'); ylabel('C_L'); title('Lift Curve'); legend('Location','best');
-
-subplot(1,3,2)
-plot(uavParams.aero.alpha_lon*180/pi, uavParams.aero.CD, 'b-o', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 0° NACA23013'); hold on;
-plot(uavParams.aero.alpha_lon_20*180/pi, uavParams.aero.CD_flap_20, 'r-s', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 20° NACA23013'); hold on;
-plot(uavParams.aero.alpha_lon_30*180/pi, uavParams.aero.CD_flap_30, 'c-*', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 30° NACA23013');
-grid on; xlabel('\alpha [deg]'); ylabel('C_D'); title('Drag Curve'); legend('Location','best');
-
-subplot(1,3,3)
-plot(uavParams.aero.alpha_lon*180/pi, uavParams.aero.CM, 'b-o', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 0° NACA23013'); hold on;
-plot(uavParams.aero.alpha_lon_20*180/pi, uavParams.aero.CM_flap_20, 'r-s', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 20° NACA23013'); hold on;
-plot(uavParams.aero.alpha_lon_30*180/pi, uavParams.aero.CM_flap_30, 'c-*', 'LineWidth', 1.5, 'DisplayName', 'Low-lift Flap 30° NACA23013');
-grid on; xlabel('\alpha [deg]'); ylabel('C_M'); title('Pitching Moment');legend('Location','best');
-
 %%
 %... Load controllercontrolParams.TiltScheduleRate parameters
 controlParams          =   load_controller_parameters(uavParams, const);
@@ -119,7 +98,7 @@ TuningMode             =   0;
 Deployment             =   false;
 
 %... Initialize Control and Guidance gains for Tiltrotor
-exampleHelperInitializeVTOLGains_m;
+load_controller_gains;
 
 %... Initialize initial velocity
 vIni = 0*const.kts2mps;
@@ -145,7 +124,7 @@ fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', Back_Transition_Rate*57.295);
 
 %exampleHelperAutomatedHoverControlTuning;
 
-keyboard;
+% keyboard;
 
 Flap_Activate  =  15000;
 Fading_time    =  0.1;

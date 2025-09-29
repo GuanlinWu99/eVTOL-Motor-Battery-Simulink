@@ -12,8 +12,8 @@ Visualization = 1;
 SensorType    = 0;
 
 % Load in Transition Misison
-%exampleHelperTransitionMissionData_mod;
-P4mission;
+exampleHelperTransitionMissionData_mod;
+% P4mission;
 
 disp("Enabled transition guidance mission.")
 

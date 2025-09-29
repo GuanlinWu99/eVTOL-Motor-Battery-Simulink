@@ -43,6 +43,8 @@ controlParams.maxElevator                   =   30*const.deg2rad;
 controlParams.minElevator                   =   -30*const.deg2rad;
 controlParams.maxRudder                     =   30*const.deg2rad;
 controlParams.minRudder                     =   -30*const.deg2rad;
+controlParams.maxFlap                       =   30*const.deg2rad;
+controlParams.minFlap                       =   0*const.deg2rad;
 
 controlParams.R_WAYPOINTTRANSITION_WP_VTOL  =   10.0;                               % [m] threshold for waypoint pass check
 controlParams.R_LOOKAHEAD_WP_VTOL           =   15.0;                               % [m] look ahead distance for VTOL waypoint guidance

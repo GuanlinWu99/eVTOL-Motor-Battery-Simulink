@@ -192,6 +192,17 @@ elems(4).Max            =   [];
 elems(4).DocUnits       =   '';
 elems(4).Description    =   '';
 
+elems(5)                =   Simulink.BusElement;
+elems(5).Name           =   'flap';
+elems(5).Dimensions     =   1;
+elems(5).DimensionsMode =   'Fixed';
+elems(5).DataType       =   'double';
+elems(5).Complexity     =   'real';
+elems(5).Min            =   [];
+elems(5).Max            =   [];
+elems(5).DocUnits       =   '';
+elems(5).Description    =   '';
+
 FixedWingCommandBus                             =   Simulink.Bus;
 FixedWingCommandBus.HeaderFile                  =   '';
 FixedWingCommandBus.Description                 =   '';
