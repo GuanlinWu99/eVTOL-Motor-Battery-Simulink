@@ -1,11 +1,15 @@
-
-%=========================================================================%
-% fixed-wing stability/control augmentation system                        %
-%-------------------------------------------------------------------------%
-% author(s): minhyun                                                      %
-% description: computing trim condition of fixed-wing mode and            %
-%              linearize model to enable auto-tuner                       %
-%=========================================================================%
+% ========================================================================
+% Fixed-wing stability/control augmentation system
+% ------------------------------------------------------------------------
+% Compute fixed-wing trim conditions over a speed/altitude grid and
+% linearize the dynamics to enable controller designer
+%
+% Inputs:
+%
+% Outputs (in workspace):
+%
+% Notes:
+% ========================================================================
 
 %.. clear workspace, command window and close fiugres
 clear all;
@@ -19,14 +23,17 @@ const       =   load_const();
 uavParams   =   load_vtol_dynamics_7000lb(const);
 
 %.. trim speed
-trimspd     =   [65 75 90 100]*const.kts2mps;                               % [m/s] trim speed
-trimalt     =   [10]*const.ft2m;                                            % [m] trim altitude
+trimspd     =   [60 75 90 100]*const.kts2mps;                               % [m/s] trim speed
+trimalt     =   [100]*const.ft2m;                                           % [m] trim altitude
 
 %.. level flight conditions
 gamma_trim      =   0.0*const.deg2rad;                                      %.. [rad] flight path angle for level-wing trim
 turn_rate_trim  =   0.0*const.deg2rad;                                      %.. [rad/s] turning rate for level coordinated-turn trim
 heading_trim    =   0.0*const.deg2rad;                                      %.. [rad] initial heading of aircraft
 alpha_trim      =   15.0*const.deg2rad;                                     %.. [rad] angle of attack constraint (might be used for climb) - initial guess for level trim
+
+%.. flap condition
+flap_trim       =   40.0*const.deg2rad;
 
 %.. model specific data and parameters
 %.. disable wind
@@ -41,14 +48,14 @@ load("data\contact.mat")
 %.. load bus interfaces for plant
 load_digital_twin_interface();
 
-trim_data   =   struct('alt_trim_fw',{},'eas_trim_fw',{},'tas_trim_fw',{},...
-                       'aoa_trim_fw',{},'aos_trim_fw',{},...
-                       'roll_trim_fw',{},'pitch_trim_fw',{},'heading_trim_fw',{},'flight_path_trim_fw',{},...
-                       'thr_trim_fw',{},'rot_spd_trim_fw',{},'elevator_trim_fw',{},'aileron_trim_fw',{},'rudder_trim_fw',{});
+trim_data_fw    =   struct('alt_trim',{},'eas_trim',{},'tas_trim',{},'aoa_trim',{},'aos_trim',{}, ...
+                           'roll_trim',{},'pitch_trim',{},'heading_trim',{},'flight_path_trim',{}, ...
+                           'fwd_thr_trim',{},'fwd_rot_spd_trim',{},'rwd_thr_trim',{},'rwd_rot_spd_trim',{}, ...
+                           'elevator_trim',{},'aileron_trim',{},'rudder_trim',{},'tilt_trim',{});
 
-lin_model   =   struct('A_fw',{},'B_fw',{},'C_fw',{},'D_fw',{},...
-                       'A_LON_fw',{},'B_LON_fw',{},'C_LON_fw',{},'D_LON_fw',{},...
-                       'A_LAT_fw',{},'B_LAT_fw',{},'C_LAT_fw',{},'D_LAT_fw',{});
+lin_model_fw    =   struct('A',{},'B',{},'C',{},'D',{}, ...
+                           'A_LON',{},'B_LON',{},'C_LON',{},'D_LON',{}, ...
+                           'A_LAT',{},'B_LAT',{},'C_LAT',{},'D_LAT',{});
 
 %.. trim batch
 for idx1 = 1:size(trimspd,2)

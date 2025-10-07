@@ -128,7 +128,7 @@ uavParams.maxElevator           =   30*const.deg2rad;
 uavParams.minElevator           =   -30*const.deg2rad;
 uavParams.maxRudder             =   30*const.deg2rad;
 uavParams.minRudder             =   -30*const.deg2rad;
-uavParams.maxFlap               =   30*const.deg2rad;
+uavParams.maxFlap               =   40*const.deg2rad;
 uavParams.minFlap               =   0*const.deg2rad;
 
 %% [2] Battery model parameters

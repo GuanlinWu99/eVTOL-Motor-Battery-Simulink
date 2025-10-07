@@ -140,176 +140,176 @@ toc
 % plot(outTuned.Body_Velocity.Time,V(3,:),'LineWidth',2);
 % legend('Vx','Vy','Vz')
 
-%% Read Simulation 
-Time                   =   outTuned.Rotor1_RPM_Reference.Time;
-Time_motor             =   outTuned.Motor1_Current.Time;
-Time_torque            =   outTuned.Rotor1_Drag_Tq.Time;
-Time_battery           =   outTuned.Battery_Data.Batt.SOC____.Time;
-Time_flight            =   outTuned.UAV_State.Xe.Time;
-
-positionFeedbackData   =   squeeze(outTuned.PositionCmdFdbk.signals.values);
-
-Rotor1_RPM_Reference   =   outTuned.Rotor1_RPM_Reference.Data;
-Rotor2_RPM_Reference   =   outTuned.Rotor2_RPM_Reference.Data;
-Rotor3_RPM_Reference   =   outTuned.Rotor3_RPM_Reference.Data;
-Rotor4_RPM_Reference   =   outTuned.Rotor4_RPM_Reference.Data;
-
-Rotor1_RPM             =   outTuned.Rotor1_RPM.Data;
-Rotor2_RPM             =   outTuned.Rotor2_RPM.Data;
-Rotor3_RPM             =   outTuned.Rotor3_RPM.Data;
-Rotor4_RPM             =   outTuned.Rotor4_RPM.Data;
-
-Motor1_Current         =   outTuned.Motor1_Current.Data;
-Motor2_Current         =   outTuned.Motor2_Current.Data;
-Motor3_Current         =   outTuned.Motor3_Current.Data;
-Motor4_Current         =   outTuned.Motor4_Current.Data;
-
-Motor1_Voltage         =   outTuned.Motor1_Voltage.Data;
-Motor2_Voltage         =   outTuned.Motor2_Voltage.Data;
-Motor3_Voltage         =   outTuned.Motor3_Voltage.Data;
-Motor4_Voltage         =   outTuned.Motor4_Voltage.Data;
-
-Motor1_Power           =   outTuned.Motor1_Power.Data;
-Motor2_Power           =   outTuned.Motor2_Power.Data;
-Motor3_Power           =   outTuned.Motor3_Power.Data;
-Motor4_Power           =   outTuned.Motor4_Power.Data;
-
-Motor1_Drag_Tq         =   outTuned.Rotor1_Drag_Tq.Data;
-Motor2_Drag_Tq         =   outTuned.Rotor2_Drag_Tq.Data;
-Motor3_Drag_Tq         =   outTuned.Rotor3_Drag_Tq.Data;
-Motor4_Drag_Tq         =   outTuned.Rotor4_Drag_Tq.Data;
-
-Battery_SOC            =   outTuned.Battery_Data.Batt.SOC____.Data;
-Battery_Crate          =   outTuned.Battery_Data.Batt.C_rate.Data;
-Battery_Current        =   outTuned.Battery_Data.Batt.Current__A_.Data;
-
-v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
-v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
-v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1])./reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
-
-keyboard
-
-%% Plot Simulations (09/12/2025) 
-
-%% [1] 4 Rotor Performance
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.9], 'Color','w');
-t = tiledlayout(4,4,'TileSpacing','compact','Padding','compact');
-names = ["Motor1","Motor2","Motor3","Motor4"];
-Width = 2;
-AxisFont = 17;
-
-% -------- Row 1: Speed --------
-ax1 = gobjects(1,4);
-for k = 1:4
-    ax1(k) = nexttile(k);
-    plot(Time, eval("Rotor"+k+"_RPM"), 'LineWidth',Width); hold on;
-    plot(Time, eval("Rotor"+k+"_RPM_Reference"), '-.', 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Speed");
-    if k==1, ylabel('RPM','FontSize',AxisFont); end
-    if k==1, legend({'Actual','Cmd'},'Location','southeast'); else, legend off; end
-    ylim([0, max(eval("Rotor"+k+"_RPM_Reference"))])
-end
-linkaxes(ax1,'y');
-
-% -------- Row 2: Power --------
-ax2 = gobjects(1,4);
-for k = 1:4
-    ax2(k) = nexttile(4+k);
-    plot(Time_motor, eval("Motor"+k+"_Power"), 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Power");
-    if k==1, ylabel('Power (kW)','FontSize',AxisFont); end
-end
-linkaxes(ax2,'y');
-
-% -------- Row 3: Current --------
-ax3 = gobjects(1,4);
-for k = 1:4
-    ax3(k) = nexttile(8+k);
-    plot(Time_motor, eval("Motor"+k+"_Current"), 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Current");
-    if k==1, ylabel('Current (A)','FontSize',AxisFont); end
-end
-linkaxes(ax3,'y');
-
-% -------- Row 4: Voltage --------
-ax4 = gobjects(1,4);
-for k = 1:4
-    ax4(k) = nexttile(12+k);
-    plot(Time_motor, eval("Motor"+k+"_Voltage"), 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Voltage");
-    if k==1, ylabel('Voltage (V)','FontSize',AxisFont); end
-    xlabel('Time (s)','FontSize',AxisFont);
-end
-linkaxes(ax4,'y');
-
-sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
-
-%% [2] Drag Torque
-% figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.3], 'Color','w'); 
-% subplot(1,4,1)
-% plot(Time_torque, Motor1_Drag_Tq, 'LineWidth', Width); grid on;
-% xlabel('Time (s)')
-% ylabel('(Nm)')
-% title('Motor1 Drag Torque')
+% %% Read Simulation 
+% Time                   =   outTuned.Rotor1_RPM_Reference.Time;
+% Time_motor             =   outTuned.Motor1_Current.Time;
+% Time_torque            =   outTuned.Rotor1_Drag_Tq.Time;
+% Time_battery           =   outTuned.Battery_Data.Batt.SOC____.Time;
+% Time_flight            =   outTuned.UAV_State.Xe.Time;
 % 
-% subplot(1,4,2)
-% plot(Time_torque, Motor2_Drag_Tq, 'LineWidth', Width); grid on;
-% xlabel('Time (s)')
-% ylabel('(Nm)')
-% title('Motor2 Drag Torque')
+% positionFeedbackData   =   squeeze(outTuned.PositionCmdFdbk.signals.values);
 % 
-% subplot(1,4,3)
-% plot(Time_torque, Motor3_Drag_Tq, 'LineWidth', Width); grid on;
-% xlabel('Time (s)')
-% ylabel('(Nm)')
-% title('Motor3 Drag Torque')
+% Rotor1_RPM_Reference   =   outTuned.Rotor1_RPM_Reference.Data;
+% Rotor2_RPM_Reference   =   outTuned.Rotor2_RPM_Reference.Data;
+% Rotor3_RPM_Reference   =   outTuned.Rotor3_RPM_Reference.Data;
+% Rotor4_RPM_Reference   =   outTuned.Rotor4_RPM_Reference.Data;
 % 
-% subplot(1,4,4)
-% plot(Time_torque, Motor4_Drag_Tq, 'LineWidth', Width); grid on;
-% xlabel('Time (s)')
-% ylabel('(Nm)')
-% title('Motor4 Drag Torque')
-
-%% [3] Battery Pack Electrical Performance
-L = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
-Pack_Power = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
-Pack_Energy = zeros(L,1);
-
-for i = 2 : length(outTuned.Battery_Data.Batt.Voltage__V_.Time)
-    Energy_tmp = Pack_Power(i)*0.001;
-    Pack_Energy(i) = Energy_tmp + Pack_Energy(i-1); 
-end
-
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.4 0.5], 'Color','w'); 
-subplot(2,3,1)
-plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',2); 
-title('SOC'); ylabel('(%)'); xlabel('Time (s)'); grid on;
-
-subplot(2,3,2)
-plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',2); 
-title('C-rate'); ylabel('(-)'); xlabel('Time (s)'); grid on;
-
-subplot(2,3,3)
-plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',2); 
-title('Current'); ylabel('(A)'); xlabel('Time (s)'); grid on;
-
-subplot(2,3,4)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',2); 
-title('Voltage'); ylabel('(V)'); xlabel('Time (s)'); grid on;
-
-subplot(2,3,5)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',2); 
-title('Power'); ylabel('(kW)'); xlabel('Time (s)'); grid on;
-
-subplot(2,3,6)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',2); 
-title('Energy'); ylabel('(kWh)'); xlabel('Time (s)'); grid on;
-
-sgtitle('Battery Pack Electrical Performance','FontSize',15,'FontWeight','bold');
+% Rotor1_RPM             =   outTuned.Rotor1_RPM.Data;
+% Rotor2_RPM             =   outTuned.Rotor2_RPM.Data;
+% Rotor3_RPM             =   outTuned.Rotor3_RPM.Data;
+% Rotor4_RPM             =   outTuned.Rotor4_RPM.Data;
+% 
+% Motor1_Current         =   outTuned.Motor1_Current.Data;
+% Motor2_Current         =   outTuned.Motor2_Current.Data;
+% Motor3_Current         =   outTuned.Motor3_Current.Data;
+% Motor4_Current         =   outTuned.Motor4_Current.Data;
+% 
+% Motor1_Voltage         =   outTuned.Motor1_Voltage.Data;
+% Motor2_Voltage         =   outTuned.Motor2_Voltage.Data;
+% Motor3_Voltage         =   outTuned.Motor3_Voltage.Data;
+% Motor4_Voltage         =   outTuned.Motor4_Voltage.Data;
+% 
+% Motor1_Power           =   outTuned.Motor1_Power.Data;
+% Motor2_Power           =   outTuned.Motor2_Power.Data;
+% Motor3_Power           =   outTuned.Motor3_Power.Data;
+% Motor4_Power           =   outTuned.Motor4_Power.Data;
+% 
+% Motor1_Drag_Tq         =   outTuned.Rotor1_Drag_Tq.Data;
+% Motor2_Drag_Tq         =   outTuned.Rotor2_Drag_Tq.Data;
+% Motor3_Drag_Tq         =   outTuned.Rotor3_Drag_Tq.Data;
+% Motor4_Drag_Tq         =   outTuned.Rotor4_Drag_Tq.Data;
+% 
+% Battery_SOC            =   outTuned.Battery_Data.Batt.SOC____.Data;
+% Battery_Crate          =   outTuned.Battery_Data.Batt.C_rate.Data;
+% Battery_Current        =   outTuned.Battery_Data.Batt.Current__A_.Data;
+% 
+% v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
+% v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
+% v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1])./reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
+% 
+% keyboard
+% 
+% %% Plot Simulations (09/12/2025) 
+% 
+% %% [1] 4 Rotor Performance
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.9], 'Color','w');
+% t = tiledlayout(4,4,'TileSpacing','compact','Padding','compact');
+% names = ["Motor1","Motor2","Motor3","Motor4"];
+% Width = 2;
+% AxisFont = 17;
+% 
+% % -------- Row 1: Speed --------
+% ax1 = gobjects(1,4);
+% for k = 1:4
+%     ax1(k) = nexttile(k);
+%     plot(Time, eval("Rotor"+k+"_RPM"), 'LineWidth',Width); hold on;
+%     plot(Time, eval("Rotor"+k+"_RPM_Reference"), '-.', 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Speed");
+%     if k==1, ylabel('RPM','FontSize',AxisFont); end
+%     if k==1, legend({'Actual','Cmd'},'Location','southeast'); else, legend off; end
+%     ylim([0, max(eval("Rotor"+k+"_RPM_Reference"))])
+% end
+% linkaxes(ax1,'y');
+% 
+% % -------- Row 2: Power --------
+% ax2 = gobjects(1,4);
+% for k = 1:4
+%     ax2(k) = nexttile(4+k);
+%     plot(Time_motor, eval("Motor"+k+"_Power"), 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Power");
+%     if k==1, ylabel('Power (kW)','FontSize',AxisFont); end
+% end
+% linkaxes(ax2,'y');
+% 
+% % -------- Row 3: Current --------
+% ax3 = gobjects(1,4);
+% for k = 1:4
+%     ax3(k) = nexttile(8+k);
+%     plot(Time_motor, eval("Motor"+k+"_Current"), 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Current");
+%     if k==1, ylabel('Current (A)','FontSize',AxisFont); end
+% end
+% linkaxes(ax3,'y');
+% 
+% % -------- Row 4: Voltage --------
+% ax4 = gobjects(1,4);
+% for k = 1:4
+%     ax4(k) = nexttile(12+k);
+%     plot(Time_motor, eval("Motor"+k+"_Voltage"), 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Voltage");
+%     if k==1, ylabel('Voltage (V)','FontSize',AxisFont); end
+%     xlabel('Time (s)','FontSize',AxisFont);
+% end
+% linkaxes(ax4,'y');
+% 
+% sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
+% 
+% %% [2] Drag Torque
+% % figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.3], 'Color','w'); 
+% % subplot(1,4,1)
+% % plot(Time_torque, Motor1_Drag_Tq, 'LineWidth', Width); grid on;
+% % xlabel('Time (s)')
+% % ylabel('(Nm)')
+% % title('Motor1 Drag Torque')
+% % 
+% % subplot(1,4,2)
+% % plot(Time_torque, Motor2_Drag_Tq, 'LineWidth', Width); grid on;
+% % xlabel('Time (s)')
+% % ylabel('(Nm)')
+% % title('Motor2 Drag Torque')
+% % 
+% % subplot(1,4,3)
+% % plot(Time_torque, Motor3_Drag_Tq, 'LineWidth', Width); grid on;
+% % xlabel('Time (s)')
+% % ylabel('(Nm)')
+% % title('Motor3 Drag Torque')
+% % 
+% % subplot(1,4,4)
+% % plot(Time_torque, Motor4_Drag_Tq, 'LineWidth', Width); grid on;
+% % xlabel('Time (s)')
+% % ylabel('(Nm)')
+% % title('Motor4 Drag Torque')
+% 
+% %% [3] Battery Pack Electrical Performance
+% L = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
+% Pack_Power = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
+% Pack_Energy = zeros(L,1);
+% 
+% for i = 2 : length(outTuned.Battery_Data.Batt.Voltage__V_.Time)
+%     Energy_tmp = Pack_Power(i)*0.001;
+%     Pack_Energy(i) = Energy_tmp + Pack_Energy(i-1); 
+% end
+% 
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.4 0.5], 'Color','w'); 
+% subplot(2,3,1)
+% plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',2); 
+% title('SOC'); ylabel('(%)'); xlabel('Time (s)'); grid on;
+% 
+% subplot(2,3,2)
+% plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',2); 
+% title('C-rate'); ylabel('(-)'); xlabel('Time (s)'); grid on;
+% 
+% subplot(2,3,3)
+% plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',2); 
+% title('Current'); ylabel('(A)'); xlabel('Time (s)'); grid on;
+% 
+% subplot(2,3,4)
+% plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',2); 
+% title('Voltage'); ylabel('(V)'); xlabel('Time (s)'); grid on;
+% 
+% subplot(2,3,5)
+% plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',2); 
+% title('Power'); ylabel('(kW)'); xlabel('Time (s)'); grid on;
+% 
+% subplot(2,3,6)
+% plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',2); 
+% title('Energy'); ylabel('(kWh)'); xlabel('Time (s)'); grid on;
+% 
+% sgtitle('Battery Pack Electrical Performance','FontSize',15,'FontWeight','bold');
 
 %% [4] Flight Dynamics Simulations 
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.7], 'Color','w'); 

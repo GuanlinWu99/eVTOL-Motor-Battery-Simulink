@@ -45,6 +45,7 @@ controlParams.maxRudder                     =   30*const.deg2rad;
 controlParams.minRudder                     =   -30*const.deg2rad;
 controlParams.maxFlap                       =   30*const.deg2rad;
 controlParams.minFlap                       =   0*const.deg2rad;
+ 
 
 controlParams.R_WAYPOINTTRANSITION_WP_VTOL  =   10.0;                               % [m] threshold for waypoint pass check
 controlParams.R_LOOKAHEAD_WP_VTOL           =   15.0;                               % [m] look ahead distance for VTOL waypoint guidance
@@ -58,6 +59,8 @@ controlParams.VTOLminPosErrratelimit        =   -5.0;                           
 
 controlParams.FWmaxpitchCMDratelimit        =   3*const.deg2rad;                    % [deg/s] fixed-wing pitch command rate
 controlParams.FWminpitchCMDratelimit        =   -2*const.deg2rad;                   % [deg/s] fixed-wing pitch command rate
+controlParams.FWmaxFlapSlewrate             =   1*const.deg2rad; 
+controlParams.FWminFlapSlewrate             =   -1*const.deg2rad; 
 
 controlParams.VtransitionBWD1               =   60*const.kts2mps;                   % [m/s] critical 
 controlParams.VtransitionBWD2               =   25*const.kts2mps;

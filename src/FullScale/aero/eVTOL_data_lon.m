@@ -11,7 +11,10 @@
 function [alpha_lon, flap_lon, CL, CD, CM] = eVTOL_data_lon()
     %.. set up files for aerodynamic data
     csvFileNames    =   {'Data_eVTOL_lon_flap0.csv',
-                         'Data_eVTOL_lon_flap20.csv'};
+                         'Data_eVTOL_lon_flap10.csv',
+                         'Data_eVTOL_lon_flap20.csv',
+                         'Data_eVTOL_lon_flap30.csv',
+                         'Data_eVTOL_lon_flap40.csv'};
 
     %.. set keywords and create empty data structure
     keywords    =   {'Alpha', 'CL', 'CDtot', 'CMm'};
