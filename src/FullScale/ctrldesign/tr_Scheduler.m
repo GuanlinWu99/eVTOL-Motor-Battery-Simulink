@@ -118,10 +118,10 @@ for idx1 = 1:size(trimspd,2)
             trim_data_tr(idx1,idx2).fwd_rot_spd_trim    =   u_trim(1)*uavParams.motor.RPMMAX;
             trim_data_tr(idx1,idx2).rwd_thr_trim        =   u_trim(2);
             trim_data_tr(idx1,idx2).rwd_rot_spd_trim    =   u_trim(2)*uavParams.motor.RPMMAX;
-            trim_data_tr(idx1,idx2).elevator_trim       =   u_trim(3);
+            trim_data_tr(idx1,idx2).tilt_trim           =   u_trim(3);
             trim_data_tr(idx1,idx2).aileron_trim        =   u_trim(4);
-            trim_data_tr(idx1,idx2).rudder_trim         =   u_trim(5);
-            trim_data_tr(idx1,idx2).tilt_trim           =   u_trim(6);
+            trim_data_tr(idx1,idx2).elevator_trim       =   u_trim(5);
+            trim_data_tr(idx1,idx2).rudder_trim         =   u_trim(6);
 
             lin_model_tr(idx1,idx2).A                   =   A;
             lin_model_tr(idx1,idx2).B                   =   B;
@@ -140,38 +140,42 @@ for idx1 = 1:size(trimspd,2)
 end
 
 %.. scheduler plot
-plot_trim_spd       =   trimspd*const.mps2kts;
-plot_trim_alt       =   trimalt*const.m2ft;
-plot_trim_fwd_thr   =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_rwd_thr   =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_pitch     =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_tilt      =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_elevator  =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
+plot_trim_spd       =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_alt       =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_fwd_thr   =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_rwd_thr   =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_pitch     =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_tilt      =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_elevator  =   zeros(size(trimspd,2),size(trimalt,2));
 
-plot_trim_ctrl_lon_rotor    =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_ctrl_lon_csurf    =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_ctrl_lat_rotor    =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_ctrl_lat_csurf    =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_ctrl_dir_rotor    =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
-plot_trim_ctrl_dir_csurf    =   zeros(size(plot_trimspd,1),size(plot_trimalt,2));
+plot_trim_ctrl_lon_rotor    =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_lon_csurf    =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_lat_rotor    =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_lat_csurf    =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_dir_rotor    =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_dir_csurf    =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_latadv_rotor =   zeros(size(trimspd,2),size(trimalt,2));
+plot_trim_ctrl_diradv_rotor =   zeros(size(trimspd,2),size(trimalt,2));  
 
-for idx1 = 1:size(trim_data,1)
-    for idx2 = 1:size(trim_data,2)
+for idx1 = 1:size(trimspd,2)
+    for idx2 = 1:size(trimalt,2)
 
-        plot_trim_spd(idx1,idx2)        =   trim_data(idx1,idx2).eas_trim;
-        plot_trim_alt(idx1,idx2)        =   trim_data(idx1,idx2).alt_trim;
-        plot_trim_fwd_thr(idx1,idx2)    =   trim_data(idx1,idx2).fwd_thr_trim*100;
-        plot_trim_rwd_thr(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        plot_trim_pitch(idx1,idx2)      =   trim_data(idx1,idx2).pitch_trim*100;
-        % plot_trim_tilt(idx1,idx2)       =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % plot_trim_elevator(idx1,idx2)   =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % 
-        % plot_trim_ctrl_lon_rotor(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % plot_trim_ctrl_lon_csurf(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % plot_trim_ctrl_lat_rotor(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % plot_trim_ctrl_lat_csurf(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % plot_trim_ctrl_lat_rotor(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
-        % plot_trim_ctrl_lat_csurf(idx1,idx2)    =   trim_data(idx1,idx2).rwd_thr_trim*100;
+        plot_trim_spd(idx1,idx2)        =   trim_data_tr(idx1,idx2).eas_trim;
+        plot_trim_alt(idx1,idx2)        =   trim_data_tr(idx1,idx2).alt_trim;
+        plot_trim_fwd_thr(idx1,idx2)    =   trim_data_tr(idx1,idx2).fwd_thr_trim*100;
+        plot_trim_rwd_thr(idx1,idx2)    =   trim_data_tr(idx1,idx2).rwd_thr_trim*100;
+        plot_trim_pitch(idx1,idx2)      =   trim_data_tr(idx1,idx2).pitch_trim*const.rad2deg;
+        plot_trim_tilt(idx1,idx2)       =   trim_data_tr(idx1,idx2).tilt_trim*(pi/2)*const.rad2deg;
+        plot_trim_elevator(idx1,idx2)   =   trim_data_tr(idx1,idx2).elevator_trim*const.rad2deg;
+
+        plot_trim_ctrl_lon_rotor(idx1,idx2)     =   lin_model_tr(idx1,idx2).B_lon(3,1);
+        plot_trim_ctrl_lon_csurf(idx1,idx2)     =   lin_model_tr(idx1,idx2).B_lon(3,2);
+        plot_trim_ctrl_lat_rotor(idx1,idx2)     =   lin_model_tr(idx1,idx2).B_lat(2,1);
+        plot_trim_ctrl_lat_csurf(idx1,idx2)     =   lin_model_tr(idx1,idx2).B_lat(2,3);
+        plot_trim_ctrl_latadv_rotor(idx1,idx2)  =   lin_model_tr(idx1,idx2).B_lat(2,4);
+        plot_trim_ctrl_dir_rotor(idx1,idx2)     =   lin_model_tr(idx1,idx2).B_lat(3,2);
+        plot_trim_ctrl_dir_csurf(idx1,idx2)     =   lin_model_tr(idx1,idx2).B_lat(3,4);
+        plot_trim_ctrl_diradv_rotor(idx1,idx2)  =   lin_model_tr(idx1,idx2).B_lat(3,4);
     end
 end
 
@@ -179,25 +183,60 @@ figure;
 set(gcf,'color','w');
 hold on;
 grid on;
-plot(plot_trimspd,plot_thr_trim,'LineWidth',1.5);
+plot(plot_trim_spd,plot_trim_fwd_thr,'LineWidth',1.5);
+plot(plot_trim_spd,plot_trim_rwd_thr,'LineWidth',1.5);
 ylabel('Throttle (%)');
 xlabel('EAS (kts)');
-title('Throttle Trim Results')
+legend('Forward Throttle', 'Rear Throttle');
+title('Throttle Trim Results (Back Transition)');
 
 figure;
 set(gcf,'color','w');
 hold on;
 grid on;
-plot(plot_trimspd,plot_aoa_trim,'LineWidth',1.5);
-ylabel('AoA (deg)');
+plot(plot_trim_spd,plot_trim_tilt,'LineWidth',1.5);
+ylabel('Tilt (deg)');
 xlabel('EAS (kts)');
-title('AoA Trim Results')
+title('Tilt Angle Trim Results (Back Transition)');
 
 figure;
 set(gcf,'color','w');
 hold on;
 grid on;
-plot(plot_trimspd,plot_elevator_trim,'LineWidth',1.5);
-ylabel('dElevator (deg)');
+plot(plot_trim_spd,plot_trim_elevator,'LineWidth',1.5);
+ylabel('Elevator (deg)');
 xlabel('EAS (kts)');
-title('Elevator Trim Results')
+title('Elevator Trim Results (Back Transition)');
+
+figure;
+set(gcf,'color','w');
+hold on;
+grid on;
+plot(plot_trim_spd,abs(plot_trim_ctrl_lon_rotor),'LineWidth',1.5);
+plot(plot_trim_spd,abs(plot_trim_ctrl_lon_csurf),'LineWidth',1.5);
+ylabel('Control Power (rad/s^2)');
+xlabel('EAS (kts)');
+legend('Rotor','Control Surface')
+title('Longitudinal Control Effectiveness (Back Transition)');
+
+figure;
+set(gcf,'color','w');
+hold on;
+grid on;
+plot(plot_trim_spd,abs(plot_trim_ctrl_lat_rotor),'LineWidth',1.5);
+plot(plot_trim_spd,abs(plot_trim_ctrl_lat_csurf),'LineWidth',1.5);
+ylabel('Control Power (rad/s^2)');
+xlabel('EAS (kts)');
+legend('Rotor','Control Surface')
+title('Lateral Control Effectiveness (Back Transition)');
+
+figure;
+set(gcf,'color','w');
+hold on;
+grid on;
+plot(plot_trim_spd,abs(plot_trim_ctrl_dir_rotor),'LineWidth',1.5);
+plot(plot_trim_spd,abs(plot_trim_ctrl_dir_csurf),'LineWidth',1.5);
+ylabel('Control Power (rad/s^2)');
+xlabel('EAS (kts)');
+legend('Rotor','Control Surface')
+title('Directional Control Effectiveness (Back Transition)');
