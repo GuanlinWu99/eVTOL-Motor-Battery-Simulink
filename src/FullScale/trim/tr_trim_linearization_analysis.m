@@ -60,7 +60,7 @@ options(14) =   1e5;
 %.. trim
 %.. initial guess for inputs
 %.. u = [fwd_thr(1)   rwd_thr(2)  tilt(3)  dA(4)  dE(5)  dR(6)]
-u0  =   [0.4    rwd_thr_trim    0.1    0    0    0]';
+u0  =   [0.4    rwd_thr_trim    tilt_trim    0    0    0]';
 
 %.. initial guess/constraints for trim states
 %.. x = [vt(1)      aoa(2)      aos(3)  phi/theta/psi(4:6)  p/q/r(7:9)  speed/roc/ctc]
@@ -76,16 +76,25 @@ u_const     =   [2 4 6];
 
 [x_trim, u_trim, y_trim, xd_trim, options]  =   trim('tr_trim_VTAOAS', x0, u0, y0, x_const, u_const, y_const, dx0, dx_const, options);
 
+%.. post-processing of trim tilt angle
+if u_trim(3) > 1
+    u_trim(3)   =   1;
+elseif u_trim(3) < 0
+    u_trim(3)   =   0;
+end
+
 %.. display trim results
 disp('================== Trim Results ==================');
 fprintf('    fwd_dth_trim             =  %10.4f  (%%) \n', u_trim(1)*100);
 fprintf('    fwd_rotor_speed_trim     =  %10.4f  (RPM)  \n', u_trim(1)*uavParams.motor.RPMMAX);
+fprintf('    fwd_thrust_trim          =  %10.4f  (N)  \n', uavParams.rotor.Ct*(u_trim(1)*uavParams.motor.RPMMAX/60*2*pi)^2);
 fprintf('    rwd_dth_trim             =  %10.4f  (%%) \n', u_trim(2)*100);
 fprintf('    rwd_rotor_speed_trim     =  %10.4f  (RPM)  \n', u_trim(2)*uavParams.motor.RPMMAX);
+fprintf('    rwd_thrust_trim          =  %10.4f  (N)  \n', uavParams.rotor.Ct*(u_trim(2)*uavParams.motor.RPMMAX/60*2*pi)^2);
 fprintf('    elevator_trim            =  %10.4f  (deg) \n', u_trim(5)*const.rad2deg);
 fprintf('    aileron_trim             =  %10.4f  (deg) \n', u_trim(4)*const.rad2deg);
 fprintf('    rudder_trim              =  %10.4f  (deg) \n', u_trim(6)*const.rad2deg);
-fprintf('    tilt_trim                =  %10.4f  (deg) \n', u_trim(3)*const.rad2deg);
+fprintf('    tilt_trim                =  %10.4f  (deg) \n', u_trim(3)*(pi/2)*const.rad2deg);
 fprintf('    flap_trim                =  %10.4f  (deg) \n', flap_trim*const.rad2deg);
 fprintf('    trim_speed (true)        =  %10.4f  (km/h) \n', x_trim(1)*const.mps2kph);
 fprintf('                             =  %10.4f  (m/s) \n', x_trim(1));

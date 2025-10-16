@@ -55,8 +55,9 @@ uavParams   =   load_vtol_dynamics_7000lb(const);
 %.. trim speed
 trimspd     =   [60 50 40 30 20 10]*const.kts2mps;                          % [m/s] trim speed
 trimalt     =   [100]*const.ft2m;                                           % [m] trim altitude
-trimpitch   =   [30 20 20 15 10 0]*const.deg2rad;                           % [rad] trim pitch schedule (w/ trim speed)
+trimpitch   =   [30 30 20 15 10 5]*const.deg2rad;                           % [rad] trim pitch schedule (w/ trim speed)
 trimrwdthr  =   [0.10 0.20 0.30 0.50 0.65 0.70];                            % [-] trim rearward throttle level
+trimtilt    =   [1.00 0.90 0.50 0.50 0.10 0.10];
 
 %.. model specific data and parameters
 %.. disable wind
@@ -89,6 +90,7 @@ for idx1 = 1:size(trimspd,2)
         H_trim          =   trimalt(idx2);
         pitch_trim      =   trimpitch(idx1);
         rwd_thr_trim    =   trimrwdthr(idx1);
+        tilt_trim       =   trimtilt(idx1);
 
         %.. level flight condition
         gamma_trim      =   0.0*const.deg2rad;                              % [rad] flight path angle for level-wing trim
@@ -118,6 +120,7 @@ for idx1 = 1:size(trimspd,2)
             trim_data_tr(idx1,idx2).fwd_rot_spd_trim    =   u_trim(1)*uavParams.motor.RPMMAX;
             trim_data_tr(idx1,idx2).rwd_thr_trim        =   u_trim(2);
             trim_data_tr(idx1,idx2).rwd_rot_spd_trim    =   u_trim(2)*uavParams.motor.RPMMAX;
+            trim_data_tr(idx1,idx2).rwd_thrust_trim     =   uavParams.rotor.Ct*(u_trim(2)*uavParams.motor.RPMMAX/60*2*pi)^2;
             trim_data_tr(idx1,idx2).tilt_trim           =   u_trim(3);
             trim_data_tr(idx1,idx2).aileron_trim        =   u_trim(4);
             trim_data_tr(idx1,idx2).elevator_trim       =   u_trim(5);

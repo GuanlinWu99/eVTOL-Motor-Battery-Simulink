@@ -20,9 +20,10 @@ controlParams.UAVSampleTime                 =   0.005;
 controlParams.maxPWM                        =   1.0;
 controlParams.minPWM                        =   0.1;
 controlParams.VTOLthrCoefficient            =   (uavParams.rotor.Ct*const.rho0*pi*(uavParams.geom.PropDiameter/2)^4);   % [N/(rad/s)^2] Thrust coefficients for VTOL mode
-controlParams.FWTrimThrottle                =   2800*const.rpm2rps;                 % [rps] trim throttle for fixed-wing mode (~ 62kts)           
-controlParams.FWElevatorTrim                =   -11*const.deg2rad;                  % [rad] elevator trim for fixed-wing mode (~ 62kts)
-controlParams.TiltScheduleRate              =   6/180*pi;                           % [rad/s] tilt rate for forward transition
+controlParams.FWTrimThrottle                =   2800*const.rpm2rps;         % [rps] trim throttle for fixed-wing mode (~ 62kts)           
+controlParams.FWElevatorTrim                =   -11*const.deg2rad;          % [rad] elevator trim for fixed-wing mode (~ 62kts)
+controlParams.FWDTiltScheduleRate           =   6/180*pi;                   % [rad/s] tilt rate for forward transition
+controlParams.BWDTiltScheduleRate           =   -6/180*pi;                  % [rad/s] tilt rate for backward transition
 controlParams.CriticalTiltAngle             =   60/180*pi;                          % [rad] critical tilt angle for forward transition
 controlParams.VtransitionFWD2               =   60*const.kts2mps;                   % [m/s] critical 
 controlParams.VtransitionFWD1               =   40*const.kts2mps;
@@ -59,8 +60,8 @@ controlParams.VTOLminPosErrratelimit        =   -5.0;                           
 
 controlParams.FWmaxpitchCMDratelimit        =   3*const.deg2rad;                    % [deg/s] fixed-wing pitch command rate
 controlParams.FWminpitchCMDratelimit        =   -2*const.deg2rad;                   % [deg/s] fixed-wing pitch command rate
-controlParams.FWmaxFlapSlewrate             =   1*const.deg2rad; 
-controlParams.FWminFlapSlewrate             =   -1*const.deg2rad; 
+controlParams.FWmaxFlapSlewrate             =   2*const.deg2rad; 
+controlParams.FWminFlapSlewrate             =   -2*const.deg2rad; 
 
 controlParams.VtransitionBWD1               =   60*const.kts2mps;                   % [m/s] critical 
 controlParams.VtransitionBWD2               =   25*const.kts2mps;

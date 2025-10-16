@@ -117,9 +117,9 @@ configObj = getActiveConfigSet('VTOLAutopilotController');
 set_param(configObj, 'SourceName', 'VTOLConfiguration');
 transition_throttle = 0.2;
 
-Back_Transition_Rate = 0.5*controlParams.TiltScheduleRate;
+Back_Transition_Rate = 0.5*controlParams.FWDTiltScheduleRate;
 
-fprintf('Forward TiltAngle Rate %.2f [deg/s]\n', controlParams.TiltScheduleRate*57.295);
+fprintf('Forward TiltAngle Rate %.2f [deg/s]\n', controlParams.FWDTiltScheduleRate*57.295);
 fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', Back_Transition_Rate*57.295);
 
 %exampleHelperAutomatedHoverControlTuning;
