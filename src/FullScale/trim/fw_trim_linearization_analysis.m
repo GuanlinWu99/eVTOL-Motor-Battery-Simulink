@@ -20,7 +20,7 @@
 %.. trim condition computation
 %.. flight conditions
 % EAS_trim    =   60*const.kts2mps;                                         %.. [m/s] equivalent air speed for trim
-% H_trim      =	3000*const.ft2m;                                            %.. [m] trim altitude
+% H_trim      =   3000*const.ft2m;                                            %.. [m] trim altitude
 [~, a, ~, rho]      =   atmosisa(H_trim);                                   %.. [kg/m^3] air density at trim altitude
 [~, ~, ~, rho0]     =   atmosisa(0);                                        %.. [kg/m^3] air density at sea level
 vt_trim     =	EAS_trim/sqrt(rho/rho0);                                    %.. [m/s] conversion to true air speed

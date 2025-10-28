@@ -7,7 +7,7 @@
 % Inputs:
 %   trimspd (1xN) [kts]     : Equivalent Airspeed grid for trim (converted to m/s)
 %   trimalt (1xM) [ft]      : Altitude grid for trim (converted to m)
-%   trimpitch (1xN) [deg]   : Scheduled body pitch guess vs. speed
+%   trimpitch (1xN) [deg]   : Scheduled body pitch guess vs speed
 %   gamma_trim [deg]        : Flight-path angle for level/climb/descend trim (0 for level)
 %   heading_trim [deg]      : Initial heading for trim
 %   alpha_trim [deg]        : AoA constraint/initial guess (used by solver)
@@ -85,7 +85,7 @@ lin_model_tr    =   struct('A',{},'B',{},'C',{},'D',{}, ...
 for idx1 = 1:size(trimspd,2)
     for idx2 = 1:size(trimalt,2)
 
-        %.. get trim condition
+        %.. trim condition
         EAS_trim        =   trimspd(idx1);
         H_trim          =   trimalt(idx2);
         pitch_trim      =   trimpitch(idx1);

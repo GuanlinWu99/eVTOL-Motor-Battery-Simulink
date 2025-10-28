@@ -120,7 +120,7 @@ transition_throttle = 0.2;
 Back_Transition_Rate = 0.5*controlParams.FWDTiltScheduleRate;
 
 fprintf('Forward TiltAngle Rate %.2f [deg/s]\n', controlParams.FWDTiltScheduleRate*57.295);
-fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', Back_Transition_Rate*57.295);
+fprintf('Backward TiltAngle Rate %.2f [deg/s]\n', controlParams.BWDTiltScheduleRate*57.295);
 
 %exampleHelperAutomatedHoverControlTuning;
 
