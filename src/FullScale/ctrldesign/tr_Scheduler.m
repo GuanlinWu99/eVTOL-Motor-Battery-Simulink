@@ -75,7 +75,8 @@ load_digital_twin_interface();
 trim_data_tr    =   struct('alt_trim',{},'eas_trim',{},'tas_trim',{},'aoa_trim',{},'aos_trim',{}, ...
                            'roll_trim',{},'pitch_trim',{},'heading_trim',{},'flight_path_trim',{}, ...
                            'fwd_thr_trim',{},'fwd_rot_spd_trim',{},'rwd_thr_trim',{},'rwd_rot_spd_trim',{}, ...
-                           'elevator_trim',{},'aileron_trim',{},'rudder_trim',{},'tilt_trim',{});
+                           'elevator_trim',{},'aileron_trim',{},'rudder_trim',{},'tilt_trim',{}, ...
+                           'flap_trim',{},'spoiler_trim',{});
 
 lin_model_tr    =   struct('A',{},'B',{},'C',{},'D',{}, ...
                            'A_LON',{},'B_LON',{},'C_LON',{},'D_LON',{}, ...
@@ -101,6 +102,9 @@ for idx1 = 1:size(trimspd,2)
         %.. flap condition
         flap_trim       =   40.0*const.deg2rad;                             % [rad] backward transition flap schedule
 
+        %.. spoiler condition
+        spoiler_trim    =   0.0*const.deg2rad;                              % [rad] backward transition flap schedule
+
         %.. trim validity signal
         trim_validity   =   true;
 
@@ -125,6 +129,8 @@ for idx1 = 1:size(trimspd,2)
             trim_data_tr(idx1,idx2).aileron_trim        =   u_trim(4);
             trim_data_tr(idx1,idx2).elevator_trim       =   u_trim(5);
             trim_data_tr(idx1,idx2).rudder_trim         =   u_trim(6);
+            trim_data_tr(idx1,idx2).flap_trim           =   flap_trim;
+            trim_data_tr(idx1,idx2).spoiler_trim        =   
 
             lin_model_tr(idx1,idx2).A                   =   A;
             lin_model_tr(idx1,idx2).B                   =   B;

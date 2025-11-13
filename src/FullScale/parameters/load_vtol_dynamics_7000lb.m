@@ -28,6 +28,9 @@ uavParams.aero.CLDe             =   0.50787;                                % [-
 uavParams.aero.CLDa             =   -0.85291;                               % [-] CL-aileron slope
 uavParams.aero.CLadot_tfnum     =   [1 0];                                  % [-] Transfer function (numerator)
 uavParams.aero.CLadot_tfden     =   [0.1 1];                                % [-] Transfer function (denominator)
+uavParams.aero.CLDs             =   -mean(uavParams.aero.CL(:,5) ...
+                                    -uavParams.aero.CL(:,1))/ ...
+                                    (40*const.deg2rad)/2;                  % [-] CL-spoiler slope
 
 %... Drag coefficients
 % uavParams.aero.CDmin    =   0.06047;                                      % [-] minimum drag 
@@ -38,6 +41,9 @@ uavParams.aero.CD                =   CD_temp;                               % [-
 uavParams.aero.CdDe              =   0.016043;                              % [-] CD-elevator slope
 uavParams.aero.CdDa              =   0.092132;                              % [-] CD-aileron slope
 uavParams.aero.CdDr              =   0.0097403;                             % [-] CD-rudder slope
+uavParams.aero.CdDs             =   mean(uavParams.aero.CD(:,5) ...
+                                    -uavParams.aero.CD(:,1))/ ...
+                                    (40*const.deg2rad);                     % [-] CD-spoiler slope
 % uavParams.aero.dragCoeffMov =   0.027;                                    % [-] fuselage moving part drag coefficient
 
 %... Moment coefficient
@@ -47,6 +53,9 @@ uavParams.aero.CM                =   CM_temp;                               % CM
 uavParams.aero.Cmq               =   -19.22663;                             % [-] pitch damping
 uavParams.aero.CmDe              =   -1.83747*1.4;                          % [-] CM-elevator slope
 % uavParams.aero.CmDr     =   0.02991;                                      % [-] CM-rudder slope
+uavParams.aero.CmDs              =   -mean(uavParams.aero.CM(:,5)... 
+                                     -uavParams.aero.CM(:,1))/ ...
+                                     (40*const.deg2rad);                    % [-] CM-spoiler slope
 
 %... Side force
 % uavParams.aero.CYb      =   -0.001570;                                    % [-] CY-beta slope
@@ -130,6 +139,8 @@ uavParams.maxRudder             =   30*const.deg2rad;
 uavParams.minRudder             =   -30*const.deg2rad;
 uavParams.maxFlap               =   40*const.deg2rad;
 uavParams.minFlap               =   0*const.deg2rad;
+uavParams.maxSpoiler            =   40*const.deg2rad;
+uavParams.minSpoiler            =   0*const.deg2rad;
 
 %% [2] Battery model parameters
 

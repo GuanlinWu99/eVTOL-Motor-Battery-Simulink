@@ -65,8 +65,8 @@ u0  =   [0.4    rwd_thr_trim    tilt_trim    0    0    0]';
 %.. initial guess/constraints for trim states
 %.. x = [vt(1)      aoa(2)      aos(3)  phi/theta/psi(4:6)  p/q/r(7:9)  speed/roc/ctc]
 x0  =   [vt_trim    alpha_trim	0       0 pitch_trim heading_trim    0 0 0       0 0 0]';   
-dx0 =   [0    	    0           0 	    0 0 0  	            0 0 0       0 0 0]';
-y0  =	[vt_trim	alpha_trim 	0       0 pitch_trim heading_trim    0 0 0	    0 0 0]';
+dx0 =   [0    	    0           0 	    0 0 0  	                     0 0 0       0 0 0]';
+y0  =	[vt_trim	alpha_trim 	0       0 pitch_trim heading_trim    0 0 0	     0 0 0]';
 
 %.. trim constraints set (hard constraints for optimization)
 x_const     =   [1 2 3 4 6 7 8 9 10 11 12];
