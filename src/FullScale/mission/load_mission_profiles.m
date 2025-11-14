@@ -91,16 +91,16 @@ switch Profile
         TransitionMission(7).params     =   [0; 0; 2; 75*const.kts2mps];
 
         TransitionMission(8).mode       =   2;                              % [-] approach pattern (FW, slow cruise)
-        TransitionMission(8).position   =   [(1.5+5.34+6.19+2.35+0.62)*const.nm2m-2000; 0; -300*const.ft2m];
-        TransitionMission(8).params     =   [0; 0; 1; 70*const.kts2mps];
+        TransitionMission(8).position   =   [(1.5+5.34+6.19+2.35+0.62)*const.nm2m-1500; 0; -300*const.ft2m];
+        TransitionMission(8).params     =   [0; 0; 1; 75*const.kts2mps];
     
         TransitionMission(9).mode       =   6;                              % [-] approach pattern (back transition)
-        TransitionMission(9).position   =   [(1.5+5.34+6.19+2.35+0.62)*const.nm2m-100; 1; -300*const.ft2m];
+        TransitionMission(9).position   =   [(1.5+5.34+6.19+2.35+0.62)*const.nm2m-500; 1; -300*const.ft2m];
         TransitionMission(9).params     =   [1; 1; 1; 1];
 
         TransitionMission(10).mode      =   2;                              % [-] approach pattern (VTOL, reaching hovering point)
         TransitionMission(10).position  =   [(1.5+5.34+6.19+2.35+0.62)*const.nm2m; 1; -300*const.ft2m];
-        TransitionMission(10).params    =   [1; 1; 1; 1];
+        TransitionMission(10).params    =   [0; 0; 0; 0];
 
         TransitionMission(11).mode      =   2;                              % [-] landing (vertical approach using waypoint)
         TransitionMission(11).position  =   [(1.5+5.34+6.19+2.35+0.62)*const.nm2m; 0; -30*const.ft2m];

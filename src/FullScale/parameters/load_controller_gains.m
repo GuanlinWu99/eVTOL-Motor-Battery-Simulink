@@ -5,10 +5,10 @@
 %% [1] Hover Mode
 
 % Roll rate
-VTOLcontrolGains.P_ROLL_RATE    =   0.5*5.8920e+3;                          %160;%2.589;
-VTOLcontrolGains.D_ROLL_RATE    =   1.0*139.4433;                           %320;%0.0166;
-VTOLcontrolGains.I_ROLL_RATE    =   0.01*4.2450e+4;                         %0;
-VTOLcontrolGains.N_ROLL_RATE    =   83.1175;                                %100;
+VTOLcontrolGains.P_ROLL_RATE    =    0.5*5.8920e+3;                          %160;%2.589;
+VTOLcontrolGains.D_ROLL_RATE    =    1.0*139.4433;                           %320;%0.0166;
+VTOLcontrolGains.I_ROLL_RATE    =    0.01*4.2450e+4;                         %0;
+VTOLcontrolGains.N_ROLL_RATE    =    83.1175;                                %100;
 
 % VTOLcontrolGains.P_ROLL_RATE    =   10.5920e+3;
 % VTOLcontrolGains.D_ROLL_RATE    =   25.4433;
@@ -16,50 +16,52 @@ VTOLcontrolGains.N_ROLL_RATE    =   83.1175;                                %100
 % VTOLcontrolGains.N_ROLL_RATE    =   83.1175;   
 
 % Pitch rate
-VTOLcontrolGains.P_PITCH_RATE   =   0.5*5.8936e+3;                          %160;%4.4;
-VTOLcontrolGains.D_PITCH_RATE   =   1.0*139.6983;                           %320;%0.0217;
-VTOLcontrolGains.I_PITCH_RATE   =   0.01*4.2439e+4;                         %0;
-VTOLcontrolGains.N_PITCH_RATE   =   83.1175;                                %100;   
+VTOLcontrolGains.P_PITCH_RATE   =    0.5*5.8936e+3;                          %160;%4.4;
+VTOLcontrolGains.D_PITCH_RATE   =    1.0*139.6983;                           %320;%0.0217;
+VTOLcontrolGains.I_PITCH_RATE   =    0.01*4.2439e+4;                         %0;
+VTOLcontrolGains.N_PITCH_RATE   =    83.1175;                                %100;   
 
 % Yaw rate
-VTOLcontrolGains.P_YAW_RATE     =   0.005*2.4721e+5;                        %1.77*200;
-VTOLcontrolGains.D_YAW_RATE     =   0.5*5.8759e+3;                          %250;%100;
-VTOLcontrolGains.I_YAW_RATE     =   0.00001*1.7784e+6;                      %0;
-VTOLcontrolGains.N_YAW_RATE     =   83.1175;                                %100;
+VTOLcontrolGains.P_YAW_RATE     =    0.005*2.4721e+5;                        %1.77*200;
+VTOLcontrolGains.D_YAW_RATE     =    0.5*5.8759e+3;                          %250;%100;
+VTOLcontrolGains.I_YAW_RATE     =    0.00001*1.7784e+6;                      %0;
+VTOLcontrolGains.N_YAW_RATE     =    83.1175;                                %100;
 
 % ========== Design outer loop after designing inner loop ==========
 
 % Roll
-VTOLcontrolGains.P_ROLL         =   1.0*5.9255;                             %8.79;
+VTOLcontrolGains.P_ROLL         =    1.0*5.9255;                             %8.79;
 
 % Pitch
-VTOLcontrolGains.P_PITCH        =   1.0*5.9253;                             %8.79; %100.0;%
+VTOLcontrolGains.P_PITCH        =    1.0*5.9253;                             %8.79; %100.0;%
 
 % Yaw
-VTOLcontrolGains.P_YAW          =   0.05*180.3320;                          %8;%1;
+VTOLcontrolGains.P_YAW          =    0.05*180.3320;                          %8;%1;
 
 % VTOL horizontal/lateral velocity control
-VTOLcontrolGains.P_VX           =   9.8*0.0958;                             % [-] original: 0.2, 2.5
-VTOLcontrolGains.I_VX           =   1.2*0.0558;                             % [-] original: 0
-VTOLcontrolGains.D_VX           =   9.8*0.0395;                             % [-] original: 0
-VTOLcontrolGains.N_VX           =   88.8873;                                % [-] original: 1.07046911218118
-VTOLcontrolGains.P_VY           =   9.8*0.0953;                             % [-] original: 0.2
-VTOLcontrolGains.I_VY           =   1.2*0.0573;                             % [-] original: 0
-VTOLcontrolGains.D_VY           =   9.8*0.0375;                             % [-] original: 0.5518
-VTOLcontrolGains.N_VY           =   88.8873;                                % [-] original: 1.07046911218118
+VTOLcontrolGains.P_VX           =    9.8*0.0958;                             % [-] original: 0.2, 2.5
+VTOLcontrolGains.I_VX           =    1.2*0.0558;                             % [-] original: 0
+VTOLcontrolGains.D_VX           =    9.8*0.0395;                             % [-] original: 0
+VTOLcontrolGains.N_VX           =    88.8873;                                % [-] original: 1.07046911218118
+VTOLcontrolGains.P_VY           =    9.8*0.0953;                             % [-] original: 0.2
+VTOLcontrolGains.I_VY           =    1.2*0.0573;                             % [-] original: 0
+VTOLcontrolGains.D_VY           =    9.8*0.0375;                             % [-] original: 0.5518
+VTOLcontrolGains.N_VY           =    88.8873;                                % [-] original: 1.07046911218118
 
 % VTOL vertical velocity control
-VTOLcontrolGains.P_VZ           =   0.7*345.0381;                           % [-] original: 15
-VTOLcontrolGains.I_VZ           =   0.01*526.2230;                          % [-] original: 0
-VTOLcontrolGains.D_VZ           =   0.9*136.1529;                           % [-] original: 90
-VTOLcontrolGains.N_VZ           =   10.2217;                                % [-] original: 8.4215
+VTOLcontrolGains.P_VZ           =    0.7*345.0381;                           % [-] original: 15
+VTOLcontrolGains.I_VZ           =    0.01*526.2230;                          % [-] original: 0
+VTOLcontrolGains.D_VZ           =    0.9*136.1529;                           % [-] original: 90
+VTOLcontrolGains.N_VZ           =    10.2217;                                % [-] original: 8.4215
 
 % VTOL horizontal/lateral position control
-VTOLcontrolGains.P_X            =   1.5*0.2001;                             % [-] original: 1.03, 0.75
-VTOLcontrolGains.P_Y            =   1.5*0.2071;                             % [-] original: 1.03
+VTOLcontrolGains.P_X            =    1.5*0.2001;                             % [-] original: 1.03, 0.75
+VTOLcontrolGains.P_Y            =    1.5*0.2071;                             % [-] original: 1.03
+VTOLcontrolGains.I_X            =    0.01;                             
+VTOLcontrolGains.I_Y            =    0.01;                             
 
 % VTOL altitude control
-VTOLcontrolGains.P_Z            =   0.3*1.4317;                             % [-] original: 13.79
+VTOLcontrolGains.P_Z            =    0.3*1.4317;                             % [-] original: 13.79
 
 TransitioncontrolGains.zeta     =    0.505;
 TransitioncontrolGains.L        =    50;

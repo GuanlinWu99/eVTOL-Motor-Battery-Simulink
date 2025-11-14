@@ -24,7 +24,7 @@ disp("Enabled transition guidance mission.")
 
 % Set Time for Simulation
 % Total_sim_time  = 450;
-Total_sim_time  = 900;
+Total_sim_time  = 1000;
 myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
 dDataSectObj    = getSection(myDictionaryObj,'Design Data');
 simTimeParam    = getEntry(dDataSectObj,'simTime');
