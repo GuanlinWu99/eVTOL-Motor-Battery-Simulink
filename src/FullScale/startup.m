@@ -87,7 +87,7 @@ Visualization          =   1;
 Wind                   =   0;
 
 if Wind == 1
-    Wind_Speed         =   5;
+    Wind_Speed         =   5.14;
 elseif Wind == 0
     Wind_Speed         =   0;
 else
@@ -132,9 +132,20 @@ Fading_time    =  0.1;
 
 %%... Run SIMULINK
 
-disp(['✅ Total Simulation Time: ', num2str(Total_sim_time), ' (s)']);
+fprintf('\n')
 disp(['✅ Flight Profile: P', num2str(Profile)]);
-disp(['✅ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
+disp(['🕒 Total Simulation Time: ', num2str(Total_sim_time), ' (s)']);
+disp(['🛩️ eVTOL MTOW: ', num2str(uavParams.geom.mass), ' (kg)']);
+disp(['🌪️ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
+disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Caspacity*HEV_Param.Np*HEV_Param.Battery_Cell.Emo)/1000), ' (kWh)']);
+disp(['🔋 Battery Pack Voltage: ', num2str(HEV_Param.Battery_Cell.Emo), ' (V)']);
+disp(['🌡️ Operation Temperature: ', num2str(HEV_Param.Temperature), ' (°C)']);
+
+if HEV_Param.Temperature == -30
+    Pre_Conditioning_Energy = 24.17;
+    disp(['🎯 Pre-Conditioning to 20 °C ... ', num2str(Pre_Conditioning_Energy), ' (kWh)', ' is required.' ]);
+end
+fprintf('\n')
 
 keyboard;
 

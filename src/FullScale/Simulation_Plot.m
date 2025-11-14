@@ -257,7 +257,7 @@ modeIntervals = [  0   T1;        % Hover
                   T1   T2;        % Forward Transition
                   T2   T3;        % Fixed-Wing
                   T3   T4;        % Backward Transition
-                  T4  623];       % Hover
+                  T4  5000];      % Hover
                         
 modeColors = [0.15 0.15 0.15;     % Hover
               0.5 0.5 0.5;        % Forward Transition
@@ -281,6 +281,7 @@ for ax = transpose(axs)
 end
 
 modeLabels = {' Multi-Copter Mode (멀티콥터 모드) ', ' Forward Transition Mode (전방 변환 모드) ', ' Fixed-Wing Mode (고정익 모드) ', ' Backward Transition Mode (후방 변환 모드) '};
+modeLabels_1 = {' Multi-Copter Mode ', ' Forward Transition Mode ', ' Fixed-Wing Mode ', ' Backward Transition Mode '};
 
 legendHandles = [];
 legendNames = {};
@@ -454,11 +455,18 @@ plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:)
 plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, '-.', 'Linewidth', Line_Width); hold on;
 xlabel('Time (s)','FontSize',12); ylabel('Att (deg)','FontSize',12); title('Euler Angles','FontSize',13); legend('Roll','Pitch','Yaw','Location','northeast'); ylim([-10 45]); xlim([0 Time(end)])
 
+% subplot(4,1,2)
+% plot(outTuned.UAV_State.RotorParameters.w1.Time, reshape(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on; grid on;
+% plot(outTuned.UAV_State.RotorParameters.w2.Time, reshape(outTuned.UAV_State.RotorParameters.w2.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w2.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
+% plot(outTuned.UAV_State.RotorParameters.w3.Time, reshape(outTuned.UAV_State.RotorParameters.w3.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w3.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
+% plot(outTuned.UAV_State.RotorParameters.w4.Time, reshape(outTuned.UAV_State.RotorParameters.w4.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w4.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
+% xlabel('Time (s)','FontSize',12); ylabel('Rot Spd(rpm)','FontSize',12); title('Rotors Speed','FontSize',13); legend('Front Left','Front Right','Rear Right','Rear Left','Location','northeast'); xlim([0 Time(end)])
+
 subplot(4,1,2)
-plot(outTuned.UAV_State.RotorParameters.w1.Time, reshape(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
-plot(outTuned.UAV_State.RotorParameters.w2.Time, reshape(outTuned.UAV_State.RotorParameters.w2.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w2.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
-plot(outTuned.UAV_State.RotorParameters.w3.Time, reshape(outTuned.UAV_State.RotorParameters.w3.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w3.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
-plot(outTuned.UAV_State.RotorParameters.w4.Time, reshape(outTuned.UAV_State.RotorParameters.w4.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w4.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on;
+plot(outTuned.UAV_State.RotorParameters.w1.Time, Rotor1_RPM, 'LineWidth', Line_Width-1); hold on; grid on;
+plot(outTuned.UAV_State.RotorParameters.w2.Time, Rotor2_RPM, 'LineWidth', Line_Width-1); hold on;
+plot(outTuned.UAV_State.RotorParameters.w3.Time, Rotor3_RPM, 'LineWidth', Line_Width-1); hold on;
+plot(outTuned.UAV_State.RotorParameters.w4.Time, Rotor4_RPM, 'LineWidth', Line_Width-1); hold on;
 xlabel('Time (s)','FontSize',12); ylabel('Rot Spd(rpm)','FontSize',12); title('Rotors Speed','FontSize',13); legend('Front Left','Front Right','Rear Right','Rear Left','Location','northeast'); xlim([0 Time(end)])
 
 subplot(4,1,3)
@@ -472,13 +480,13 @@ plot(outTuned.UAV_State.RotorParameters.Tilt1.Time, outTuned.UAV_State.RotorPara
 plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorParameters.Tilt2.Data/pi*180, 'Linewidth', Line_Width-1, 'LineStyle', '--')
 grid on; title('Tilt Angles'); xlabel('Time (s)','FontSize',12); ylabel('Tilt (deg)','FontSize',13); title('Tilt Angles','FontSize',13); xlim([0 Time(end)])
 
-sgtitle('Flight Performance','FontSize',20,'FontWeight','bold');
+sgtitle('Tilted-Rotor eVTOL Flight Performance','FontSize',20,'FontWeight','bold');
 
 modeIntervals = [  0   T1;     % Hover
                   T1   T2;     % Forward Transition
                   T2   T3;     % Fixed-Wing
                   T3   T4;     % Backward Transition
-                  T4  623];    % Hover
+                  T4  5000];   % Hover
                         
 modeColors = [0.2 0.2 0.2;     % Hover
               0.5 0.5 0.5;     % Forward Transition
@@ -504,10 +512,10 @@ end
 legendHandles = [];
 legendNames = {};
 
-for k = 1:length(modeLabels)
-    if ~ismember(modeLabels{k}, legendNames)
+for k = 1:length(modeLabels_1)
+    if ~ismember(modeLabels_1{k}, legendNames)
         legendHandles(end+1) = patch(NaN, NaN, modeColors(k,:), 'FaceAlpha', 0.5, 'EdgeColor', 'none');
-        legendNames{end+1} = modeLabels{k}; 
+        legendNames{end+1} = modeLabels_1{k}; 
     end
 end
 
@@ -516,9 +524,9 @@ lgd = legend(legendHandles, legendNames, 'Orientation', 'horizontal', 'NumColumn
 lgd.ItemTokenSize = [35, 18];
 
 %% [5] Flight Dynamics Simulations (3D)
-%figure('Units','normalized','OuterPosition',[0.1 0.1 0.3 0.45], 'Color','w'); 
-%plot3(positionFeedbackData(4,:),-positionFeedbackData(5,:),-positionFeedbackData(6,:),'LineWidth',2); grid on
-%xlabel('North (m)'); ylabel('West (m)'); zlabel('Altitude (m)'); ylim([-200 200])
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.3 0.45], 'Color','w'); 
+plot3(positionFeedbackData(4,:),-positionFeedbackData(5,:),-positionFeedbackData(6,:),'LineWidth',2); grid on
+xlabel('North (m)'); ylabel('West (m)'); zlabel('Altitude (m)'); ylim([-200 200])
 
 % %% [6] Thrust
 % figure('Units','normalized','OuterPosition',[0.1 0.1 0.25 0.35], 'Color','w'); 
@@ -533,14 +541,64 @@ lgd.ItemTokenSize = [35, 18];
 % ax = gca; ax.YAxis(1).Color = 'k'; ax.YAxis(2).Color = 'k'; ax.XAxis.Color = 'k'; 
 
 %% [7] 2D Plots for Flight Simulation
-% figure('Units','normalized','OuterPosition',[0.1 0.1 0.75 0.35], 'Color','w'); 
-% plot(positionFeedbackData(4,:),-positionFeedbackData(6,:),'LineWidth',2.5); 
-% xlabel('North (m)','FontSize',12); ylabel('Altitude (m)','FontSize',12); title('P4 Flight Profile','FontSize',13); xlim([-100 19000]); ylim([0 700]); grid on;
-% 
-% figure('Units','normalized','OuterPosition',[0.1 0.1 0.95 0.35], 'Color','w'); hold on; grid on;
-% patch([0 50 50 0], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
-% patch([10 16000 16000 10], [0 0 700 700], [0.8 0.8 0.8], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 연한 회색
-% patch([16000 18000 18000 16000], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
-% plot(positionFeedbackData(4,:), -positionFeedbackData(6,:), 'k', 'LineWidth', 2.5);
-% xlabel('North (m)', 'FontSize', 12); ylabel('Altitude (m)', 'FontSize', 12); title('P4 Flight Profile', 'FontSize', 13);
-% xlim([-100 18100]); ylim([0 700]); grid on; box on; hold off;
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.75 0.35], 'Color','w'); 
+plot(positionFeedbackData(4,:),-positionFeedbackData(6,:),'LineWidth',2.5); 
+xlabel('North (m)','FontSize',12); ylabel('Altitude (m)','FontSize',12); title('P4 Flight Profile','FontSize',13); xlim([-100 35000]); ylim([0 700]); grid on;
+
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.95 0.35], 'Color','w'); hold on; grid on;
+patch([0 50 50 0], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
+patch([10 16000 16000 10], [0 0 700 700], [0.8 0.8 0.8], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 연한 회색
+patch([16000 18000 18000 16000], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
+plot(positionFeedbackData(4,:), -positionFeedbackData(6,:), 'k', 'LineWidth', 2.5);
+xlabel('North (m)', 'FontSize', 12); ylabel('Altitude (m)', 'FontSize', 12); title('P4 Flight Profile', 'FontSize', 13);
+xlim([-100 18100]); ylim([0 700]); grid on; box on; hold off;
+
+%% SOP Plot
+% ========= SOH & SOP parameters ========= %
+C_nom_Ah   = 3*200;                                                         % 【Ref】https://www.batemo.com/products/batemo-cell-explorer/samsung-inr18650-30q/
+Vmin       = 2.5*200;     
+Vmax       = 3.6*200;     
+Imax_dis   = 22.6*200;                                                      
+R0_ref     = [];      
+
+% ========= Pull data from outTuned ========= %
+t = outTuned.Battery_Data.Batt.Voltage__V_.Time(:);
+V = outTuned.Battery_Data.Batt.Voltage__V_.Data(:);
+I = outTuned.Battery_Data.Batt.Current__A_.Data(:);
+SOC = outTuned.Battery_Data.Batt.SOC____.Data(:);
+Voc = outTuned.Battery_Data.Batt.signal7.Data(:);
+Temp = outTuned.Battery_Data.Batt.Temperature.Data(:);
+SOC = SOC/100;
+dt = [0; diff(t)];                                                          % [s]
+Ts_med = median(diff(t));
+
+% ========= SOP (discharge), kW ========= %
+Ns                                        = 200;                            % number of series
+Np                                        = 200;                            % number of parallel
+% Samsung INR18650-300 cell
+% Scaling law from Prof. Jung's group at 50% soc
+R0                                        = 0.012;
+R1                                        = 0.004;
+R2                                        = 0.0015;
+C1                                        = 136.29;
+C2                                        = 872.87;
+Tau1                                      = R1*C1;
+R                                      = ones(size(I)) * ((Ns/Np)*R0   +   (Ns/Np)*R1  + (Ns/Np)*R2);             % Battery pack resistance[Ohm]
+% Voc                                       = 800;%V + I .* R;                     % approximate ocv = terminal voltage + I*Ruse
+% Not violate minimum voltage
+Iv_dis = max((Voc - Vmin) ./ R, 0);                                         % 【Ref】Review of State of Power Estimation for Li-Ion Batteries:
+Pv_dis = Vmin .* Iv_dis;                                                    % Methods, Issues, and Prospects
+% Not violate maximum current
+Pi_dis = Voc .* Imax_dis - R .* (Imax_dis.^2);
+Pi_dis = max(Pi_dis, 0);
+SOP_dis_kW = min(Pv_dis, Pi_dis) / 1000;
+
+% ========= Plot SOP ========= %
+figure('Units','normalized','OuterPosition',[0.52 0.1 0.42 0.7],'Color','w');
+tiledlayout(3,2,'Padding','compact','TileSpacing','compact');
+nexttile; plot(t,SOC,'LineWidth',1.8); grid on; ylabel('SOC (-)'); xlabel('t (s)'); title('SOC');
+nexttile; plot(t,V,'LineWidth',1.8); grid on; ylabel('V (V)'); xlabel('t (s)'); title('Terminal Voltage');
+%nexttile; plot(t,Temp,'LineWidth',1.8); grid on; ylabel('Temp (K)'); xlabel('t (s)'); title('Temperature');
+nexttile; plot(t,Voc, 'LineWidth', 1.8);grid on; ylabel('OCV(V)');xlabel('t(s)');title('Open Circuit Voltage');
+nexttile; plot(t,SOP_dis_kW,'LineWidth',1.8); grid on; ylabel('kW'); xlabel('t (s)'); title('SOP_{dis} (max deliverable)');
+ 

@@ -14,6 +14,10 @@ component R0
         n = foundation.electrical.electrical; %  -:right
     end
     
+    outputs
+        pow = {0, 'W'}; % POW:right
+    end
+
     variables(Access=private)
         i = { 0, 'A' }; % Current through variable
     end
@@ -31,6 +35,7 @@ component R0
         assert(R00 > 0)
         % p.v - n.v == i*R00*(1 + A0*(1-SOC));
         p.v - n.v == i*R00;
+        pow == R00 * i * i;
     end
     
 end

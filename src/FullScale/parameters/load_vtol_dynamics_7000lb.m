@@ -82,8 +82,9 @@ uavParams.aero.CnDa             =   0.0049274;                              % [-
 uavParams.aero.CnDr             =   -0.067036*3;                            % [-] Cn-rudder slope
 
 % --- Scale up the parameters ---
+MTOW                            =   7000*0.453592;                          % [kg]
 n                               =   14/2;                                   % [-] lenth scale parameter
-sigma                           =   (3175/6.025)/n^3;                       % [-] density scale parameter
+sigma                           =   (MTOW/6.025)/n^3;                       % [-] density scale parameter
 
 %.. geometry
 uavParams.geom.b                =   n*2;                                    % [m] full-scale UAV span
@@ -165,51 +166,107 @@ HEV_Param.Battery_Sys.R1                   = 1.8;                    % [Ohm]
 HEV_Param.Battery_Sys.Maximum_Capacity     = HEV_Param.Battery_Sys.Rated_Capacity;    % [Ah]
 
 % [2-3] Battery Model Parameters 
+% [2-3] Battery Model Parameters 
 HEV_Param.Battery_Cell.Rated_Capacity     = 5;                       % [Ah]
 HEV_Param.Battery_Cell.SOC_init           = 0.9;                     
 HEV_Param.Battery_Cell.theta_init         = 25;
-HEV_Param.Battery_Cell.Ctheta             = 200;                     % (J/°C) Thermal Capacitance
-HEV_Param.Battery_Cell.Area               = 0.01;                    % (m^2) Surface area of battery exposed to air 
+HEV_Param.Battery_Cell.Ctheta             = 950*0.0459*40000;        % (J/°C=J/(kg/°C）*kg) Thermal Capacitance
+HEV_Param.Battery_Cell.Area               = 0.01*200;                % (m^2) Surface area of battery exposed to air 
 HEV_Param.Battery_Cell.Rtheta             = 20;                      % (W/m^2/K) Convective heat transfer coefficient 
 HEV_Param.Battery_Cell.Kc                 = 1.2;                     % [-]
 HEV_Param.Battery_Cell.Costar             = 1.8e+005;                % (As)
 HEV_Param.Battery_Cell.Kt_Temps           = [25 40 60 75];           % Temperature breakpoints for Kt LUT
 HEV_Param.Battery_Cell.Kt                 = [0.80,1.10,1.20,1.12;];  % () LUT output values
 HEV_Param.Battery_Cell.delta              = 0.73;                    % ()
-HEV_Param.Battery_Cell.Istar              = 20;                      % (A) Nominal Current (=cap/disch_t)
+% HEV_Param.Battery_Cell.Istar              = 20;                      % (A) Nominal Current (=cap/disch_t)
 HEV_Param.Battery_Cell.theta_f            = -40;                     % (°C) Electrolyte Freezing Temp
 
 %% *Editted by Sounghwan (Battery cell to pack scaling)*
-Ns                                        = 200;                      % number of series
-Np                                        = 200;                      % number of parallel
-
-% Samsung INR18650-300 cell 
-% Scaling law from Prof. Jung's group
-R0                                        = 0.012;
-R1                                        = 0.004;
-R2                                        = 0.0015;
-C1                                        = 136.29;
-C2                                        = 872.87;
-Tau1                                      = R1*C1;
+% Samsung INR18650-30Q Battery cell
+Ns                                        = 200;                     % number of series
+Np                                        = 200;                     % number of parallel
 Capacity                                  = 3;                       % [Ah] cell rated capacity
-Voltage                                   = 4;                       % [V] cell nominal voltage
+Voltage                                   = 3.6;                     % [V] cell nominal voltage
+temp_amb                                  = 25;                      % Ambient temperature (normal temperature)
+
+temp_target                               = 25;                      % Target Temperature
+
+% Temperature scaling using Arrhenius principle
+% When cold temperature, we assume that the temperature after
+% Pre-Conditioning is 20 degree, so ECM parameters for 20 degree is needed.
+
+switch temp_target
+    % Cold temperature (-30)
+    case -30
+        activate_function                 = 32.3667;                 % [kJ/mole]     
+        T0                                = temp_amb + 273.15;       % [K] 
+        T_target                          = 20 + 273.15;             % [K]
+        R_gas                             = 8.314462618;             % [J/mole/K]
+        delta                             = 1/T_target - 1/T0; 
+        
+        R0_amb                            = 0.01262;                   
+        R1_amb                            = 0.00443;                   
+        R2_amb                            = 0.001536;                  
+        C1_amb                            = 0.13729;                 
+        C2_amb                            = 872.87;            
+        
+        R0 = R0_amb*exp((1000*activate_function/R_gas)*delta);
+        R1 = R1_amb*exp((1000*activate_function/R_gas)*delta);
+        R2 = R2_amb*exp((1000*activate_function/R_gas)*delta);
+        C1 = C1_amb*exp(-(1000*activate_function/R_gas)*delta);
+        C2 = C2_amb*exp(-(1000*activate_function/R_gas)*delta);
+        
+        Tau1                              = R1*C1;                   % [s]
+        Tau2                              = R2*C2;                   % [s]
+    
+    % Ambient Temperature (25)
+    case 25
+        R0                                = 0.012;                   % [Ohm]
+        R1                                = 0.004;                   % [Ohm]
+        R2                                = 0.0015;                  % [Ohm]
+        C1                                = 0.13629;                 % [mF]
+        C2                                = 872.87;                  % [F]
+        Tau1                              = R1*C1;                   % [s]
+        Tau2                              = R2*C2;                   % [s]
+    
+    % Hot Temperature (45)
+    case 45
+        activate_function                 = 32.3667;                 % [kJ/mole]     
+        T0                                = temp_amb + 273.15;       % [K] 
+        T_target                          = temp_target + 273.15;    % [K]
+        R_gas                             = 8.314462618;             % [J/mole/K]
+        delta                             = 1/T_target - 1/T0; 
+        
+        R0_amb                            = 0.01262;                   
+        R1_amb                            = 0.00443;                   
+        R2_amb                            = 0.001536;                  
+        C1_amb                            = 0.13729;                 
+        C2_amb                            = 872.87;            
+        
+        R0 = R0_amb*exp((1000*activate_function/R_gas)*delta);
+        R1 = R1_amb*exp((1000*activate_function/R_gas)*delta);
+        R2 = R2_amb*exp((1000*activate_function/R_gas)*delta);
+        C1 = C1_amb*exp(-(1000*activate_function/R_gas)*delta);
+        C2 = C2_amb*exp(-(1000*activate_function/R_gas)*delta);
+
+        Tau1                              = R1*C1;                   % [s]
+        Tau2                              = R2*C2;                   % [s]
+end
 
 HEV_Param.Battery_Cell.Emo                = Voltage*Ns;              % [800V]
 HEV_Param.Battery_Cell.R0                 = (Ns/Np)*R0;              % [Ohm]
 HEV_Param.Battery_Cell.R1                 = (Ns/Np)*R1;              % [Ohm]
 HEV_Param.Battery_Cell.R2                 = (Ns/Np)*R2;              % [Ohm]
+HEV_Param.Battery_Cell.C1                 = (Np/Ns)*C1;              % [F]
 HEV_Param.Battery_Cell.C2                 = (Np/Ns)*C2;              % [F]
 HEV_Param.Battery_Cell.Tau1               = Tau1;                    % [s]
+HEV_Param.Battery_Cell.Tau2               = Tau2;                    % [s]
+HEV_Param.Battery_weight                  = 1800;                    % [kg]
 HEV_Param.Ns                              = Ns;
 HEV_Param.Np                              = Np;
 HEV_Param.Capacity                        = Capacity;
+HEV_Param.Temperature                     = temp_target; 
 
-% HEV_Param.Battery_Cell.Emo                = 4.8*10;    % [V] [max o.c. volts per cell] (open circuit voltage at full charge)
-% HEV_Param.Battery_Cell.R0                 = 0.001;     % [Ohm]
-% HEV_Param.Battery_Cell.R1                 = 0.01;      % [Ohm]
-% HEV_Param.Battery_Cell.R2                 = 0.05;      % [Ohm]
-% HEV_Param.Battery_Cell.C2                 = 200;       % [F]
-% HEV_Param.Battery_Cell.Tau1               = 1;         % [s]
 
 % Compute initial extracted charge
 HEV_Param.Battery_Cell.Qe_init = (1-HEV_Param.Battery_Cell.SOC_init)*HEV_Param.Battery_Cell.Kc*HEV_Param.Battery_Cell.Costar*interp1([HEV_Param.Battery_Cell.theta_f HEV_Param.Battery_Cell.Kt_Temps],[0 HEV_Param.Battery_Cell.Kt],HEV_Param.Battery_Cell.theta_init,'spline');
