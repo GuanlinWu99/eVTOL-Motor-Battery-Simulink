@@ -74,6 +74,10 @@
 %     end
 % 
 % end
+
+
+
+
 component Em
 % Main Branch Voltage Source
 
@@ -87,11 +91,11 @@ inputs
 end
 
 parameters
-    Em0   = {3.5, 'V'};     % Open-circuit voltage at full charge
-    Ke    = {0.0006, 'V/K'};% Voltage drop per Kelvin
-    Cbat  = {18000, 'A*s'}; % Total battery capacity
-    Qinit = {0, 'A*s'};     % Initial extracted charge
-    Rint  = {1e-3, 'Ohm'};  % Internal resistance
+    Em0   = {3.6, 'V'};       % Open-circuit voltage at full charge (200S pack: 3.6V * 200 = 720V)
+    Ke    = {0.0006, 'V/K'};  % Voltage drop per Kelvin
+    Cbat  = {18000, 'A*s'};   % Total battery capacity
+    Qinit = {0, 'A*s'};       % Initial extracted charge
+    Rint  = {1e-3, 'Ohm'};    % Internal resistance
 end
 
 variables(Access=private)
@@ -101,6 +105,7 @@ end
 
 outputs
     SOC = {0.8, '1'};   % State of charge
+    Voc = {720, 'V'};   % OCV output port (pack voltage)
 end
 
 branches
@@ -108,15 +113,17 @@ branches
 end
 
 equations
+    % Charge dynamics
     Qe.der == -i;
 
     let
-        SOC_raw = 1 - Qe / Cbat;
-        SOC_clamp = min(max(SOC_raw, 0), 1);     
-        Voc      = Em0 - Ke*T*(1 - SOC_clamp);   
+        SOC_raw  = 1 - Qe / Cbat;
+        SOC_clamp = min(max(SOC_raw, 0), 1);
+        Voc_loc  = Em0 - Ke*T*(1 - SOC_clamp);   % internal OCV calculation
     in
-        SOC           == SOC_clamp;             
-        p.v - n.v     == Voc - Rint * i;        
+        SOC       == SOC_clamp;          % output SOC
+        Voc       == Voc_loc;            % connect internal OCV to output port
+        p.v - n.v == Voc_loc - Rint*i;   % terminal voltage with internal resistance
     end
 end
 

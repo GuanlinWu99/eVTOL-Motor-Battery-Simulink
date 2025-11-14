@@ -21,6 +21,7 @@ component R1
     parameters
         R10 = {1, 'Ohm'};      % Resistance, R10
         % DOC_min = {1e-6, '1'}; % Minimum depth of charge
+        
     end
     
     variables(Access=private)
@@ -41,7 +42,7 @@ component R1
         % else
         %     R1 == -R10*log(DOC);     % Logarithmic relationship
         % end
-        R1 == R10
+        R1 == R10 
         p.v - n.v == i*R1;
     end
 end
