@@ -54,10 +54,10 @@ function [alpha_latdir, beta_latdir, CS, CR, CN] = eVTOL_data_latdir()
     alpha_latdir    =   reshape(dataMap('Alpha'), [nAlpha, nBeta]);
     alpha_latdir    =   alpha_latdir(:,1);
     beta_latdir     =   reshape(dataMap('Beta'), [nAlpha, nBeta]);
-    beta_latdir     =   beta_latdir(1,:)';
-    CS              =   reshape(dataMap('CS'), [nAlpha, nBeta]);
-    CR              =   reshape(dataMap('CMl'), [nAlpha, nBeta]);
-    CN              =   reshape(dataMap('CMn'), [nAlpha, nBeta]);
+    beta_latdir     =   beta_latdir(1,:);
+    CS              =   reshape(dataMap('CS'), [nAlpha, nBeta])';
+    CR              =   reshape(dataMap('CMl'), [nAlpha, nBeta])';
+    CN              =   reshape(dataMap('CMn'), [nAlpha, nBeta])';
 
 end
 

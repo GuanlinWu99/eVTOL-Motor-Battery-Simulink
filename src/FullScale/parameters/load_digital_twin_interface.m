@@ -19,6 +19,10 @@ elems(3) = Simulink.BusElement;
 elems(3).Name = 'dR';
 elems(4) = Simulink.BusElement;
 elems(4).Name = 'dT';
+elems(5) = Simulink.BusElement;
+elems(5).Name = 'dF';
+elems(6) = Simulink.BusElement;
+elems(6).Name = 'dS';
 FixedWingCtrlBus = Simulink.Bus;
 FixedWingCtrlBus.Elements = elems;
 %% Design bus - Rotor Control
