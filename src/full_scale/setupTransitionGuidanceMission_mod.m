@@ -13,7 +13,7 @@ SensorType    = 0;
 
 % Load in Transition Misison
 % exampleHelperTransitionMissionData_mod;
-Profile     =   4;
+Profile     =   6;
 load_mission_profiles;
 
 disp("Enabled transition guidance mission.")
@@ -24,7 +24,7 @@ disp("Enabled transition guidance mission.")
 
 % Set Time for Simulation
 % Total_sim_time  = 450;
-Total_sim_time  = 1000;
+Total_sim_time  = 2000;
 myDictionaryObj = Simulink.data.dictionary.open('VTOLDynamicsData.sldd');
 dDataSectObj    = getSection(myDictionaryObj,'Design Data');
 simTimeParam    = getEntry(dDataSectObj,'simTime');

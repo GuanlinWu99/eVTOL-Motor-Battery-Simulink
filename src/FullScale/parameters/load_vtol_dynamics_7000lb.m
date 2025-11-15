@@ -82,7 +82,7 @@ uavParams.aero.CnDa             =   0.0049274;                              % [-
 uavParams.aero.CnDr             =   -0.067036*3;                            % [-] Cn-rudder slope
 
 % --- Scale up the parameters ---
-MTOW                            =   7000*0.453592;                          % [kg]
+MTOW                            =   5600*0.453592;                          % [kg]
 n                               =   14/2;                                   % [-] lenth scale parameter
 sigma                           =   (MTOW/6.025)/n^3;                       % [-] density scale parameter
 
@@ -170,7 +170,7 @@ HEV_Param.Battery_Sys.Maximum_Capacity     = HEV_Param.Battery_Sys.Rated_Capacit
 HEV_Param.Battery_Cell.Rated_Capacity     = 5;                       % [Ah]
 HEV_Param.Battery_Cell.SOC_init           = 0.9;                     
 HEV_Param.Battery_Cell.theta_init         = 25;
-HEV_Param.Battery_Cell.Ctheta             = 950*0.0459*40000;        % (J/°C=J/(kg/°C）*kg) Thermal Capacitance
+HEV_Param.Battery_Cell.Ctheta             = 950;                     % (J/°C=J/(kg/°C）*kg) Thermal Capacitance
 HEV_Param.Battery_Cell.Area               = 0.01*200;                % (m^2) Surface area of battery exposed to air 
 HEV_Param.Battery_Cell.Rtheta             = 20;                      % (W/m^2/K) Convective heat transfer coefficient 
 HEV_Param.Battery_Cell.Kc                 = 1.2;                     % [-]
@@ -189,7 +189,7 @@ Capacity                                  = 3;                       % [Ah] cell
 Voltage                                   = 3.6;                     % [V] cell nominal voltage
 temp_amb                                  = 25;                      % Ambient temperature (normal temperature)
 
-temp_target                               = 25;                      % Target Temperature
+temp_target                               = 45;                      % Target Temperature
 
 % Temperature scaling using Arrhenius principle
 % When cold temperature, we assume that the temperature after

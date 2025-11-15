@@ -84,7 +84,7 @@ controlParams          =   load_controller_parameters(uavParams, const);
 Visualization          =   1;
 
 %... Disable Wind
-Wind                   =   0;
+Wind                   =   1;
 
 if Wind == 1
     Wind_Speed         =   5.14;
@@ -137,7 +137,7 @@ disp(['✅ Flight Profile: P', num2str(Profile)]);
 disp(['🕒 Total Simulation Time: ', num2str(Total_sim_time), ' (s)']);
 disp(['🛩️ eVTOL MTOW: ', num2str(uavParams.geom.mass), ' (kg)']);
 disp(['🌪️ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
-disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Caspacity*HEV_Param.Np*HEV_Param.Battery_Cell.Emo)/1000), ' (kWh)']);
+disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Capacity*HEV_Param.Np*HEV_Param.Battery_Cell.Emo)/1000), ' (kWh)']);
 disp(['🔋 Battery Pack Voltage: ', num2str(HEV_Param.Battery_Cell.Emo), ' (V)']);
 disp(['🌡️ Operation Temperature: ', num2str(HEV_Param.Temperature), ' (°C)']);
 
@@ -146,6 +146,7 @@ if HEV_Param.Temperature == -30
     disp(['🎯 Pre-Conditioning to 20 °C ... ', num2str(Pre_Conditioning_Energy), ' (kWh)', ' is required.' ]);
 end
 fprintf('\n')
+
 
 keyboard;
 
