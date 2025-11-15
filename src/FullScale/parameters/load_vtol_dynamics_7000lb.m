@@ -170,7 +170,7 @@ HEV_Param.Battery_Sys.Maximum_Capacity     = HEV_Param.Battery_Sys.Rated_Capacit
 HEV_Param.Battery_Cell.Rated_Capacity     = 5;                       % [Ah]
 HEV_Param.Battery_Cell.SOC_init           = 0.9;                     
 HEV_Param.Battery_Cell.theta_init         = 25;
-HEV_Param.Battery_Cell.Ctheta             = 950*0.0459*40000;        % (J/°C=J/(kg/°C）*kg) Thermal Capacitance
+HEV_Param.Battery_Cell.Ctheta             = 950;                     % J/(kg*K）Thermal Capacitance
 HEV_Param.Battery_Cell.Area               = 0.01*200;                % (m^2) Surface area of battery exposed to air 
 HEV_Param.Battery_Cell.Rtheta             = 20;                      % (W/m^2/K) Convective heat transfer coefficient 
 HEV_Param.Battery_Cell.Kc                 = 1.2;                     % [-]
