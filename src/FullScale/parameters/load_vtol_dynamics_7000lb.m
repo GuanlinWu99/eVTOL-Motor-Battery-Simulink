@@ -168,7 +168,7 @@ HEV_Param.Battery_Sys.Maximum_Capacity     = HEV_Param.Battery_Sys.Rated_Capacit
 % [2-3] Battery Model Parameters 
 % [2-3] Battery Model Parameters 
 HEV_Param.Battery_Cell.Rated_Capacity     = 5;                       % [Ah]
-HEV_Param.Battery_Cell.SOC_init           = 0.9;                     
+HEV_Param.Battery_Cell.SOC_init           = 1.0;                     
 HEV_Param.Battery_Cell.theta_init         = 25;
 HEV_Param.Battery_Cell.Ctheta             = 950;                     % (J/°C=J/(kg/°C）*kg) Thermal Capacitance
 HEV_Param.Battery_Cell.Area               = 0.01*200;                % (m^2) Surface area of battery exposed to air 
@@ -253,6 +253,22 @@ switch temp_target
         Tau2                              = R2*C2;                   % [s]
 end
 
+% Use battery cell data provided by jung's group in 24 degree, test standard is us06
+% TODO：get cell data under different temprature
+% TODO: GET battery data when soc belongs to 0-11%.
+load("models/Motor_batt/battery_param_from_jung_group.mat");
+soc = SOC_bp;
+Voltage = OCV_table(15:101)';
+R0 = Rs_table;
+R1 = R1_table;
+R2 = R2_table;
+C1 = C1_table;
+C2 = C2_table;
+Tau1 = tau1_table;
+Tau2 = tau2_table;
+
+
+HEV_Param.Battery_Cell.SOC                = soc';                    % [%]
 HEV_Param.Battery_Cell.Emo                = Voltage*Ns;              % [800V]
 HEV_Param.Battery_Cell.R0                 = (Ns/Np)*R0;              % [Ohm]
 HEV_Param.Battery_Cell.R1                 = (Ns/Np)*R1;              % [Ohm]

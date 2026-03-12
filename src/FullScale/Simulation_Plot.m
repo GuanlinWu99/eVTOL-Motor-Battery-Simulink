@@ -207,25 +207,54 @@ for i = 2 : length(outTuned.Battery_Data.Batt.Voltage__V_.Time)
 end
 
 % This is for calculating SOP
-Vmin       = 2.5*200;
-Imax_dis   = 22.6*200;   
-V          = outTuned.Battery_Data.Batt.Voltage__V_.Data(:);
-I          = outTuned.Battery_Data.Batt.Current__A_.Data(:);
-R          = ones(size(I)) * (HEV_Param.Battery_Cell.R0 + HEV_Param.Battery_Cell.R1 + HEV_Param.Battery_Cell.R2);    % Battery pack resistance [Ohm]
-Voc        = V + I .* R;                                                    % approximate ocv = terminal voltage + I*Ruse
+% Vmin       = 2.5*200;
+% Imax_dis   = 22.6*200;   
+% V          = outTuned.Battery_Data.Batt.Voltage__V_.Data(:);
+% I          = outTuned.Battery_Data.Batt.Current__A_.Data(:);
+% R          = ones(size(I)) * (HEV_Param.Battery_Cell.R0 + HEV_Param.Battery_Cell.R1 + HEV_Param.Battery_Cell.R2);    % Battery pack resistance [Ohm]
+% Voc        = V + I .* R;                                                    % approximate ocv = terminal voltage + I*Ruse
+% 
+% % Not violate minimum voltage
+% Iv_dis = max((Voc - Vmin) ./ R, 0);                                         % 【Ref】Review of State of Power Estimation for Li-Ion Batteries: 
+% Pv_dis = Vmin .* Iv_dis;                                                    % Methods, Issues, and Prospects
+% 
+% Pi_dis = Voc .* Imax_dis - R .* (Imax_dis.^2);
+% Pi_dis = max(Pi_dis, 0);
+% SOP_dis_kW = min(Pv_dis, Pi_dis)/1000;
 
-% Not violate minimum voltage
-Iv_dis = max((Voc - Vmin) ./ R, 0);                                         % 【Ref】Review of State of Power Estimation for Li-Ion Batteries: 
-Pv_dis = Vmin .* Iv_dis;                                                    % Methods, Issues, and Prospects
+% % Figure 1: EKF absolute error
+% figure('Color','w');
+% plot(outTuned.Battery_Data.Batt.signal8.Time, abs(ekf_error), 'LineWidth', Line_Width);
+% title('Absolute SOC Estimation Error','FontSize',Font);
+% xlabel('Time (s)','FontSize',12);
+% ylabel('Error (%)','FontSize',12);
+% grid on;
+% legend('|\Delta SOC|','Location','best');
 
-Pi_dis = Voc .* Imax_dis - R .* (Imax_dis.^2);
-Pi_dis = max(Pi_dis, 0);
-SOP_dis_kW = min(Pv_dis, Pi_dis)/1000;
+% Figure 2: SOC comparison
+figure('Color','w');
+plot(outTuned.Battery_Data.Batt.SOC____.Time, ...
+     outTuned.Battery_Data.Batt.SOC____.Data, ...
+     'LineWidth',Line_Width); 
+hold on;
+plot(outTuned.Battery_Data.Batt.signal8.Time, ...
+     outTuned.Battery_Data.Batt.signal8.Data*100, ...
+     'LineWidth',Line_Width, ...
+     'Color','g', ...
+     'LineStyle','--');
+title('SOC','FontSize',Font);
+ylabel('(%)','FontSize',12);
+xlabel('Time (s)','FontSize',12);
+grid on;
+legend('True SOC','EKF Estimated SOC','Location','best');
 
+% Figure 3: Summary plots
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.8], 'Color','w'); 
 subplot(3,3,1)
-plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',Line_Width); 
-title('SOC','FontSize',Font); ylabel('(%)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)]); ylim([50 100])
+plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',Line_Width); hold on;
+plot(outTuned.Battery_Data.Batt.signal8.Time, outTuned.Battery_Data.Batt.signal8.Data*100,'LineWidth',Line_Width, 'Color','g', 'LineStyle','--');
+title('SOC','FontSize',Font); ylabel('(%)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on;legend('True SOC','EKF Estimated SOC','Location','best');
+% ([0 Time(end)]); ylim([50 100])
 
 subplot(3,3,2)
 plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',Line_Width); 
@@ -250,6 +279,10 @@ title('Cumulative Energy Consumption','FontSize',Font); ylabel('(kWh)','FontSize
 subplot(3,3,7)
 plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, SOP_dis_kW,'LineWidth',Line_Width); 
 title('SOP','FontSize',Font); ylabel('(kW)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
+
+subplot(3,3,8)
+plot(outTuned.Battery_Data.Batt.signal7.Time, outTuned.Battery_Data.Batt.signal7.Data/200,'LineWidth',Line_Width);
+title('ocv','FontSize',Font); ylabel('(%)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; 
 
 sgtitle('Battery Pack Electrical Performance','FontSize',20,'FontWeight','bold');
 

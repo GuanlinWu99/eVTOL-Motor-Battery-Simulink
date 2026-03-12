@@ -13,7 +13,7 @@ SensorType    = 0;
 
 % Load in Transition Misison
 % exampleHelperTransitionMissionData_mod;
-Profile     =   6;
+Profile     =   0;
 load_mission_profiles;
 
 disp("Enabled transition guidance mission.")

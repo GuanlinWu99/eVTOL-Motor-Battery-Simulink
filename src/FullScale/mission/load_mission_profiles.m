@@ -187,7 +187,7 @@ switch Profile
         TransitionMission(5).mode       =   2;                              % [-] second climb (flight path hold vertical autopilot)
         TransitionMission(5).position   =   [(3.53+0.62)*const.nm2m; 0; -2000*const.ft2m];
         TransitionMission(5).params     =   [0; 0; 2; 82*const.kts2mps];
-
+        % 
         TransitionMission(6).mode       =   2;                              % [-] cruise
         TransitionMission(6).position   =   [(12.01+3.53+0.62)*const.nm2m; 0; -2000*const.ft2m];
         TransitionMission(6).params     =   [0; 0; 1; 90*const.kts2mps];
@@ -199,7 +199,7 @@ switch Profile
         TransitionMission(8).mode       =   2;                              % [-] approach pattern (FW, slow cruise)
         TransitionMission(8).position   =   [(1.5+5.34+12.01+3.53+0.62)*const.nm2m-1500; 0; -300*const.ft2m];
         TransitionMission(8).params     =   [0; 0; 1; 75*const.kts2mps];
-    
+
         TransitionMission(9).mode       =   6;                              % [-] approach pattern (back transition)
         TransitionMission(9).position   =   [(1.5+5.34+12.01+3.53+0.62)*const.nm2m-250; 0; -300*const.ft2m];    % note. make y = 1 cause error?
         TransitionMission(9).params     =   [1; 1; 1; 60*const.kts2mps];

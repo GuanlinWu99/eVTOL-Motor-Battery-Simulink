@@ -61,7 +61,7 @@ iniQ        =   0;
 iniR        =   0;
 
 %... Initialize landing gear model
-load("data\contact.mat")
+load("data/contact.mat")
 % contact = struct('spring', 1.28931184836e5, 'vd', 0.02, 'slidingFriction', 0.8, 'rollingFriction', 0.2, 'gLimit', 100);
 
 %... Load bus interfaces for controller
@@ -137,8 +137,8 @@ disp(['✅ Flight Profile: P', num2str(Profile)]);
 disp(['🕒 Total Simulation Time: ', num2str(Total_sim_time), ' (s)']);
 disp(['🛩️ eVTOL MTOW: ', num2str(uavParams.geom.mass), ' (kg)']);
 disp(['🌪️ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
-disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Capacity*HEV_Param.Np*HEV_Param.Battery_Cell.Emo)/1000), ' (kWh)']);
-disp(['🔋 Battery Pack Voltage: ', num2str(HEV_Param.Battery_Cell.Emo), ' (V)']);
+disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Capacity(1,1)*HEV_Param.Np*HEV_Param.Battery_Cell.Emo(1,1))/1000), ' (kWh)']);
+disp(['🔋 Battery Pack Voltage: ', num2str(HEV_Param.Battery_Cell.Emo(1,1)), ' (V)']);
 disp(['🌡️ Operation Temperature: ', num2str(HEV_Param.Temperature), ' (°C)']);
 
 if HEV_Param.Temperature == -30
@@ -147,15 +147,15 @@ if HEV_Param.Temperature == -30
 end
 fprintf('\n')
 
-
-keyboard;
+% 
+% keyboard;
 
 tic
 outTuned = sim(mdl);
 toc
 
 %%... Plot figures
-% Simulation_Plot();
+Simulation_Plot();
 
 
 
