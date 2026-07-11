@@ -27,6 +27,9 @@ VTOLcontrolGains.D_YAW_RATE     =    0.5*5.8759e+3;                          %25
 VTOLcontrolGains.I_YAW_RATE     =    0.00001*1.7784e+6;                      %0;
 VTOLcontrolGains.N_YAW_RATE     =    83.1175;                                %100;
 
+VTOLcontrolGains.P_YAW_RATE     =    1*VTOLcontrolGains.P_YAW_RATE;
+VTOLcontrolGains.D_YAW_RATE     =    1*VTOLcontrolGains.D_YAW_RATE;
+
 % ========== Design outer loop after designing inner loop ==========
 
 % Roll
