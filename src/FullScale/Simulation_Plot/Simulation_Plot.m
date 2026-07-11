@@ -1,6 +1,5 @@
 
 %% This is a function for drawing plots.
-
 % V = squeeze(outTuned.Body_Velocity.Data);
 % plot(outTuned.Body_Velocity.Time,V(1,:),'LineWidth',2); hold on; grid on
 % plot(outTuned.Body_Velocity.Time,V(2,:),'LineWidth',2); hold on
@@ -10,7 +9,7 @@
 %% Read Simulation 
 Time                   =   outTuned.Rotor1_RPM_Reference.Time;
 Time_motor             =   outTuned.Motor1_Current.Time;
-%Time_torque            =   outTuned.Rotor1_Drag_Tq.Time;
+%Time_torque           =   outTuned.Rotor1_Drag_Tq.Time;
 Time_battery           =   outTuned.Battery_Data.Batt.SOC____.Time;
 Time_flight            =   outTuned.UAV_State.Xe.Time;
 
@@ -41,7 +40,7 @@ Motor2_Power           =   outTuned.Motor2_Power.Data;
 Motor3_Power           =   outTuned.Motor3_Power.Data;
 Motor4_Power           =   outTuned.Motor4_Power.Data;
 
-% Motor1_Drag_Tq         =   outTuned.Rotor1_Drag_Tq.Data;
+% Motor1_Drag_Tq       =   outTuned.Rotor1_Drag_Tq.Data;
 % Motor2_Drag_Tq         =   outTuned.Rotor2_Drag_Tq.Data;
 % Motor3_Drag_Tq         =   outTuned.Rotor3_Drag_Tq.Data;
 % Motor4_Drag_Tq         =   outTuned.Rotor4_Drag_Tq.Data;
@@ -65,83 +64,95 @@ for i = 1:length(changeIdx)
     transitions(i).To = Flight_Condition(changeIdx(i)+1);
 end
 
-T1 =  transitions(1).Index*0.005;       % Hover to Transition
-T2 =  transitions(2).Index*0.005;       % Transition to Fixed-Wing
-T3 =  transitions(3).Index*0.005;       % Fixed-Wing to Transition
-T4 =  transitions(4).Index*0.005;       % Transition to Hover
-
 Travel_Distance = positionFeedbackData(4,:);
 
-D1 =  Travel_Distance(transitions(1).Index);   % Location of Hover to Transition
-D2 =  Travel_Distance(transitions(2).Index);   % Location of Transition to Fixed-Wing
-D3 =  Travel_Distance(transitions(3).Index);   % Location of Fixed-Wing to Transition
-D4 =  Travel_Distance(transitions(4).Index);   % Location of Transition to Hover
+% --- Transition times/distances, robust to INCOMPLETE flights ----------
+% A mission that does not complete all four flight-mode changes (e.g. a
+% strong cross-wind run that never finishes the forward transition) yields
+% fewer than 4 entries in `transitions`. Indexing transitions(2..4) then
+% throws "Index exceeds the number of array elements" and the whole plot
+% crashes. Pad any missing transition with the end-of-flight time/distance
+% so the mode-interval matrices below stay well-formed and the plots (incl.
+% the battery curves) still render. When all 4 transitions are present the
+% values are identical to the original code.
+t_scale = size(outTuned.UAV_State.Vb.Data,3)/size(outTuned.Flight_Mode.Data,1)*0.001;
+T_end   = size(outTuned.UAV_State.Vb.Data,3)*0.001;   % final sim time [s]
+D_end   = Travel_Distance(end);                        % final travel distance
+nT      = numel(transitions);
 
-fprintf('Transition Time: %f: %s → %s\n', T1, transitions(1).From, transitions(1).To);
-fprintf('Transition Time: %f: %s → %s\n', T2, transitions(2).From, transitions(2).To);
-fprintf('Transition Time: %f: %s → %s\n', T3, transitions(3).From, transitions(3).To);
-fprintf('Transition Time: %f: %s → %s\n', T4, transitions(4).From, transitions(4).To);
+Tvec = [T_end T_end T_end T_end];
+Dvec = [D_end D_end D_end D_end];
+for i = 1:min(nT,4)
+    Tvec(i) = transitions(i).Index * t_scale;
+    Dvec(i) = Travel_Distance(transitions(i).Index);
+end
+T1 = Tvec(1); T2 = Tvec(2); T3 = Tvec(3); T4 = Tvec(4);   % Hover->Tr, Tr->FW, FW->Tr, Tr->Hover
+D1 = Dvec(1); D2 = Dvec(2); D3 = Dvec(3); D4 = Dvec(4);
 
-keyboard;
+if nT < 4
+    fprintf(2, '[Simulation_Plot] WARNING: only %d/4 flight-mode transitions detected; missing ones padded to end-of-flight (incomplete mission).\n', nT);
+end
+for i = 1:min(nT,4)
+    fprintf('Transition Time: %f: %s -> %s\n', Tvec(i), transitions(i).From, transitions(i).To);
+end
 
 %% Plot Simulations (Updated: 11/07/2025) 
-
 %% [1] 4 Rotor Performance
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.9], 'Color','w');
-t = tiledlayout(4,4,'TileSpacing','compact','Padding','compact');
-names = ["Motor1","Motor2","Motor3","Motor4"];
-Width = 2;
-AxisFont = 17;
-
-% -------- Row 1: Speed --------
-ax1 = gobjects(1,4);
-for k = 1:4
-    ax1(k) = nexttile(k);
-    plot(Time, eval("Rotor"+k+"_RPM"), 'LineWidth',Width); hold on;
-    plot(Time, eval("Rotor"+k+"_RPM_Reference"), '-.', 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Speed");
-    if k==1, ylabel('RPM','FontSize',AxisFont); end
-    if k==1, legend({'Actual','Cmd'},'Location','southeast'); else, legend off; end
-    ylim([0, max(eval("Rotor"+k+"_RPM_Reference"))])
-end
-linkaxes(ax1,'y');
-
-% -------- Row 2: Power --------
-ax2 = gobjects(1,4);
-for k = 1:4
-    ax2(k) = nexttile(4+k);
-    plot(Time_motor, eval("Motor"+k+"_Power"), 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Power");
-    if k==1, ylabel('Power (kW)','FontSize',AxisFont); end
-end
-linkaxes(ax2,'y');
-
-% -------- Row 3: Current --------
-ax3 = gobjects(1,4);
-for k = 1:4
-    ax3(k) = nexttile(8+k);
-    plot(Time_motor, eval("Motor"+k+"_Current"), 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Current");
-    if k==1, ylabel('Current (A)','FontSize',AxisFont); end
-end
-linkaxes(ax3,'y');
-
-% -------- Row 4: Voltage --------
-ax4 = gobjects(1,4);
-for k = 1:4
-    ax4(k) = nexttile(12+k);
-    plot(Time_motor, eval("Motor"+k+"_Voltage"), 'LineWidth', Width);
-    grid on; box on;
-    title(names(k) + " Voltage");
-    if k==1, ylabel('Voltage (V)','FontSize',AxisFont); end
-    xlabel('Time (s)','FontSize',AxisFont);
-end
-linkaxes(ax4,'y');
-
-sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.9], 'Color','w');
+% t = tiledlayout(4,4,'TileSpacing','compact','Padding','compact');
+% names = ["Motor1","Motor2","Motor3","Motor4"];
+% Width = 2;
+% AxisFont = 17;
+% 
+% % -------- Row 1: Speed --------
+% ax1 = gobjects(1,4);
+% for k = 1:4
+%     ax1(k) = nexttile(k);
+%     plot(Time, eval("Rotor"+k+"_RPM"), 'LineWidth',Width); hold on;
+%     plot(Time, eval("Rotor"+k+"_RPM_Reference"), '-.', 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Speed");
+%     if k==1, ylabel('RPM','FontSize',AxisFont); end
+%     if k==1, legend({'Actual','Cmd'},'Location','southeast'); else, legend off; end
+%     ylim([0, max(eval("Rotor"+k+"_RPM_Reference"))])
+% end
+% linkaxes(ax1,'y');
+% 
+% % -------- Row 2: Power --------
+% ax2 = gobjects(1,4);
+% for k = 1:4
+%     ax2(k) = nexttile(4+k);
+%     plot(Time_motor, eval("Motor"+k+"_Power"), 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Power");
+%     if k==1, ylabel('Power (kW)','FontSize',AxisFont); end
+% end
+% linkaxes(ax2,'y');
+% 
+% % -------- Row 3: Current --------
+% ax3 = gobjects(1,4);
+% for k = 1:4
+%     ax3(k) = nexttile(8+k);
+%     plot(Time_motor, eval("Motor"+k+"_Current"), 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Current");
+%     if k==1, ylabel('Current (A)','FontSize',AxisFont); end
+% end
+% linkaxes(ax3,'y');
+% 
+% % -------- Row 4: Voltage --------
+% ax4 = gobjects(1,4);
+% for k = 1:4
+%     ax4(k) = nexttile(12+k);
+%     plot(Time_motor, eval("Motor"+k+"_Voltage"), 'LineWidth', Width);
+%     grid on; box on;
+%     title(names(k) + " Voltage");
+%     if k==1, ylabel('Voltage (V)','FontSize',AxisFont); end
+%     xlabel('Time (s)','FontSize',AxisFont);
+% end
+% linkaxes(ax4,'y');
+% 
+% sgtitle('Tiltrotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'FontWeight','bold');
 
 % %% [2] Drag Torque
 % figure('Units','normalized','OuterPosition',[0.1 0.1 0.65 0.3], 'Color','w'); 
@@ -194,62 +205,94 @@ sgtitle('Tilted-Rotor eVTOL (Rotors 1 & 2 Tilted, 3 & 4 Fixed)','FontSize',15,'F
 % xlabel('Time (s)'); ylabel('(Nm)'); legend('Rotor 4'); title('Motor4 Drag Torque')
 
 %% [3] Battery Pack Electrical Performance with Different Background Color
-L = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
-Pack_Power = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
-Pack_Energy = zeros(L,1);
-Font = 13;
+L            = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
+Pack_Power   = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
+Pack_Energy  = zeros(L,1);
+Font         = 13;
 Transparency = 0.6;
-Line_Width = 3;
+Line_Width   = 3;
 
 for i = 2 : length(outTuned.Battery_Data.Batt.Voltage__V_.Time)
-    Energy_tmp = Pack_Power(i)*0.001;
+    Energy_tmp     = Pack_Power(i)*0.001;
     Pack_Energy(i) = Energy_tmp + Pack_Energy(i-1); 
 end
 
-% This is for calculating SOP
-Vmin       = 2.5*200;
-Imax_dis   = 22.6*200;   
-V          = outTuned.Battery_Data.Batt.Voltage__V_.Data(:);
-I          = outTuned.Battery_Data.Batt.Current__A_.Data(:);
-R          = ones(size(I)) * (HEV_Param.Battery_Cell.R0 + HEV_Param.Battery_Cell.R1 + HEV_Param.Battery_Cell.R2);    % Battery pack resistance [Ohm]
-Voc        = V + I .* R;                                                    % approximate ocv = terminal voltage + I*Ruse
+% % This is for calculating SOP
+% Vmin       = 2.5 * 200;
+% Imax_dis   = 22.6 * 200;
+% V          = outTuned.Battery_Data.Batt.Voltage__V_.Data;
+% I          = outTuned.Battery_Data.Batt.Current__A_.Data;
+% SOC        = outTuned.Battery_Data.Batt.SOC____.Data;  % current SOC time series
+% 
+% % Lookup table breakpoints (SOC axis for R0, R1, R2)
+% SOC_bkpt   = HEV_Param.Battery_Cell.SOC_bkpt;  % [87x1]
+% 
+% % Interpolate each R component at the operating SOC
+% R0         = interp1(SOC_bkpt, HEV_Param.Battery_Cell.R0, SOC, 'linear', 'extrap');
+% R1         = interp1(SOC_bkpt, HEV_Param.Battery_Cell.R1, SOC, 'linear', 'extrap');
+% R2         = interp1(SOC_bkpt, HEV_Param.Battery_Cell.R2, SOC, 'linear', 'extrap');
+% R          = R0 + R1 + R2;      % time varying resistance
+% Voc        = V + I .* R; 
+% 
+% % Voltage-limited discharge current & power
+% Iv_dis     = max((Voc - Vmin) ./ R, 0);
+% Pv_dis     = Vmin .* Iv_dis;
+% 
+% % Current-limited discharge power
+% Pi_dis     = Voc .* Imax_dis - R .* (Imax_dis.^2);
+% Pi_dis     = max(Pi_dis, 0);
+% SOP_dis_kW = min(Pv_dis, Pi_dis) / 1000;
 
-% Not violate minimum voltage
-Iv_dis = max((Voc - Vmin) ./ R, 0);                                         % 【Ref】Review of State of Power Estimation for Li-Ion Batteries: 
-Pv_dis = Vmin .* Iv_dis;                                                    % Methods, Issues, and Prospects
-
-Pi_dis = Voc .* Imax_dis - R .* (Imax_dis.^2);
-Pi_dis = max(Pi_dis, 0);
-SOP_dis_kW = min(Pv_dis, Pi_dis)/1000;
-
+% Plot all figure
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.8], 'Color','w'); 
+
 subplot(3,3,1)
-plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',Line_Width); 
-title('SOC','FontSize',Font); ylabel('(%)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)]); ylim([50 100])
+plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',Line_Width); grid on;
+title('SOC','FontSize',Font); 
+xlabel('Time (s)','FontSize',12);
+ylabel('(%)','FontSize',12); 
+xlim([0 Time(end)]); 
+ylim([50 100])
 
 subplot(3,3,2)
-plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',Line_Width); 
-title('C-rate','FontSize',Font); ylabel('(-)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
+plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',Line_Width); grid on; 
+title('C-rate','FontSize',Font);  
+xlabel('Time (s)','FontSize',12);
+ylabel('(-)','FontSize',12);
+xlim([0 Time(end)])
 
 subplot(3,3,3)
-plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',Line_Width); 
-title('Current','FontSize',Font); ylabel('(A)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
+plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',Line_Width); grid on; 
+title('Current','FontSize',Font);  
+xlabel('Time (s)','FontSize',12); 
+ylabel('(A)','FontSize',12);
+xlim([0 Time(end)])
 
 subplot(3,3,4)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',Line_Width); 
-title('Voltage','FontSize',Font); ylabel('(V)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',Line_Width); grid on;
+title('Voltage','FontSize',Font);  
+xlabel('Time (s)','FontSize',12); 
+ylabel('(V)','FontSize',12);
+xlim([0 Time(end)])
 
 subplot(3,3,5)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',Line_Width); 
-title('Required Power','FontSize',Font); ylabel('(kW)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',Line_Width); grid on;
+title('Required Power','FontSize',Font); 
+xlabel('Time (s)','FontSize',12);  
+ylabel('(kW)','FontSize',12); 
+xlim([0 Time(end)])
 
 subplot(3,3,6)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',Line_Width); 
-title('Cumulative Energy Consumption','FontSize',Font); ylabel('(kWh)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
-
-subplot(3,3,7)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, SOP_dis_kW,'LineWidth',Line_Width); 
-title('SOP','FontSize',Font); ylabel('(kW)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',Line_Width); grid on;
+title('Cumulative Energy Consumption','FontSize',Font);  
+xlabel('Time (s)','FontSize',12);
+ylabel('(kWh)','FontSize',12);
+xlim([0 Time(end)])
+ylim([0 180])
+ 
+% subplot(3,3,7)
+% plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, SOP_dis_kW,'LineWidth',Line_Width); 
+% title('SOP','FontSize',Font); ylabel('(kW)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
 
 sgtitle('Battery Pack Electrical Performance','FontSize',20,'FontWeight','bold');
 
@@ -379,51 +422,60 @@ lgd.ItemTokenSize = [50, 30];
 % sgtitle('Flight Dynamics Simulations','FontSize',15,'FontWeight','bold');
 
 %% [4-1] Flight Trajectory in North–Altitude Plane (Visually Stretched)
-RGB = orderedcolors("gem");
-H = rgb2hex(RGB);
+RGB         = orderedcolors("gem");
+H           = rgb2hex(RGB);
+ref_2d_traj = zeros(3,size(TransitionMission,2));
 
-ref_2d_traj     =   zeros(3,size(TransitionMission,2));
 for idx = 1:size(ref_2d_traj,2)
     ref_2d_traj(:,idx) = TransitionMission(idx).position;
 end
+
 ref_2d_traj(:,3) = [];
+ref_air_spd      = zeros(2,2*size(TransitionMission,2)-2);
 
-ref_air_spd     =   zeros(2,2*size(TransitionMission,2)-2);
-for idx = 1:size(TransitionMission,2)-1
-    ref_air_spd(1,2*idx-1)  = sqrt(TransitionMission(idx).position(1).^2+TransitionMission(idx).position(2).^2);
-    ref_air_spd(1,2*idx)    = sqrt(TransitionMission(idx+1).position(1).^2+TransitionMission(idx+1).position(2).^2);
-    ref_air_spd(2,2*idx-1)  = TransitionMission(idx+1).params(4)/const.kts2mps;
-    ref_air_spd(2,2*idx)    = TransitionMission(idx+1).params(4)/const.kts2mps;
+for idx = 1 : size(TransitionMission,2) - 1
+    ref_air_spd(1,2*idx-1) = sqrt(TransitionMission(idx).position(1).^2+TransitionMission(idx).position(2).^2);
+    ref_air_spd(1,2*idx) = sqrt(TransitionMission(idx+1).position(1).^2+TransitionMission(idx+1).position(2).^2);
+    ref_air_spd(2,2*idx-1) = TransitionMission(idx+1).params(4)/const.kts2mps;
+    ref_air_spd(2,2*idx) = TransitionMission(idx+1).params(4)/const.kts2mps;
 end
+
 ref_air_spd(:,4:5) = [];
-
 air_spd = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:), [], 1).^2 + ...
-                 reshape(outTuned.UAV_State.Vb.Data(:,2,:), [], 1).^2 + ...
-                 reshape(outTuned.UAV_State.Vb.Data(:,3,:), [], 1).^2)/const.kts2mps;
+               reshape(outTuned.UAV_State.Vb.Data(:,2,:), [], 1).^2 + ...
+               reshape(outTuned.UAV_State.Vb.Data(:,3,:), [], 1).^2)/const.kts2mps;
 
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.9 0.4], 'Color','w'); 
+figure('Units','normalized','OuterPosition',[0.1 0.1 0.9 0.6], 'Color','w'); 
+
 subplot(2,1,1);
 plot(ref_2d_traj(1,:),-ref_2d_traj(3,:), 'LineWidth', Line_Width, 'LineStyle',"--",'Color',H(7)); hold on;
 plot(positionFeedbackData(4,:), -positionFeedbackData(6,:), 'LineWidth', 1.5,'Color',H(1)); grid on; box on; 
-xlabel('Distance (North, m)', 'FontSize', 12); ylabel('Altitude (m)', 'FontSize', 12); xlim([0 max(positionFeedbackData(4,:))+50]); ylim([0 1000]);
-% axis tight; pbaspect([15 1 1]);
+xlabel('Distance (North, m)', 'FontSize', 12); 
+ylabel('Altitude (m)', 'FontSize', 12); 
+xlim([0 max(positionFeedbackData(4,:))+50]); 
+ylim([0 1000]);
 legend('Mission Profile', 'Actual Trajectory')
 title('Flight Trajectory in 2D Vertical Plane', 'FontSize', Font, 'FontWeight', 'bold');
+% axis tight; pbaspect([15 1 1]);
 
 subplot(2,1,2);
 plot(ref_air_spd(1,:), ref_air_spd(2,:), 'LineWidth', Line_Width, 'LineStyle',"--",'Color',H(7)); hold on; grid on; box on; 
 plot(positionFeedbackData(4,:), air_spd(1:5:end,:), 'LineWidth', 1.5,'Color',H(1));
-xlabel('Distance (North, m)', 'FontSize', 12); ylabel('Airspeed (kts)', 'FontSize', 12); xlim([0 max(positionFeedbackData(4,:))+50]); ylim([0 110]);
-% axis tight; pbaspect([15 1 1]);
+xlabel('Distance (North, m)', 'FontSize', 12); 
+ylabel('Airspeed (kts)', 'FontSize', 12); 
+xlim([0 max(positionFeedbackData(4,:))+50]); 
+ylim([0 110]);
 legend('Mission Profile', 'Actual Trajectory')
 title('Flight Speed Profile', 'FontSize', Font, 'FontWeight', 'bold');
+% axis tight; pbaspect([15 1 1]);
 
+sgtitle('Tiltrotor eVTOL Flight Performance','FontSize',20,'FontWeight','bold');
 
 modeIntervals = [  0   D1;        % Hover
                   D1   D2;        % Forward Transition
                   D2   D3;        % Fixed-Wing
                   D3   D4;        % Backward Transition
-                  D4  18100];     % Hover
+                  D4   50000];     % Hover
                         
 modeColors = [0.15 0.15 0.15;     % Hover
               0.5 0.5 0.5;        % Forward Transition
@@ -439,8 +491,7 @@ for ax = transpose(axs)
     for k = 1:size(modeIntervals,1)
         x1 = modeIntervals(k,1);
         x2 = modeIntervals(k,2);
-        h = patch(ax, [x1 x2 x2 x1], [yl(1) yl(1) yl(2) yl(2)], ...
-                  modeColors(k,:), 'FaceAlpha', 0.6, 'EdgeColor', 'none');
+        h = patch(ax, [x1 x2 x2 x1], [yl(1) yl(1) yl(2) yl(2)], modeColors(k,:), 'FaceAlpha', 0.6, 'EdgeColor', 'none');
         uistack(h, 'bottom'); 
         h.Annotation.LegendInformation.IconDisplayStyle = 'off';
     end
@@ -453,7 +504,12 @@ subplot(4,1,1)
 plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', Line_Width-1); hold on; grid on;
 plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', Line_Width-1); hold on;
 plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, '-.', 'Linewidth', Line_Width); hold on;
-xlabel('Time (s)','FontSize',12); ylabel('Att (deg)','FontSize',12); title('Euler Angles','FontSize',13); legend('Roll','Pitch','Yaw','Location','northeast'); ylim([-10 45]); xlim([0 Time(end)])
+xlabel('Time (s)','FontSize',12); 
+ylabel('Att (deg)','FontSize',12); 
+title('Euler Angles','FontSize',13); 
+legend('Roll','Pitch','Yaw','Location','northeast'); 
+xlim([0 Time(end)])
+ylim([-10 45]); 
 
 % subplot(4,1,2)
 % plot(outTuned.UAV_State.RotorParameters.w1.Time, reshape(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on; grid on;
@@ -467,20 +523,33 @@ plot(outTuned.UAV_State.RotorParameters.w1.Time, Rotor1_RPM, 'LineWidth', Line_W
 plot(outTuned.UAV_State.RotorParameters.w2.Time, Rotor2_RPM, 'LineWidth', Line_Width-1); hold on;
 plot(outTuned.UAV_State.RotorParameters.w3.Time, Rotor3_RPM, 'LineWidth', Line_Width-1); hold on;
 plot(outTuned.UAV_State.RotorParameters.w4.Time, Rotor4_RPM, 'LineWidth', Line_Width-1); hold on;
-xlabel('Time (s)','FontSize',12); ylabel('Rot Spd(rpm)','FontSize',12); title('Rotors Speed','FontSize',13); legend('Front Left','Front Right','Rear Right','Rear Left','Location','northeast'); xlim([0 Time(end)])
+xlabel('Time (s)','FontSize',12); 
+ylabel('Rot Spd(rpm)','FontSize',12); 
+title('Rotors Speed','FontSize',13); 
+legend('Front Left','Front Right','Rear Right','Rear Left','Location','northeast'); 
+xlim([0 Time(end)])
 
 subplot(4,1,3)
 plot(outTuned.UAV_State.aileron.Time, outTuned.UAV_State.aileron.Data*180/pi, 'Linewidth', Line_Width-1); hold on; grid on;
 plot(outTuned.UAV_State.elevator.Time, outTuned.UAV_State.elevator.Data*180/pi, 'Linewidth', Line_Width-1); hold on;
 plot(outTuned.UAV_State.rudder.Time, outTuned.UAV_State.rudder.Data*180/pi, 'Linewidth', Line_Width-1); hold on; 
-xlabel('Time (s)','FontSize',12); ylabel('Def (deg)','FontSize',12); title('Control Surfaces','FontSize',13); legend('Aileron','Elevator','Rudder','Location','northeast'); xlim([0 Time(end)])
+xlabel('Time (s)','FontSize',12); 
+ylabel('Def (deg)','FontSize',12); 
+title('Control Surfaces','FontSize',13); 
+legend('Aileron','Elevator','Rudder','Location','northeast'); 
+xlim([0 Time(end)])
 
 subplot(4,1,4)
 plot(outTuned.UAV_State.RotorParameters.Tilt1.Time, outTuned.UAV_State.RotorParameters.Tilt1.Data/pi*180, 'Linewidth', Line_Width-1); hold on;
-plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorParameters.Tilt2.Data/pi*180, 'Linewidth', Line_Width-1, 'LineStyle', '--')
-grid on; title('Tilt Angles'); xlabel('Time (s)','FontSize',12); ylabel('Tilt (deg)','FontSize',13); title('Tilt Angles','FontSize',13); xlim([0 Time(end)])
+plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorParameters.Tilt2.Data/pi*180, 'Linewidth', Line_Width-1, 'LineStyle', '--'); grid on;
+xlabel('Time (s)','FontSize',12); 
+ylabel('Tilt (deg)','FontSize',13); 
+title('Tilt Angles','FontSize',13); 
+lgd4 = legend('Frong Left','Front Right','Location','northeast');
+lgd4.AutoUpdate = 'off'; 
+xlim([0 Time(end)]); 
 
-sgtitle('Tilted-Rotor eVTOL Flight Performance','FontSize',20,'FontWeight','bold');
+sgtitle('Tiltrotor eVTOL Flight Performance','FontSize',20,'FontWeight','bold');
 
 modeIntervals = [  0   T1;     % Hover
                   T1   T2;     % Forward Transition
@@ -503,7 +572,7 @@ for ax = transpose(axs)
     for k = 1:size(modeIntervals,1)
         x1 = modeIntervals(k,1);
         x2 = modeIntervals(k,2);
-        h = patch(ax, [x1 x2 x2 x1], [yl(1) yl(1) yl(2) yl(2)], modeColors(k,:),'FaceAlpha',0.5,'EdgeColor','none');
+        h = patch(ax, [x1 x2 x2 x1], [yl(1) yl(1) yl(2) yl(2)], modeColors(k,:), 'FaceAlpha', 0.5, 'EdgeColor', 'none');
         uistack(h,'bottom'); 
         h.Annotation.LegendInformation.IconDisplayStyle = 'off';
     end
@@ -518,9 +587,8 @@ for k = 1:length(modeLabels_1)
         legendNames{end+1} = modeLabels_1{k}; 
     end
 end
-
-lgd = legend(legendHandles, legendNames, 'Orientation', 'horizontal', 'NumColumns', 4, 'Box', 'off', ...
-      'FontSize', 13, 'Position', [0.015 0.015 1.5 0.01]); 
+add_ax = axes('position',get(gca,'position'),'visible','off');
+lgd = legend(add_ax, legendHandles, legendNames, 'Orientation', 'horizontal', 'NumColumns', 4, 'Box', 'off', 'FontSize', 13, 'Position', [0.015 0.015 1.5 0.01]); 
 lgd.ItemTokenSize = [35, 18];
 
 %% [5] Flight Dynamics Simulations (3D)
@@ -541,17 +609,17 @@ xlabel('North (m)'); ylabel('West (m)'); zlabel('Altitude (m)'); ylim([-200 200]
 % ax = gca; ax.YAxis(1).Color = 'k'; ax.YAxis(2).Color = 'k'; ax.XAxis.Color = 'k'; 
 
 %% [7] 2D Plots for Flight Simulation
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.75 0.35], 'Color','w'); 
-plot(positionFeedbackData(4,:),-positionFeedbackData(6,:),'LineWidth',2.5); 
-xlabel('North (m)','FontSize',12); ylabel('Altitude (m)','FontSize',12); title('P4 Flight Profile','FontSize',13); xlim([-100 35000]); ylim([0 700]); grid on;
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.75 0.35], 'Color','w'); 
+% plot(positionFeedbackData(4,:),-positionFeedbackData(6,:),'LineWidth',2.5); 
+% xlabel('North (m)','FontSize',12); ylabel('Altitude (m)','FontSize',12); title('P4 Flight Profile','FontSize',13); xlim([-100 35000]); ylim([0 700]); grid on;
 
-figure('Units','normalized','OuterPosition',[0.1 0.1 0.95 0.35], 'Color','w'); hold on; grid on;
-patch([0 50 50 0], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
-patch([10 16000 16000 10], [0 0 700 700], [0.8 0.8 0.8], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 연한 회색
-patch([16000 18000 18000 16000], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
-plot(positionFeedbackData(4,:), -positionFeedbackData(6,:), 'k', 'LineWidth', 2.5);
-xlabel('North (m)', 'FontSize', 12); ylabel('Altitude (m)', 'FontSize', 12); title('P4 Flight Profile', 'FontSize', 13);
-xlim([-100 18100]); ylim([0 700]); grid on; box on; hold off;
+% figure('Units','normalized','OuterPosition',[0.1 0.1 0.95 0.35], 'Color','w'); hold on; grid on;
+% patch([0 50 50 0], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
+% patch([10 16000 16000 10], [0 0 700 700], [0.8 0.8 0.8], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 연한 회색
+% patch([16000 18000 18000 16000], [0 0 700 700], [0.4 0.4 0.4], 'FaceAlpha', 0.3, 'EdgeColor', 'none'); % 짙은 회색
+% plot(positionFeedbackData(4,:), -positionFeedbackData(6,:), 'k', 'LineWidth', 2.5);
+% xlabel('North (m)', 'FontSize', 12); ylabel('Altitude (m)', 'FontSize', 12); title('P4 Flight Profile', 'FontSize', 13);
+% xlim([-100 18100]); ylim([0 700]); grid on; box on; hold off;
 
 %% SOP Plot
 % ========= SOH & SOP parameters ========= %
@@ -594,11 +662,11 @@ Pi_dis = max(Pi_dis, 0);
 SOP_dis_kW = min(Pv_dis, Pi_dis) / 1000;
 
 % ========= Plot SOP ========= %
-figure('Units','normalized','OuterPosition',[0.52 0.1 0.42 0.7],'Color','w');
-tiledlayout(3,2,'Padding','compact','TileSpacing','compact');
-nexttile; plot(t,SOC,'LineWidth',1.8); grid on; ylabel('SOC (-)'); xlabel('t (s)'); title('SOC');
-nexttile; plot(t,V,'LineWidth',1.8); grid on; ylabel('V (V)'); xlabel('t (s)'); title('Terminal Voltage');
-%nexttile; plot(t,Temp,'LineWidth',1.8); grid on; ylabel('Temp (K)'); xlabel('t (s)'); title('Temperature');
-nexttile; plot(t,Voc, 'LineWidth', 1.8);grid on; ylabel('OCV(V)');xlabel('t(s)');title('Open Circuit Voltage');
-nexttile; plot(t,SOP_dis_kW,'LineWidth',1.8); grid on; ylabel('kW'); xlabel('t (s)'); title('SOP_{dis} (max deliverable)');
+% figure('Units','normalized','OuterPosition',[0.52 0.1 0.42 0.7],'Color','w');
+% tiledlayout(3,2,'Padding','compact','TileSpacing','compact');
+% nexttile; plot(t,SOC,'LineWidth',1.8); grid on; ylabel('SOC (-)'); xlabel('t (s)'); title('SOC');
+% nexttile; plot(t,V,'LineWidth',1.8); grid on; ylabel('V (V)'); xlabel('t (s)'); title('Terminal Voltage');
+% %nexttile; plot(t,Temp,'LineWidth',1.8); grid on; ylabel('Temp (K)'); xlabel('t (s)'); title('Temperature');
+% nexttile; plot(t,Voc, 'LineWidth', 1.8);grid on; ylabel('OCV(V)');xlabel('t(s)');title('Open Circuit Voltage');
+% nexttile; plot(t,SOP_dis_kW,'LineWidth',1.8); grid on; ylabel('kW'); xlabel('t (s)'); title('SOP_{dis} (max deliverable)');
  

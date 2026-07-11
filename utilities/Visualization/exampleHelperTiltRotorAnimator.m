@@ -22,7 +22,7 @@ classdef exampleHelperTiltRotorAnimator < matlab.System
         function stepImpl(obj, position, orientation, rotorAngles)
             %
 
-            obj.Body.Matrix = trvec2tform(position)*quat2tform(orientation);
+            openExample('simscapeelectrical/PowerAssistedSteeringExample')obj.Body.Matrix = trvec2tform(position)*quat2tform(orientation);
             obj.RotorA.Matrix = trvec2tform([-40,50 0])*eul2tform([0 rotorAngles(1) 0]);
             obj.RotorB.Matrix = trvec2tform([-40,-50 0])*eul2tform([0 rotorAngles(2) 0]);
             obj.RotorC.Matrix = trvec2tform([22,-50 0])*eul2tform([0 rotorAngles(3) 0]);

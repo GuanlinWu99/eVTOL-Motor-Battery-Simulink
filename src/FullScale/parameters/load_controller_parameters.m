@@ -17,7 +17,7 @@ simParams.UAVTimeStep                       =   0.001;
 controlParams.ControlSampleTime             =   0.005;
 controlParams.UAVSampleTime                 =   0.005;
 
-controlParams.maxPWM                        =   1.0;
+controlParams.maxPWM                        =   1;                          % 오리지널 버전: 1.0 // 3월 19일, 2026년
 controlParams.minPWM                        =   0.1;
 controlParams.VTOLthrCoefficient            =   (uavParams.rotor.Ct*const.rho0*pi*(uavParams.geom.PropDiameter/2)^4);   % [N/(rad/s)^2] Thrust coefficients for VTOL mode
 controlParams.FWTrimThrottle                =   2800*const.rpm2rps;         % [rps] trim throttle for fixed-wing mode (~ 62kts)           
@@ -72,49 +72,39 @@ controlParams.Vcruise                       =   16;
 controlParams.L1                            =   300;                                % [m]
 controlParams.turningRadius                 =   60;
 
-controlParams.minThrottle =   0;
-controlParams.maxThrottle =   1;
-controlParams.slewRateThrottle= 1;
-controlParams.slewRateServos= 5;
-controlParams.FWmaxPitch            =   20*const.deg2rad;                   % [rad]
-controlParams.FWminPitch            =   -10*const.deg2rad;                  % [rad]
-controlParams.maxRoll= 0.6981;
-controlParams.minRoll= -0.6981;
-controlParams.maxRollRate= 1.2217;
-controlParams.minRollRate= -1.2217;
-controlParams.maxPitchRate= 1.2217;
-controlParams.minPitchRate= -1.2217;
-controlParams.FWmaxClimbRate        =   40*tand(30);                        % [m/s] fixed-wing maximum climb rate
-controlParams.FWmaxDescendRate      =   -40*tand(20);                   
-controlParams.FWmaxCRratelimit      =   20;                                 % [m/s^2] fixed-wing maximum rate limit of climb rate 
-controlParams.FWminCRratelimit      =   -10;
-controlParams.stallSpeed= 9.5000;
-controlParams.cruiseSpeed= 20;
-controlParams.takeoffSpeed= 12.3500;
-controlParams.takeoffNavAlt= 5;
-controlParams.climboutAltMin= 10;
-controlParams.climboutAlt= 13;
-controlParams.landingApproachSpeed= 12.3500;
-controlParams.flarePitch= 0.0349;
-controlParams.flareAlt= 2;
-controlParams.landStopVel= 1;
-controlParams.finalLoiterSpeed= 15; 
+controlParams.minThrottle                   =   0;
+controlParams.maxThrottle                   =   1;
+controlParams.slewRateThrottle              =   1;
+controlParams.slewRateServos                =   5;
+controlParams.FWmaxPitch                    =   20*const.deg2rad;                   % [rad]
+controlParams.FWminPitch                    =  -10*const.deg2rad;                   % [rad]
+controlParams.maxRoll                       =   0.6981;
+controlParams.minRoll                       =  -0.6981;
+controlParams.maxRollRate                   =   1.2217;
+controlParams.minRollRate                   =  -1.2217;
+controlParams.maxPitchRate                  =   1.2217;
+controlParams.minPitchRate                  =  -1.2217;
+controlParams.FWmaxClimbRate                =   40*tand(30);                        % [m/s] fixed-wing maximum climb rate
+controlParams.FWmaxDescendRate              =  -40*tand(20);                   
+controlParams.FWmaxCRratelimit              =   20;                                 % [m/s^2] fixed-wing maximum rate limit of climb rate 
+controlParams.FWminCRratelimit              =  -10;
+controlParams.stallSpeed                    =   9.5000;
+controlParams.cruiseSpeed                   =   20;
+controlParams.takeoffSpeed                  =   12.3500;
+controlParams.takeoffNavAlt                 =   5;
+controlParams.climboutAltMin                =   10;
+controlParams.climboutAlt                   =   13;
+controlParams.landingApproachSpeed          =   12.3500;
+controlParams.flarePitch                    =   0.0349;
+controlParams.flareAlt                      =   2;
+controlParams.landStopVel                   =   1;
+controlParams.finalLoiterSpeed              =   15; 
 
-controlParams.tilt_trim             =   0.0;                                % [rad] tilt angle trim for VTOL mode
-controlParams.w_trim = 0;
-controlParams.windVel = [0, 0, 0];
-
-controlParams.transitionRadius = 10;
-
-controlParams.MaxTilt = 1.0472;
-
-
-
+controlParams.tilt_trim                     =   0.0;                                % [rad] tilt angle trim for VTOL mode
+controlParams.w_trim                        =   0;
+controlParams.windVel                       =   [0, 0, 0];
+controlParams.transitionRadius              =   10;
+controlParams.MaxTilt                       =   1.0472;
 
 %% define simulation parameters
-
-
-
-
-
 end
