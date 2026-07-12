@@ -294,6 +294,10 @@ ylim([0 180])
 % plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, SOP_dis_kW,'LineWidth',Line_Width); 
 % title('SOP','FontSize',Font); ylabel('(kW)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
 
+subplot(3,3,8)
+plot(outTuned.Battery_Data.Batt.signal7.Time, outTuned.Battery_Data.Batt.signal7.Data/200,'LineWidth',Line_Width);
+title('ocv','FontSize',Font); ylabel('(%)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; 
+
 sgtitle('Battery Pack Electrical Performance','FontSize',20,'FontWeight','bold');
 
 modeIntervals = [  0   T1;        % Hover
