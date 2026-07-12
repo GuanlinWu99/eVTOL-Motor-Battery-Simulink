@@ -1,11 +1,11 @@
 % % Copyright 2011-2024 The MathWorks, Inc.
-clc;
-clear;
+% clc;
+% clear;
 
 % Battery Model Parameters
-Ts = 2e-6; 
-set_param('Test_FourMotor_PID_Ave','FixedStep','Ts');
-ts_vec = 60e-6;
+% Ts = 2e-6; 
+% set_param('Test_FourMotor_PID_Ave','FixedStep','Ts');
+ts_vec = 50e-6;
 target_temperature = 25;
 
 %% ===== Cell Spec (LG Chem INR 18650 / Samsung SA-88, 18650-class) =======
