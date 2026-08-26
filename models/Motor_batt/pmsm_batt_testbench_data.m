@@ -1,25 +1,30 @@
 %% PMSM / inverter / SA88 parameters (base workspace).
 
-% ---- Motor (Evolito D500-class) ----
-Rs   = 0.003;      % [Ohm]    stator resistance / phase
-Ld   = 40e-6;      % [H]      d-axis inductance
-Lq   = 40e-6;      % [H]      q-axis inductance
-psim = 0.045;      % [Wb]     PM flux linkage
-p    = 10;         % [-]      pole pairs
+% ---- Motor (3.9 m direct-drive rotor: low-speed, high-torque) ----
+% Represents the system-level motor in VTOLDynamics (2769 Nm peak, <=1500 rpm,
+% 95% eff). The old high-speed Evolito cannot make ~1500 Nm at ~830 rpm.
+% Swap for a specific target motor when available.
+Rs   = 0.015;      % [Ohm]    stator resistance / phase
+Ld   = 300e-6;     % [H]      d-axis inductance (large low-speed machine)
+Lq   = 300e-6;     % [H]      q-axis inductance
+psim = 0.092;      % [Wb]     PM flux linkage (high, for high torque)
+p    = 20;         % [-]      pole pairs (multi-pole direct drive)
 Bm   = 1e-3;       % [N*m*s]  viscous damping
 Jtot = 2.0;        % [kg*m^2] motor+rotor inertia (standalone testbench)
-Imax = 1450;       % [A]      peak current limit
-Kt   = 1.5*p*psim; % [Nm/A]   torque constant
+Imax = 1000;       % [A]      peak current limit (2769 Nm / Kt ~ 1003 A)
+Kt   = 1.5*p*psim; % [Nm/A]   torque constant = 2.76
 
-% ---- Rotor load / operating point ----
-k_drag    = 0.0012718;                     % [N*m*s^2] rotor drag  T = k_drag*w^2
-w_ref_val = [724.9; 726.5; 725.1; 726.7];  % [rad/s]   per-rotor hover speed refs
+% ---- Rotor load / operating point (3.9 m rotor, MTOW 5600 lb) ----
+% k_drag = Cq*rho*A*R^3 ; Cq=8/pi^3*0.007048, A=pi*(3.9/2)^2, R=1.95, rho=1.225.
+% Hover per rotor: ~832 rpm (87.2 rad/s), ~1500 Nm, ~131 kW.
+k_drag    = 0.1974;                        % [N*m*s^2] rotor drag  T = k_drag*w^2
+w_ref_val = [87.2; 87.4; 87.2; 87.4];      % [rad/s]   per-rotor hover speed refs (~832 rpm)
 
-% ---- Flight integration (PMSM_Drive) ----
-Jm_flight  = 0.0600;                        % [kg*m^2] drive inertia
-Vdc_fixed  = 780;                           % [V]      fixed DC bus
-RPMMAX     = 10000;                         % [rpm]    max motor speed (normalises Rotor Assembly.N)
-trqR_hover = [668.4; 671.3; 668.6; 671.5];  % [N*m]    hover torque (standalone test)
+% ---- Flight integration (PMSM_Drive), 3.9 m rotor ----
+Jm_flight  = 0.09;                          % [kg*m^2] = shaft 0.009 + prop 0.08 (VTOLDynamics value)
+Vdc_fixed  = 720;                           % [V]      DC bus (low-speed motor is not voltage-limited)
+RPMMAX     = 1500;                          % [rpm]    max motor speed (normalises Rotor Assembly.N)
+trqR_hover = [1500; 1505; 1500; 1505];      % [N*m]    hover torque (standalone test)
 
 % ---- Control gains ----
 bw_i = 2*pi*1000;  Kp_i = Ld*bw_i;  Ki_i = Rs*bw_i;            % current loop, 1 kHz
