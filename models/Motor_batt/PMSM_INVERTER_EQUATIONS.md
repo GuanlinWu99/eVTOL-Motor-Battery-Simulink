@@ -1,0 +1,196 @@
+# PMSM Drive — Governing Equations
+
+Equations as implemented in `PMSM_Drive` (all-Simulink, no Simscape).
+Signal flow per motor:
+
+```
+trqR ──► iq_ref ──► [iq limit] ──► current PI ──► [averaged inverter] ──► vd,vq
+                                        ▲                                    │
+                                     id,iq ◄──────── PMSM dq electrical ◄─────┘
+                                                            │
+                                     Te ──► mechanics ──► ω ──► θ ──► inverse Park ──► ia,ib,ic
+```
+
+---
+
+## 1. PMSM stator equations (rotor dq frame)
+
+Electrical angular speed:
+
+$$\omega_e = p\,\omega_m$$
+
+Stator voltage equations (state variables $i_d, i_q$):
+
+$$\frac{di_d}{dt}=\frac{v_d-R_s i_d+\omega_e L_q i_q}{L_d}$$
+
+$$\frac{di_q}{dt}=\frac{v_q-R_s i_q-\omega_e\left(L_d i_d+\psi_m\right)}{L_q}$$
+
+The $\omega_e L_q i_q$ and $\omega_e L_d i_d$ terms are the cross-coupling between axes;
+$\omega_e\psi_m$ is the back-EMF.
+
+## 2. Electromagnetic torque
+
+$$T_e=\tfrac{3}{2}\,p\left[\psi_m i_q+(L_d-L_q)\,i_d i_q\right]$$
+
+With a **non-salient (surface-PM) machine** $L_d=L_q$, so the reluctance term vanishes:
+
+$$T_e=\tfrac{3}{2}p\,\psi_m i_q=K_t\,i_q,\qquad K_t=\tfrac{3}{2}p\,\psi_m$$
+
+## 3. Mechanics
+
+$$\frac{d\omega_m}{dt}=\frac{T_e-T_{drag}-B_m\omega_m}{J}$$
+
+$T_{drag}$ is the rotor aerodynamic torque supplied by the flight model
+(in the standalone testbench $T_{drag}=k_{drag}\,\omega_m|\omega_m|$).
+
+Rotor electrical angle:
+
+$$\theta_e=\int p\,\omega_m\,dt$$
+
+## 4. Three-phase currents (inverse Park + inverse Clarke)
+
+$$i_a=i_d\cos\theta_e-i_q\sin\theta_e$$
+$$i_b=i_d\cos\!\left(\theta_e-\tfrac{2\pi}{3}\right)-i_q\sin\!\left(\theta_e-\tfrac{2\pi}{3}\right)$$
+$$i_c=i_d\cos\!\left(\theta_e+\tfrac{2\pi}{3}\right)-i_q\sin\!\left(\theta_e+\tfrac{2\pi}{3}\right)$$
+
+Amplitude-invariant convention: with $i_d=0$ the phase-current peak equals $i_q$,
+so $I_{rms}=i_q/\sqrt{2}$.
+
+---
+
+## 5. Field-oriented control
+
+**Current references** (torque request from the flight speed PID):
+
+$$i_q^{*}=\frac{T_{req}}{K_t},\qquad i_d^{*}=0$$
+
+$i_d^{*}=0$ is the MTPA condition for a non-salient machine.
+
+**Voltage-feasible current limit** — the largest $i_q$ the DC bus can actually
+drive at the present speed (with $i_d=0$, neglecting $R_s i_q$):
+
+$$V_{max}=\frac{V_{dc}}{\sqrt{3}},\qquad E_b=\omega_e\psi_m$$
+
+$$i_{q,lim}=\min\!\left(I_{max},\ \frac{\sqrt{V_{max}^{2}-E_b^{2}}}{\omega_e L_q}\right)$$
+
+Derived from the voltage-limit circle $\left(E_b+R_s i_q\right)^2+\left(\omega_e L_q i_q\right)^2\le V_{max}^2$.
+
+**Current loop** — PI with pole/zero cancellation, closed-loop bandwidth $\omega_{bi}$:
+
+$$K_{p,i}=L_d\,\omega_{bi},\qquad K_{i,i}=R_s\,\omega_{bi}$$
+
+---
+
+## 6. Averaged inverter
+
+No switching is modelled (no PWM ripple); the commanded dq voltage is applied
+directly, with two corrections.
+
+**(a) dq decoupling feed-forward** — cancels the cross-coupling and back-EMF so
+the PI outputs only cover the resistive drop and transients:
+
+$$v_d^{c}=v_d^{PI}-\omega_e L_q i_q$$
+$$v_q^{c}=v_q^{PI}+\omega_e\left(L_d i_d+\psi_m\right)$$
+
+**(b) Voltage clamp, d-axis priority** — SVPWM linear range $V_{max}=V_{dc}/\sqrt3$:
+
+$$v_d=\mathrm{sat}\!\left(v_d^{c},\ \pm V_{max}\right)$$
+$$v_q=\mathrm{sat}\!\left(v_q^{c},\ \pm\sqrt{V_{max}^{2}-v_d^{2}}\right)$$
+
+The d-axis keeps priority so flux control is retained at the voltage limit
+(a common-factor scaling of $v_d,v_q$ loses $i_d$ control and the flux runs away).
+
+## 7. DC side (power balance)
+
+$$P_{ac}=\tfrac{3}{2}\left(v_d i_d+v_q i_q\right),\qquad i_{dc}=\frac{P_{ac}}{V_{dc}}$$
+
+This ties the AC side to the battery: $P_{dc}=P_{ac}$ (lossless averaged converter).
+
+## 8. Battery — SA88 pack, 1-RC equivalent circuit
+
+$$V_{dc}=\mathrm{OCV}(SOC)-i_{dc}R_0(SOC)-V_1$$
+$$\frac{dV_1}{dt}=\frac{i_{dc}}{C_1}-\frac{V_1}{R_1C_1}$$
+$$SOC=SOC_0-\frac{1}{3600\,C_{pack}}\int i_{dc}\,dt$$
+
+$\mathrm{OCV},R_0,R_1,C_1$ are measured SA88 cell look-up tables vs SOC, scaled to the
+pack: $\mathrm{OCV}_{pack}=N_s\,\mathrm{OCV}_{cell}$, $R_{pack}=\frac{N_s}{N_p}R_{cell}$,
+$C_{pack}=\frac{N_p}{N_s}C_{cell}$.
+
+---
+
+## 9. Post-processing reconstruction (full mission)
+
+For the full mission the detailed drive is too slow, so the phase currents are
+reconstructed algebraically from the logged torque and speed:
+
+$$i_q=\frac{T_e}{K_t},\quad i_d=0,\quad \theta_e=\int p\,\omega\,dt$$
+$$i_a=-i_q\sin\theta_e,\quad i_{b,c}=-i_q\sin\!\left(\theta_e\mp\tfrac{2\pi}{3}\right)$$
+
+Energy-consistent with the shaft: $\tfrac{3}{2}E_b i_q=\tfrac{3}{2}\omega_e\psi_m i_q=T_e\omega_m$.
+
+**Validation:** against the detailed in-loop model the reconstructed $i_q$ agrees
+to **2.1 %** (831.9 A vs 830.9 A at hover), with matching waveform and RMS envelope.
+
+---
+
+## 10. Parameters (Evolito D500-class)
+
+| Symbol | Value | Unit | Meaning |
+|---|---|---|---|
+| $R_s$ | 0.003 | Ω | stator resistance / phase |
+| $L_d=L_q$ | 40 | µH | stator inductance (non-salient) |
+| $\psi_m$ | 0.045 | Wb | PM flux linkage |
+| $p$ | 10 | – | pole pairs |
+| $K_t$ | 0.675 | N·m/A | torque constant |
+| $I_{max}$ | 1450 | A | peak current |
+| $V_{dc}$ | 780 | V | DC bus (charged SA88 pack) |
+| $\omega_{bi}$ | 2π·1000 | rad/s | current-loop bandwidth |
+| $N_s\times N_p$ | 200 × 200 | – | SA88 pack (720 V nom, 700 Ah) |
+
+## 11. References (equation → source)
+
+**PMSM dq model, torque, Park transform** (§1, §2, §4)
+- R. H. Park, "Two-reaction theory of synchronous machines," *AIEE Trans.*, vol. 48, pp. 716–727, 1929. — original dq transformation.
+- R. Krishnan, *Permanent Magnet Synchronous and Brushless DC Motor Drives*, CRC Press, 2010, Ch. 3–4. — standard dq voltage/torque equations for PMSM.
+- D. W. Novotny and T. A. Lipo, *Vector Control and Dynamics of AC Drives*, Oxford Univ. Press, 1996.
+- B. K. Bose, *Modern Power Electronics and AC Drives*, Prentice Hall, 2002, Ch. 8.
+
+**Zero d-axis control for a non-salient machine** (§5)
+- MathWorks, *PMSM Field-Oriented Control* block — current-reference strategy "Zero d-axis control" is the default for non-salient machines.
+  https://www.mathworks.com/help/sps/ref/pmsmfieldorientedcontrol.html
+
+**Voltage-limit / current-limit constraint and the feasible $i_q$** (§5)
+- S. Morimoto, Y. Takeda, T. Hirasa, K. Taniguchi, "Expansion of operating limits for permanent magnet motor by current vector control considering inverter capacity," *IEEE Trans. Ind. Appl.*, vol. 26, no. 5, pp. 866–871, 1990. — **the classic derivation of the voltage-limit ellipse / current-limit circle** that our $i_{q,lim}$ comes from.
+- T. M. Jahns, "Flux-weakening regime operation of an interior permanent magnet synchronous motor drive," *IEEE Trans. Ind. Appl.*, vol. IA-23, no. 3, pp. 681–689, 1987.
+- M. Nicola et al., "A review about flux-weakening operating limits and control techniques for synchronous motor drives," *Energies*, vol. 15, no. 5, 1930, 2022. — modern review of the same constraints.
+- MathWorks, *PMSM Constraint Curves and Their Application*.
+  https://www.mathworks.com/help/mcb/gs/pmsm-constraint-curves-and-their-application.html
+
+**dq decoupling / pre-control feed-forward** (§6a)
+- L. Harnefors and H.-P. Nee, "Model-based current control of AC machines using the internal model control method," *IEEE Trans. Ind. Appl.*, vol. 34, no. 1, pp. 133–141, 1998. — basis for both the decoupling terms and the pole-cancelling PI tuning.
+- T. M. Rowan and R. J. Kerkman, "A new synchronous current regulator and an analysis of current-regulated PWM inverters," *IEEE Trans. Ind. Appl.*, vol. IA-22, no. 4, pp. 678–690, 1986.
+- MathWorks, *PMSM Current Controller with Pre-Control* — "pre-control voltage" is the same feed-forward.
+  https://www.mathworks.com/help/sps/ref/pmsmcurrentcontrollerwithprecontrol.html
+
+**Voltage clamp with axis prioritisation (d-axis priority)** (§6b)
+- MathWorks, *PMSM Field-Oriented Control* block, parameter **"Axis prioritization": `q-axis` | `d-axis` | `d-q equivalence`** — "Prioritize or maintain ratio between d- and q-axis when the block limits voltage." Our implementation is the `d-axis` option.
+- Anti-windup treatment of the same saturation: J.-M. Kim, S.-K. Sul, "Speed control of interior permanent magnet synchronous motor drive for the flux weakening operation," *IEEE Trans. Ind. Appl.*, vol. 33, no. 1, pp. 43–48, 1997.
+
+**SVPWM linear range $V_{max}=V_{dc}/\sqrt3$** (§6b)
+- H. W. van der Broeck, H.-C. Skudelny, G. V. Stanke, "Analysis and realization of a pulsewidth modulator based on voltage space vectors," *IEEE Trans. Ind. Appl.*, vol. 24, no. 1, pp. 142–150, 1988.
+- D. G. Holmes and T. A. Lipo, *Pulse Width Modulation for Power Converters: Principles and Practice*, IEEE Press/Wiley, 2003, Ch. 6. — the inscribed circle of the hexagon gives peak phase voltage $0.577\,V_{dc}=V_{dc}/\sqrt3$.
+
+**Averaged (switching-function-free) converter model** (§6, §7)
+- MathWorks, *Average-Value Inverter (Three-Phase)* / SPS averaged converter documentation — power-invariant DC/AC relation $P_{dc}=P_{ac}$ used in §7.
+
+**Battery 1-RC equivalent-circuit model** (§8)
+- G. L. Plett, *Battery Management Systems, Vol. I: Battery Modeling*, Artech House, 2015, Ch. 2–3.
+- M. Chen and G. A. Rincón-Mora, "Accurate electrical battery model capable of predicting runtime and I–V performance," *IEEE Trans. Energy Conversion*, vol. 21, no. 2, pp. 504–511, 2006.
+
+## 12. Modelling assumptions
+
+- Non-salient (surface-PM) machine: $L_d=L_q$, no reluctance torque, $i_d^*=0$.
+- Averaged inverter: no PWM switching, therefore **no current ripple and no
+  switching losses**; the fundamental current is exact.
+- Linear magnetics: no saturation of $\psi_m$, $L_d$, $L_q$.
+- Lossless DC/AC power balance (copper loss appears through $R_s$, iron loss not modelled).
