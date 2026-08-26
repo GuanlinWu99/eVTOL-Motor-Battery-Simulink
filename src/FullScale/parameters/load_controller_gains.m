@@ -17,7 +17,7 @@ VTOLcontrolGains.N_ROLL_RATE    =    83.1175;                                %10
 
 % Pitch rate
 VTOLcontrolGains.P_PITCH_RATE   =    0.5*5.8936e+3;                          %160;%4.4;
-VTOLcontrolGains.D_PITCH_RATE   =    1.0*139.6983;                           %320;%0.0217;
+VTOLcontrolGains.D_PITCH_RATE   =    2*1.0*139.6983;                           %320;%0.0217;
 VTOLcontrolGains.I_PITCH_RATE   =    0.01*4.2439e+4;                         %0;
 VTOLcontrolGains.N_PITCH_RATE   =    83.1175;                                %100;   
 

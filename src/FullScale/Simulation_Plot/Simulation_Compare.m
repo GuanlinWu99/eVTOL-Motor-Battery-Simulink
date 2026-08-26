@@ -54,7 +54,7 @@ Buffer = 10;
 Transparency = 0.6; 
 Line_Width = 2.5;
 
-Battery_Capacity = (HEV_Param.Capacity*HEV_Param.Np*HEV_Param.Ns*3.6)/1000;
+Battery_Capacity = (uavParams.Battery_Pack_Capacity*uavParams.Battery_Pack_Voltage)/1000;   % was a hardcoded 3.6 V per cell
 disp(['🔋 Battery Pack Capacity: ', num2str(Battery_Capacity), ' (kWh)']);
 
 %% Plot Battery Pack Electrical Performance

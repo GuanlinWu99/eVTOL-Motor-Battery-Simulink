@@ -7,12 +7,14 @@
 %                           3) battery pack spec                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [uavParams, HEV_Param] = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature)
+function uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature, Np_override)
+
+if nargin < 5, Np_override = 0; end
 
 %% Define Aerodynamics 
 % ... Load custom aerodynamic coefficients from openVSPaero
-[alpha_lon_temp, flap_lon_temp, CL_temp, CD_temp, CM_temp]          =   eVTOL_data_lon();
-[alpha_latdir_temp, beta_latdir_temp, CS_temp, CR_temp, CN_temp]    =   eVTOL_data_latdir();        % [-] CR = Cl
+[alpha_lon_temp, flap_lon_temp, CL_temp, CD_temp, CM_temp] = eVTOL_data_lon();
+[alpha_latdir_temp, beta_latdir_temp, CS_temp, CR_temp, CN_temp] = eVTOL_data_latdir();  % [-] CR = Cl
 
 uavParams.aero.alpha_lon        =   alpha_lon_temp*const.deg2rad;
 uavParams.aero.flap_lon         =   flap_lon_temp*const.deg2rad;
@@ -85,7 +87,7 @@ uavParams.aero.CnDr             =   -0.067036*3;                            % [-
 
 % --- Scale up the parameters ---
 MTOW                            =   eVTOL_MTOW*0.453592;                    % [kg]
-n                               =   14/2;                                   % [-] lenth scale parameter
+n                               =   14/2;                                   % [-] length scale parameter
 sigma                           =   (MTOW/6.025)/n^3;                       % [-] density scale parameter
 
 %.. eVTOL Geometry
@@ -106,19 +108,19 @@ uavParams.geom.Izz              =   sigma*n^5*(0.125*3);                    % [k
 uavParams.geom.Ixz              =   0.0;                                    % [kg*m^5] full-scale UAV xz-product inertia
 
 %.. motor
-uavParams.motor.RPMMAX          =   10000;                                  % [rpm] maximum rpm of motors
-uavParams.motor.tilt_trim       =   0;                                      % [rad] motor tilt trim angle 
-uavParams.motor.minPWM          =   0.1;                                    % [-] motor minimum pwm level
-uavParams.motor.maxPWM          =   1.0;                                    % [-] motor maximum pwm level
-uavParams.motor.tfnum           =   1;
-uavParams.motor.tfden           =   [0.1 1];
+uavParams.motor.RPMMAX          =   1500;                                   % [rpm] max motor rpm
+% uavParams.motor.tilt_trim       =   0;                                      % [rad] bias added to the tilt command
+uavParams.motor.minPWM          =   0.1;                                    % [-] throttle floor
+uavParams.motor.maxPWM          =   1.0;                                    % [-] throttle ceiling; 1.0 commands RPMMAX
+uavParams.motor.tfnum           =   1;                                      % [-] motor lag 1/(0.1s+1); read only by the linearization models
+uavParams.motor.tfden           =   [0.1 1];                                % [-] denominator; 0.1 s time constant
 
 %.. adjust the thrust coefficient
 uavParams.rotor.Ct              =   4/(pi^3)*0.1142;                        % [-] thrust coefficient of rotor
 uavParams.rotor.Cq              =   8/(pi^3)*0.007048;                      % [-] torque coefficient of rotor
 uavParams.rotor.N               =   3;                                      % [-] number of blades
-uavParams.geom.PropDiameter     =   (2/3)*n*0.3052;                         % [m] full-scale UAV propeller diameter
-uavParams.geom.PropChord        =   n*0.0080;                               % [m] rotor blade chord
+uavParams.geom.PropDiameter     =   3.9;                                    % [m] full-scale UAV propeller diameter
+uavParams.geom.PropChord        =   0.1022;                                 % [m] rotor blade chord
 uavParams.geom.PropOffHinge     =   0;                                      % [-] offhinge angle
 uavParams.geom.PropCLa          =   5.5;                                    % [-] propeller CL-alpha slope
 uavParams.geom.PropLock         =   0.6051;                                 % [-] lock number
@@ -142,51 +144,28 @@ uavParams.minFlap               =   0*const.deg2rad;
 uavParams.maxSpoiler            =   40*const.deg2rad;
 uavParams.minSpoiler            =   0*const.deg2rad;
 
-%% Battery model parameters
+%% Battery & Motor parameters
+% ...Battery Parameters
+Q_flat                                       = 4500*(eVTOL_MTOW/6020);  % [Nm] flat torque limit
 
-% [2-1] PREDEFINED LI-ION BATTERY PARAMS
-HEV_Param.Battery_Det.Nominal_Voltage      = 200;                           % [v]
-HEV_Param.Battery_Det.Rated_Capacity       = 8.1;                           % [Ah]
-HEV_Param.Battery_Det.Initial_SOC          = 97;                            % [%]
-HEV_Param.Battery_Det.Series_Resistance    = 0.2/10;                        % [Ohm]
+Ns                                           = 200;                         % [-] cells in series; sets pack voltage
+switch eVTOL_MTOW
+    case 7000
+        Np                                   = 28;                          % [-] cells in parallel; sets capacity and splits the current
+    otherwise
+        Np                                   = 21;                          % [-] cells in parallel; sets capacity and splits the current
+end
+if Np_override > 0
+    Np                                       = Np_override;
+end
+Norminal_Capacity                            = 10.5;                        % [Ah] per cell
+Norminal_Voltage                             = 3.45;                        % [V] per cell
+Cell_Mass                                    = 0.0965;   % [kg] per cell
 
-% [2-2] GENERIC BATTERY PARAMS
-HEV_Param.Battery_Sys.Nominal_Voltage      = 217;                           % [v]
-HEV_Param.Battery_Sys.Internal_Resistance  = 0.24691;                       % [Ohm]
-HEV_Param.Battery_Sys.Rated_Capacity       = 250;                           % [Ah]
-HEV_Param.Battery_Sys.Initial_Charge       = 250;                           % [Ah]
-HEV_Param.Battery_Sys.Expn_Voltage         = 215.0342;                      % V
-HEV_Param.Battery_Sys.Expn_Charge          = 2.3438;
-HEV_Param.Battery_Sys.C1.Capacitance       = 2500;
-HEV_Param.Battery_Sys.C1.Initial_Voltage   = 19;                            % [v]
-HEV_Param.Battery_Sys.C1.Series_Resistance = 1e-6;
-HEV_Param.Battery_Sys.R2                   = 0.3;                           % [Ohm]
-HEV_Param.Battery_Sys.R1                   = 1.8;                           % [Ohm]
-HEV_Param.Battery_Sys.Maximum_Capacity     = HEV_Param.Battery_Sys.Rated_Capacity;    % [Ah]
+%  Each 1-RC parameter's activation energy was obtained by fitting ln(parameter) versus 1/T (Arrhenius form) across the SA-88 sheets at
+%  25/30/35/40 °C (3C), over the SOC ≥ 30% range to avoid low-SOC data noise. Slope = Ea/R_g gives Ea_R0 = 1.23, Ea_R1 = 3.34, Ea_C1 = 3.44
+%  kJ/mol. （2026/06/14 Guanlin Wu）
 
-% [2-3] Battery Model Parameters 
-HEV_Param.Battery_Cell.Rated_Capacity     = 5;                              % [Ah]
-HEV_Param.Battery_Cell.SOC_init           = 0.9;                     
-HEV_Param.Battery_Cell.theta_init         = 25;
-HEV_Param.Battery_Cell.Ctheta             = 950;                            % (J/°C=J/(kg/°C）*kg) Thermal Capacitance
-HEV_Param.Battery_Cell.Area               = 0.01*200;                       % (m^2) Surface area of battery exposed to air 
-HEV_Param.Battery_Cell.Rtheta             = 20;                             % (W/m^2/K) Convective heat transfer coefficient 
-HEV_Param.Battery_Cell.Kc                 = 1.2;                            % [-]
-HEV_Param.Battery_Cell.Costar             = 1.8e+005;                       % (As)
-HEV_Param.Battery_Cell.Kt_Temps           = [25 40 60 75];                  % Temperature breakpoints for Kt LUT
-HEV_Param.Battery_Cell.Kt                 = [0.80,1.10,1.20,1.12;];         % () LUT output values
-HEV_Param.Battery_Cell.delta              = 0.73;                           % ()
-% HEV_Param.Battery_Cell.Istar              = 20;                           % (A) Nominal Current (=cap/disch_t)
-HEV_Param.Battery_Cell.theta_f            = -40;                            % (°C) Electrolyte Freezing Temp
-
-
-%% ===== Cell Spec (LG Chem INR 18650 / Samsung SA-88, 18650-class) =======
-Ns                                           = 200;                         % [-] number of series
-Np                                           = 200;                         % [-] number of parallel
-Norminal_Capacity                            = 3.5;                         % [Ah] norminal capacity
-Norminal_Voltage                             = 3.6;                         % [V] norminal voltage
-
-%% ========================================================================
 switch target_temperature
     case 20
         load("src/FullScale/parameters/SA88_25_Degree.mat");
@@ -198,100 +177,59 @@ switch target_temperature
         load("src/FullScale/parameters/SA88_40_Degree.mat");
         T_ref_K                              = 40 + 273.15;
     otherwise
-        error('Unsupported target_temperature = %g degC (expected 20, 25, or 45).', ...
-              target_temperature);
+        error('Unsupported target_temperature = %g degC (expected 20, 25, or 45).', target_temperature);
 end
 
- %  Each 1-RC parameter's activation energy was obtained by fitting ln(parameter) versus 1/T (Arrhenius form) across the SA-88 sheets at
- %  25/30/35/40 °C (3C), over the SOC ≥ 30% range to avoid low-SOC data noise. Slope = Ea/R_g gives Ea_R0 = 1.23, Ea_R1 = 3.34, Ea_C1 = 3.44
- %  kJ/mol. （2026/06/14 Guanlin Wu）
-Ea_R0                                        = 1.23;             % [kJ/mol] from R0(T) fit
-Ea_R1                                        = 3.34;             % [kJ/mol] from R1(T) fit
-Ea_C1                                        = 3.44;             % [kJ/mol] from C1(T) fit
-Ea_OCV                                       = 0.73;             % [kJ/mol] from measured OCV(T) fit; OCV rises with T -> C-style sign
-R_gas                                        = 8.314462618;
-T_target_K                                   = target_temperature + 273.15;
-delta                                        = 1/T_target_K - 1/T_ref_K;
-k_R0                                         = exp( (1000*Ea_R0/R_gas) * delta );
-k_R1                                         = exp( (1000*Ea_R1/R_gas) * delta );
-k_C1                                         = exp(-(1000*Ea_C1/R_gas) * delta );
-k_OCV                                        = exp(-(1000*Ea_OCV/R_gas) * delta );  % OCV ref = R/C ref: 20C from 25 (-0.5%), 45C from 40 (+0.44%)
+Ea_R0                                        = 1.23;                                % [kJ/mol] from R0(T) fit
+Ea_R1                                        = 3.34;                                % [kJ/mol] from R1(T) fit
+Ea_C1                                        = 3.44;                                % [kJ/mol] from C1(T) fit
+R_gas                                        = 8.314462618;                         % [J/(mol*K)] gas constant
+T_target_K                                   = target_temperature + 273.15;         % [K]
+delta                                        = 1/T_target_K - 1/T_ref_K;            % [1/K]
+k_R0                                         = exp( (1000*Ea_R0/R_gas) * delta );   % [-] 1000 converts kJ/mol -> J/mol
+k_R1                                         = exp( (1000*Ea_R1/R_gas) * delta );   % [-]
+k_C1                                         = exp(-(1000*Ea_C1/R_gas) * delta );   % [-] sign flipped: C1 rises with T
 
-soc                                          = SOC_bp / 100;   % 0..95 [%] -> 0..0.95 fraction (Simscape battery block requires SOC <= 1)
-Voltage                                      = k_OCV * OCV_table';   % measured SA-88 OCV (25C/40C), Arrhenius-scaled to target T
+soc                                          = SOC_bp / 100;                        % [%] -> 0...1.0 fraction
+Voltage                                      = OCV_table';   
 R0                                           = k_R0 * Rs_table;
 R1                                           = k_R1 * R1_table;
 C1                                           = k_C1 * C1_table;
-Tau1                                         = R1 .* C1;            % recomputed; now T-dependent (Ea_R1 != Ea_C1)
-T_target                                     = target_temperature + 273.15;
+Tau1                                         = R1 .* C1;            
 
-HEV_Param.Battery_Cell.SOC                   = soc';                        % [0-1]
-HEV_Param.Battery_Cell.Emo                   = Voltage*Ns;                  % [V]
-HEV_Param.Battery_Cell.R0                    = (Ns/Np)*R0;                  % [Ohm]
-HEV_Param.Battery_Cell.R1                    = (Ns/Np)*R1;                  % [Ohm]
-HEV_Param.Battery_Cell.C1                    = (Np/Ns)*C1;                  % [F]
-HEV_Param.Battery_Cell.Tau1                  = Tau1;                        % [s]
-HEV_Param.Capacity                           = Norminal_Capacity;
-HEV_Param.Temperature                        = target_temperature;
-HEV_Param.Ns                                 = Ns;
-HEV_Param.Np                                 = Np;
+uavParams.Battery_Cell.SOC                   = soc';                        % [-] 0..1; breakpoints for the tables below
+uavParams.Battery_Cell.Emo                   = Voltage*Ns;                  % [V] pack open-circuit voltage
+uavParams.Battery_Cell.R0                    = (Ns/Np)*R0;                  % [Ohm] ohmic resistance
+uavParams.Battery_Cell.R1                    = (Ns/Np)*R1;                  % [Ohm] polarisation resistance of the single RC branch
+uavParams.Battery_Cell.C1                    = (Np/Ns)*C1;                  % [F] polarisation capacitance
+uavParams.Battery_Cell.Tau1                  = Tau1;                        % [s] R1*C1; relaxation time of the RC branch
+uavParams.Capacity                           = Norminal_Capacity;           % [Ah] per cell; the block scales by Np internally
+uavParams.Temperature                        = target_temperature;          % [degC] fixed input, not a state; no self-heating is modelled
+uavParams.Ns                                 = Ns;
+uavParams.Np                                 = Np;
 
-HEV_Param.Battery_Pack_Voltage               = Ns*Norminal_Voltage;
-HEV_Param.Battery_Pack_Capacity              = Np*Norminal_Capacity;
+uavParams.Battery_Cell.Mass                  = Cell_Mass;  % [kg] per cell
+uavParams.Battery_Pack_Voltage               = Ns*Norminal_Voltage;
+uavParams.Battery_Pack_Capacity              = Np*Norminal_Capacity;
+uavParams.Battery_Pack_Mass                  = Ns*Np*Cell_Mass;  % [kg] cells only
+uavParams.Battery_Cell.init_SOC              = 0.95;                        % [-] 0..1; 0.95 is the top of the SOC breakpoint table
 
-% Compute initial extracted charge
-HEV_Param.Battery_Cell.Qe_init               = (1-HEV_Param.Battery_Cell.SOC_init)*HEV_Param.Battery_Cell.Kc...
-                                               *HEV_Param.Battery_Cell.Costar...
-                                               *interp1([HEV_Param.Battery_Cell.theta_f HEV_Param.Battery_Cell.Kt_Temps],[0 HEV_Param.Battery_Cell.Kt],HEV_Param.Battery_Cell.theta_init,'spline');
+% ...eVTOL Motor Parameters
+uavParams.MotorElec.TorqSpdLUT.SpeedRPM = [0    300   600   900   1200  1380  1500];  % [RPM] breakpoints, 0 to RPMMAX
+uavParams.MotorElec.TorqSpdLUT.TorqueNm = Q_flat*[1 1 1 1 1 0.978 0.900];       % [Nm] constant torque then constant power
+uavParams.MotorElec.Damping                      = 0.001;                   % [Nm/(rad/s)] kept small, motor treated as an ideal torque source
+uavParams.MotorElec.TorqueControl_TimeConst      = 0.00267;                 % [s] lag of the drive's inner torque loop  
+uavParams.MotorElec.Shaft_Inertia                = 0.009;                   % [kg*m^2] motor rotor inertia, inside the Servomotor block
+uavParams.MotorElec.Prop_Inertia                 = 0.0837*sqrt(eVTOL_MTOW/6020);  % [kg*m^2] propeller inertia on the shaft
+uavParams.MotorElec.Series_Resistance            = 0.001;                   % [Ohm] winding resistance seen from the DC bus
+uavParams.MotorElec.w_eff                        = 900;                     % [RPM] speed at which Efficiency is measured
+uavParams.MotorElec.q_eff                        = 2769;                    % [Nm] torque at which Efficiency is measured
+uavParams.MotorElec.Efficiency                   = 95;                      % [%] motor + drive efficiency at (w_eff, q_eff)
 
-%% Ultra Capacitor Parameters
-HEV_Param.UltraCapacitor.Nominal_Capacitance = 1000;                        % [Farad]
-HEV_Param.UltraCapacitor.Rate_C_V            = 0.2;                         % [Farad/Volt]
-HEV_Param.UltraCapacitor.Series_R            = 30/3;                        % [Ohm]
-HEV_Param.UltraCapacitor.Self_Discharge_R    = 500;                         % [Ohm]
-HEV_Param.UltraCapacitor.Initial_Voltage     = 217;                         % [V]
-
-%% MOTOR PARAMETERS
-HEV_Param.Motor.Stator_Resistance = 29.4e-3;        
-
-HEV_Param.Motor.TorqSpdLUT.SpeedRPM          = [0     1404   2800   4200   5600   7000   8000   8500   9000   10000]; %from ermax348
-HEV_Param.Motor.TorqSpdLUT.TorqueNm          = [800    800    800    800    800    800    700    650    500       0]; %from ermax348
-
-HEV_Param.Motor.Damping = 0.001; %N*m/(rad/s)
-HEV_Param.Motor.TorqueControl_TimeConst = 0.00267;                                  
-HEV_Param.Motor.Shaft_Inertia = 0.22042;                                    % from ermax348
-% HEV_Param.Motor.Series_Resistance = 0.01;                                 % CHG
-HEV_Param.Motor.Inductances = [425.2e-6   425.3e-6];                        % imitate surface pmsm, from ermax348
-HEV_Param.Motor.Magnetic_flux = 0.06249;                                    % from ermax 348
-HEV_Param.Motor.Efficiency = 96;                                            % from ermax 348
-
-%% DC-DC Converter Parameters
-HEV_Param.DCDCConv.Output_Voltage            = 500;                         % [V]
-HEV_Param.DCDCConv.Resistance_Losses         = 0.00625;                     % [Ohm]
-HEV_Param.DCDCConv.Kp                        = 0.01;
-HEV_Param.DCDCConv.Ki                        = 10;
-HEV_Param.DCDCConv.MinVin                    = 50;
-HEV_Param.DCDCConv.Mean_Boost.Kp             = 0.001;
-HEV_Param.DCDCConv.Mean_Boost.Ki             = 1;
-HEV_Param.DCDCConv.EPower2Heat               = 0.1;                         % Watts/Watts
-HEV_Param.DCDCConv.Thermal_Mass              = 0.1*10;                      % [kg]
-HEV_Param.DCDCConv.Specific_Heat             = 100;                         % J/kg/K
-HEV_Param.DCDCConv.Initial_Temperature       = 25;                          % [C]
-HEV_Param.DCDCConv.Air_Temperature           = 298;                         % [K]
-HEV_Param.DCDCConv.Convection.Area           = 20;                          % [cm^2]
-HEV_Param.DCDCConv.Convection.HT_Coefficient = 100;                         % W/(m^2*K)
-
-% [6] Controller Parameters
-HEV_Param.Control.Engine_Start_RPM           = 800;                         % RPM
-HEV_Param.Control.Engine_Stop_RPM            = 790;                         % RPM
-HEV_Param.Control.Mode_Logic_TS              = 0.1;
-HEV_Param.Control.ICE.Kp                     = 0.02;
-HEV_Param.Control.ICE.Ki                     = 0.01;
-HEV_Param.Control.Gen.Kp                     = 10;
-HEV_Param.Control.Gen.Ki                     = 3;
-HEV_Param.Control.Mot.Kp                     = 500;
-HEV_Param.Control.Mot.Ki                     = 300;
-HEV_Param.Control.Veh_Spd.Kp                 = 0.02;
-HEV_Param.Control.Veh_Spd.Ki                 = 0.04;
-
+% ...DC-DC Converter Parameters
+uavParams.DCDCConv.Output_Voltage            = 1000;                        % [V] regulated bus that feeds the four drives
+uavParams.DCDCConv.Resistance_Losses         = 0.0188;                     % [Ohm] conduction loss (GAIA converter, 4%)
+uavParams.DCDCConv.Kp                        = 0.01;                        % [-] output voltage proportional controller
+uavParams.DCDCConv.Ki                        = 10;                          % [-] output voltage integral controller
+uavParams.DCDCConv.MinVin                    = 50;                          % [V] converter stops below this input voltage
 end

@@ -225,12 +225,12 @@ end
 % SOC        = outTuned.Battery_Data.Batt.SOC____.Data;  % current SOC time series
 % 
 % % Lookup table breakpoints (SOC axis for R0, R1, R2)
-% SOC_bkpt   = HEV_Param.Battery_Cell.SOC_bkpt;  % [87x1]
+% SOC_bkpt   = uavParams.Battery_Cell.SOC_bkpt;  % [87x1]
 % 
 % % Interpolate each R component at the operating SOC
-% R0         = interp1(SOC_bkpt, HEV_Param.Battery_Cell.R0, SOC, 'linear', 'extrap');
-% R1         = interp1(SOC_bkpt, HEV_Param.Battery_Cell.R1, SOC, 'linear', 'extrap');
-% R2         = interp1(SOC_bkpt, HEV_Param.Battery_Cell.R2, SOC, 'linear', 'extrap');
+% R0         = interp1(SOC_bkpt, uavParams.Battery_Cell.R0, SOC, 'linear', 'extrap');
+% R1         = interp1(SOC_bkpt, uavParams.Battery_Cell.R1, SOC, 'linear', 'extrap');
+% R2         = interp1(SOC_bkpt, uavParams.Battery_Cell.R2, SOC, 'linear', 'extrap');
 % R          = R0 + R1 + R2;      % time varying resistance
 % Voc        = V + I .* R; 
 % 
@@ -246,13 +246,38 @@ end
 % Plot all figure
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.5 0.8], 'Color','w'); 
 
+if uavParams.Temperature == 20
+    Pre_Cond_kWh = uavParams.Battery_Pack_Mass*950*50/3.6e6;
+else
+    Pre_Cond_kWh = 0;
+end
+Pack_kWh     = uavParams.Battery_Pack_Capacity*uavParams.Battery_Pack_Voltage/1000;
+Pre_Cond_SOC = 100*Pre_Cond_kWh/Pack_kWh;                                   % [%] share of the pack spent on heating
+if Pre_Cond_kWh > 0
+    Pre_Cond_Note = sprintf('incl. %.2f kWh preconditioning', Pre_Cond_kWh);
+    SOC_Title     = {'SOC', Pre_Cond_Note};
+    Energy_Title  = {'Cumulative Energy Consumption', Pre_Cond_Note};
+else
+    SOC_Title     = 'SOC';
+    Energy_Title  = 'Cumulative Energy Consumption';
+end
+SOC_Plot    = outTuned.Battery_Data.Batt.SOC____.Data - Pre_Cond_SOC;
+Energy_Plot = Pack_Energy/(3.6*10^6) + Pre_Cond_kWh;
+
+if ~exist('AX_SOC','var'),     AX_SOC     = [20 100];  end
+if ~exist('AX_CRATE','var'),   AX_CRATE   = [0 13];    end
+if ~exist('AX_CURRENT','var'), AX_CURRENT = [0 3500];  end
+if ~exist('AX_VOLTAGE','var'), AX_VOLTAGE = [650 850]; end
+if ~exist('AX_POWER','var'),   AX_POWER   = [0 2500];  end
+if ~exist('AX_ENERGY','var'),  AX_ENERGY  = [0 150];   end
+
 subplot(3,3,1)
-plot(outTuned.Battery_Data.Batt.SOC____.Time, outTuned.Battery_Data.Batt.SOC____.Data,'LineWidth',Line_Width); grid on;
-title('SOC','FontSize',Font); 
+plot(outTuned.Battery_Data.Batt.SOC____.Time, SOC_Plot,'LineWidth',Line_Width); grid on;
+title(SOC_Title,'FontSize',Font); 
 xlabel('Time (s)','FontSize',12);
 ylabel('(%)','FontSize',12); 
 xlim([0 Time(end)]); 
-ylim([50 100])
+ylim(AX_SOC)
 
 subplot(3,3,2)
 plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',Line_Width); grid on; 
@@ -260,6 +285,7 @@ title('C-rate','FontSize',Font);
 xlabel('Time (s)','FontSize',12);
 ylabel('(-)','FontSize',12);
 xlim([0 Time(end)])
+ylim(AX_CRATE)
 
 subplot(3,3,3)
 plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',Line_Width); grid on; 
@@ -267,6 +293,7 @@ title('Current','FontSize',Font);
 xlabel('Time (s)','FontSize',12); 
 ylabel('(A)','FontSize',12);
 xlim([0 Time(end)])
+ylim(AX_CURRENT)
 
 subplot(3,3,4)
 plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',Line_Width); grid on;
@@ -274,6 +301,7 @@ title('Voltage','FontSize',Font);
 xlabel('Time (s)','FontSize',12); 
 ylabel('(V)','FontSize',12);
 xlim([0 Time(end)])
+ylim(AX_VOLTAGE)
 
 subplot(3,3,5)
 plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',Line_Width); grid on;
@@ -281,22 +309,19 @@ title('Required Power','FontSize',Font);
 xlabel('Time (s)','FontSize',12);  
 ylabel('(kW)','FontSize',12); 
 xlim([0 Time(end)])
+ylim(AX_POWER)
 
 subplot(3,3,6)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Energy/(3.6*10^6),'LineWidth',Line_Width); grid on;
-title('Cumulative Energy Consumption','FontSize',Font);  
+plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Energy_Plot,'LineWidth',Line_Width); grid on;
+title(Energy_Title,'FontSize',Font);  
 xlabel('Time (s)','FontSize',12);
 ylabel('(kWh)','FontSize',12);
 xlim([0 Time(end)])
-ylim([0 180])
+ylim(AX_ENERGY)
  
 % subplot(3,3,7)
 % plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, SOP_dis_kW,'LineWidth',Line_Width); 
 % title('SOP','FontSize',Font); ylabel('(kW)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; xlim([0 Time(end)])
-
-subplot(3,3,8)
-plot(outTuned.Battery_Data.Batt.signal7.Time, outTuned.Battery_Data.Batt.signal7.Data/200,'LineWidth',Line_Width);
-title('ocv','FontSize',Font); ylabel('(%)','FontSize',12); xlabel('Time (s)','FontSize',12); grid on; 
 
 sgtitle('Battery Pack Electrical Performance','FontSize',20,'FontWeight','bold');
 
@@ -318,6 +343,7 @@ axs = flipud(axs);
 for ax = transpose(axs)
     hold(ax,'on');
     yl = ylim(ax);
+    ylim(ax, yl);
     for k = 1:size(modeIntervals,1)
         x1 = modeIntervals(k,1);
         x2 = modeIntervals(k,2);
@@ -456,8 +482,9 @@ plot(ref_2d_traj(1,:),-ref_2d_traj(3,:), 'LineWidth', Line_Width, 'LineStyle',"-
 plot(positionFeedbackData(4,:), -positionFeedbackData(6,:), 'LineWidth', 1.5,'Color',H(1)); grid on; box on; 
 xlabel('Distance (North, m)', 'FontSize', 12); 
 ylabel('Altitude (m)', 'FontSize', 12); 
-xlim([0 max(positionFeedbackData(4,:))+50]); 
-ylim([0 1000]);
+xlim([0 max(positionFeedbackData(4,:))+50]);
+if ~exist('AX_ALT','var'), AX_ALT = [0 1000]; end
+ylim(AX_ALT);
 legend('Mission Profile', 'Actual Trajectory')
 title('Flight Trajectory in 2D Vertical Plane', 'FontSize', Font, 'FontWeight', 'bold');
 % axis tight; pbaspect([15 1 1]);
@@ -467,8 +494,9 @@ plot(ref_air_spd(1,:), ref_air_spd(2,:), 'LineWidth', Line_Width, 'LineStyle',"-
 plot(positionFeedbackData(4,:), air_spd(1:5:end,:), 'LineWidth', 1.5,'Color',H(1));
 xlabel('Distance (North, m)', 'FontSize', 12); 
 ylabel('Airspeed (kts)', 'FontSize', 12); 
-xlim([0 max(positionFeedbackData(4,:))+50]); 
-ylim([0 110]);
+xlim([0 max(positionFeedbackData(4,:))+50]);
+if ~exist('AX_SPD','var'), AX_SPD = [0 110]; end
+ylim(AX_SPD);
 legend('Mission Profile', 'Actual Trajectory')
 title('Flight Speed Profile', 'FontSize', Font, 'FontWeight', 'bold');
 % axis tight; pbaspect([15 1 1]);
@@ -492,6 +520,7 @@ axs = findall(gcf, 'Type', 'Axes'); axs = flipud(axs);
 for ax = transpose(axs)
     hold(ax, 'on');
     yl = ylim(ax);
+    ylim(ax, yl);
     for k = 1:size(modeIntervals,1)
         x1 = modeIntervals(k,1);
         x2 = modeIntervals(k,2);
@@ -511,9 +540,9 @@ plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:)
 xlabel('Time (s)','FontSize',12); 
 ylabel('Att (deg)','FontSize',12); 
 title('Euler Angles','FontSize',13); 
-legend('Roll','Pitch','Yaw','Location','northeast'); 
+legend('Roll','Pitch','Yaw','Location','northeast');
 xlim([0 Time(end)])
-ylim([-10 45]); 
+ylim([-10 45]);
 
 % subplot(4,1,2)
 % plot(outTuned.UAV_State.RotorParameters.w1.Time, reshape(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:)*60/(2*pi), [size(outTuned.UAV_State.RotorParameters.w1.Data(:,1,:),1),1]), 'LineWidth', Line_Width-1); hold on; grid on;
@@ -573,6 +602,7 @@ axs = flipud(axs);
 for ax = transpose(axs)
     hold(ax,'on');
     yl = ylim(ax);
+    ylim(ax, yl);
     for k = 1:size(modeIntervals,1)
         x1 = modeIntervals(k,1);
         x2 = modeIntervals(k,2);
@@ -639,7 +669,7 @@ V = outTuned.Battery_Data.Batt.Voltage__V_.Data(:);
 I = outTuned.Battery_Data.Batt.Current__A_.Data(:);
 SOC = outTuned.Battery_Data.Batt.SOC____.Data(:);
 Voc = outTuned.Battery_Data.Batt.signal7.Data(:);
-Temp = outTuned.Battery_Data.Batt.Temperature.Data(:);
+% Temp = outTuned.Battery_Data.Batt.Temperature.Data(:);
 SOC = SOC/100;
 dt = [0; diff(t)];                                                          % [s]
 Ts_med = median(diff(t));

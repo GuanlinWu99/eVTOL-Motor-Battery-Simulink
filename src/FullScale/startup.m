@@ -1,8 +1,7 @@
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Topic: start up script for tilt-rotor eVTOL MATLAB/Simulink simulator          %
 % Author(s): Minhyun, Sounghwan, and Guanlin                                     %
-% Description and updates (05/11/2026):                                          %
+% Description and updates (08/25/2026):                                          %
 % 1. Include drag torque calculation in the powertrain                           %
 % 2. Upgrade battery pack in the powertrain                                      %
 % 3. Changed from Variable-Type to Fixed-Type Ts = 0.001 (09/26/2025)            %
@@ -10,6 +9,9 @@
 % 5. Replacement of Prof. Jung's group 2RC-ECM battery model (04/01/2026)        %
 % 6. Completed Arrhenius relation for battery parameter fitting (04/15/2026)     %
 % 7. Completed the P8 flight profile (most critical case) (05/11/2026)           %
+% 8. Rotor diameter increased to 3.9 m and powertrain rescaled (08/09/2026)      %
+% 9. One battery pack for all MTOW via BATTERY_NP (08/12/2026)                   %
+% 10. Switched the cell to the Amprius SA88 data sheet values (08/14/2026)       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ... Clear workspace, command window and close figures
@@ -21,17 +23,10 @@ cleanup; clc;
 mdl ='VTOLTiltrotor';
 load_system(mdl);
 
-%% ... Call motor speed PID controller gains
-motorctrl.p  = 0.4;
-motorctrl.i  = 0.001;
-motorctrl.d  = 0;
-motorctrl.n  = 100;
-Limit        = 700;
-
 cfgRefTop    = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
 cfgTop       = getRefConfigSet(cfgRefTop);
 set_param(cfgTop,'SolverType','Fixed-step','Solver','ode4');
-Ts           = 0.001;
+Ts           = 0.001;                                       % [s] sample time
 mdlSub       = 'VTOLDynamics';
 load_system(mdlSub);
 cfgSubActive = getActiveConfigSet(mdlSub);
@@ -56,7 +51,7 @@ iniQ        =   0;
 iniR        =   0;
 
 %... Initialize eVTOL landing gear model
-load("data\contact.mat")
+load("contact.mat")
 
 %... Load bus interfaces for controller
 load_ctrl_interface();
@@ -70,13 +65,22 @@ load_controller_gains;
 %... Load constants
 const = load_const();
 
+% ... Call motor speed PID controller gains
+motorctrl.p  = 2.28;
+motorctrl.i  = 0.001;
+motorctrl.d  = 0;
+motorctrl.n  = 100;
+Limit        = 700;  % [Nm] saturation of the motor speed PID correction
+
+BATTERY_NP = 21;                      % [-] cells in parallel, 0 = by MTOW
+
 % P1, P2, P3 : Short Distance (8.2 NM)
 % P4, P5, P9, P10 : Middle Distance (16 NM)
 % P6, P7, P8 : Long Distance (23 NM)
 % P11 : Test profile
 
 %... Flight profile
-Profile = 2;
+Profile = 4;
 
 %... Set up VTOL dynamics parameters
 switch Profile
@@ -120,7 +124,7 @@ end
 if Wind_Speed == 0
 %% No Wind
     Yaw_Wind_Moment = 0;
-    
+
 %% Moderate Wind
 elseif (Wind_Speed == 5) && (eVTOL_MTOW == 5600)
     Yaw_Wind_Moment = 1400;
@@ -128,12 +132,12 @@ elseif (Wind_Speed == 5) && (eVTOL_MTOW == 6020)
     Yaw_Wind_Moment = 2500;
     VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
     VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
-elseif (Wind_Speed == 5) && (eVTOL_MTOW == 7000)    
+elseif (Wind_Speed == 5) && (eVTOL_MTOW == 7000)
     Yaw_Wind_Moment = 3500;
     VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
     VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
 
-%% Strong Wind (To be updated...) 
+%% Strong Wind (To be updated...)
 elseif (Wind_Speed == 7) && (eVTOL_MTOW == 5600)
     Yaw_Wind_Moment = 3000;
 elseif (Wind_Speed == 7) && (eVTOL_MTOW == 6020)
@@ -141,18 +145,21 @@ elseif (Wind_Speed == 7) && (eVTOL_MTOW == 6020)
     VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
     VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
 elseif (Wind_Speed == 7) && (eVTOL_MTOW == 7000)
-    Yaw_Wind_Moment = 3000;    
+    Yaw_Wind_Moment = 3000;
     VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
     VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
 end
 
-[uavParams, HEV_Param] =   load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature);
+uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature, BATTERY_NP);
 
-if Profile == 8
+% Landing descent speed. This was 'if Profile == 8' and scaled all four
+% vertical gains. Only P_Z matters here. The Waypoint Follower uses a fixed
+% 3 m lookahead and the descent rate is P_Z times its vertical part, so the
+% aircraft tracks the commanded altitude to about 2.6 m RMSE and the inner
+% loop is not the limit. Measured on P4 over a common 60 to 10 m window,
+% the descent rate is 1.12 m/s at the base gain and 1.58 m/s here.
+if eVTOL_MTOW == 7000
     VTOLcontrolGains.P_Z  = 1.5 * VTOLcontrolGains.P_Z;
-    VTOLcontrolGains.P_VZ = 1.5 * VTOLcontrolGains.P_VZ;
-    VTOLcontrolGains.I_VZ = 1.5 * VTOLcontrolGains.I_VZ;
-    VTOLcontrolGains.D_VZ = 1.5 * VTOLcontrolGains.D_VZ;
 end
 
 %% Other setting...
@@ -189,26 +196,20 @@ disp(['📍 Travel Distance: ', num2str(TransitionMission(end).position(1)), ' (
 disp(['🕒 Total Simulation Time: ', num2str(Total_sim_time), ' (s)']);
 disp(['🛩️ eVTOL MTOW: ', num2str(eVTOL_MTOW), ' (lbs)']);
 disp(['🌪️ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
-disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Battery_Pack_Capacity*HEV_Param.Battery_Pack_Voltage)/1000), ' (kWh)']);
-disp(['⚡ Battery Pack Voltage: ', num2str(HEV_Param.Battery_Pack_Voltage), ' (V)']);
-disp(['🌡️ Operation Temperature: ', num2str(HEV_Param.Temperature), ' (°C)']);
-%disp(['❗ Key Note: We used the Prof. Jung battery 2RC-ECM model at 25 °C. OCV-SOC curve for 0~11 % is not available. Battery parameters for 30 ~ 45 °C are not available currently.']);
-%disp(['🔋 Battery Pack Capacity: ', num2str((HEV_Param.Capacity*HEV_Param.Np*HEV_Param.Battery_Cell.Emo)/1000), ' (kWh)']);
-%disp(['⚡ Battery Pack Voltage: ', num2str(HEV_Param.Battery_Cell.Emo), ' (V)']);
-% disp(['🌡️ Operation Temperature: ', num2str(HEV_Param.Temperature), ' (°C)']);
+disp(['🔋 Battery Pack Capacity: ', num2str((uavParams.Battery_Pack_Capacity*uavParams.Battery_Pack_Voltage)/1000), ' (kWh)']);
+disp(['⚡ Battery Pack Voltage: ', num2str(uavParams.Battery_Pack_Voltage), ' (V)']);
+disp(['🌡️ Operation Temperature: ', num2str(uavParams.Temperature), ' (°C)']);
 
-if HEV_Param.Temperature == 20
-    Pre_Conditioning_Energy = 24.17;
+if uavParams.Temperature == 20
+    Pre_Conditioning_Energy = uavParams.Battery_Pack_Mass*950*50/3.6e6;           % [kWh]
     disp(['🎯 Pre-Conditioning from -30 °C to 20 °C ... ', num2str(Pre_Conditioning_Energy), ' (kWh)', ' is required.']);
     fprintf('\n')
 end
-% keyboard;
 
 %% Run Simulink 
 outTuned = sim(mdl);
 filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
-save(filename, 'outTuned', 'TransitionMission', 'HEV_Param', 'controlParams', 'uavParams', 'const');
-% keyboard;
+save(filename, 'outTuned', 'TransitionMission', 'uavParams', 'controlParams', 'const');
 
 %% Plot Simulation Plots
 switch Profile
@@ -217,7 +218,4 @@ switch Profile
     otherwise
     Simulation_Plot();
 end
-
-%% Comparision plot under 1) Prototype battery model and 2) Prof. Jung's model
-Simulation_Compare();
 
