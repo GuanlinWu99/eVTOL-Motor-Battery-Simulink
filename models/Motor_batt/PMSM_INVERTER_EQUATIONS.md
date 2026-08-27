@@ -128,24 +128,60 @@ $$i_a=-i_q\sin\theta_e,\quad i_{b,c}=-i_q\sin\!\left(\theta_e\mp\tfrac{2\pi}{3}\
 
 Energy-consistent with the shaft: $\tfrac{3}{2}E_b i_q=\tfrac{3}{2}\omega_e\psi_m i_q=T_e\omega_m$.
 
-**Validation:** against the detailed in-loop model the reconstructed $i_q$ agrees
-to **2.1 %** (831.9 A vs 830.9 A at hover), with matching waveform and RMS envelope.
+**Validation:** against the detailed in-loop model the reconstructed $i_q$ agreed
+to **2.1 %** (831.9 A vs 830.9 A at hover), with matching waveform and RMS
+envelope. That figure was measured with the earlier D500-class parameter set and
+has not been repeated since the motor changed to the D1500 pair of section 10, so
+it should be re-run before it is quoted.
 
 ---
 
-## 10. Parameters (Evolito D500-class)
+## 10. Parameters
+
+Motor: two Evolito D1500 stacked per rotor, axial flux, about 80 kg, up to
+2500 rpm, rated near 2880 N·m peak and 540 kW. Evolito does not publish the
+electrical detail, so $R_s$, $L_d$, $L_q$, $\psi_m$ and $p$ are estimates chosen
+to keep the back-EMF inside the bus up to 1500 rpm. Values are those in
+`pmsm_batt_testbench_data.m`.
 
 | Symbol | Value | Unit | Meaning |
 |---|---|---|---|
-| $R_s$ | 0.003 | Ω | stator resistance / phase |
-| $L_d=L_q$ | 40 | µH | stator inductance (non-salient) |
-| $\psi_m$ | 0.045 | Wb | PM flux linkage |
-| $p$ | 10 | – | pole pairs |
-| $K_t$ | 0.675 | N·m/A | torque constant |
-| $I_{max}$ | 1450 | A | peak current |
-| $V_{dc}$ | 780 | V | DC bus (charged SA88 pack) |
+| $R_s$ | 0.010 | Ω | stator resistance / phase (estimate) |
+| $L_d=L_q$ | 200 | µH | stator inductance, non-salient (estimate) |
+| $\psi_m$ | 0.16 | Wb | PM flux linkage (estimate) |
+| $p$ | 15 | – | pole pairs (estimate) |
+| $K_t=\tfrac32 p\psi_m$ | 3.6 | N·m/A | torque constant |
+| $I_{max}$ | 800 | A | peak current, $K_t I_{max}$ = 2880 N·m |
+| $J_m$ | 0.09 | kg·m² | shaft 0.009 plus propeller 0.08 |
+| $V_{dc}$ | 690 | V | DC bus, see the note below |
 | $\omega_{bi}$ | 2π·1000 | rad/s | current-loop bandwidth |
-| $N_s\times N_p$ | 200 × 200 | – | SA88 pack (720 V nom, 700 Ah) |
+| $N_s\times N_p$ | 200 × 21 | – | SA88 pack, 690 V nominal, 220.5 Ah, 152.1 kWh |
+
+The pack matches the flight model, which sets $N_s=200$, $N_p=21$ and a 10.5 Ah
+SA88 cell. An earlier version of this file used 200 × 200 with a 3.5 Ah cell,
+which was the LG placeholder the flight side replaced on 14 August 2026. That
+pack held 3.2 times the capacity and a ninth of the resistance, so its bus never
+sagged.
+
+$V_{dc}$ is still a constant, which is a stopgap. The flight model measures the
+pack at 824 V full and 666 V at the P4 landing peak, so a fixed 690 V neither
+follows the state of charge nor reproduces the sag under load. Section 5 of
+`INTEGRATION_GUIDE.md` describes the fix, which is to sum $i_{dc}$ across the four
+motors into the battery block of section 8 and broadcast its terminal voltage
+back as $V_{dc}$.
+
+**Back-EMF headroom.** $E_b=\omega_e\psi_m$ against the SVPWM ceiling
+$V_{max}=V_{dc}/\sqrt3$:
+
+| Speed | $E_b$ | $V_{max}$ at 824 V | at 690 V | at 666 V |
+|---|---|---|---|---|
+| 1000 rpm | 251 V | 476 V | 398 V | 384 V |
+| 1265 rpm (measured peak) | 318 V | 476 V | 398 V | 384 V |
+| 1500 rpm (RPMMAX) | 377 V | 476 V | 398 V | 384 V |
+
+At the measured peak rotor speed there is 66 V of headroom on a depleted pack.
+At RPMMAX there is 7 V, so a mission that reaches the speed ceiling on a low pack
+would need field weakening.
 
 ## 11. References (equation → source)
 

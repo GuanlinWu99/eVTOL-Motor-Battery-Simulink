@@ -20,7 +20,10 @@ w_ref_val = [87.2; 87.4; 87.2; 87.4];      % [rad/s]   per-rotor hover speed ref
 
 % ---- Flight integration (PMSM_Drive), 3.9 m rotor ----
 Jm_flight  = 0.09;                          % [kg*m^2] physical (shaft 0.009 + prop 0.08)
-Vdc_fixed  = 720;                           % [V]      DC bus (low-speed motor is not voltage-limited)
+Vdc_fixed  = 690;                           % [V]      NOT used by the flight integration. PMSM_Drive
+                                            %          has its own Battery subsystem: Total_Idc sums the
+                                            %          four Idc into a 1-RC ECM and broadcasts Vdc back.
+                                            %          Kept for the standalone PMSM_SA88_* testbenches.
 RPMMAX     = 1500;                          % [rpm]    max motor speed (normalises Rotor Assembly.N)
 trqR_hover = [1500; 1505; 1500; 1505];      % [N*m]    hover torque (standalone test)
 
@@ -28,8 +31,12 @@ trqR_hover = [1500; 1505; 1500; 1505];      % [N*m]    hover torque (standalone 
 bw_i = 2*pi*1000;  Kp_i = Ld*bw_i;  Ki_i = Rs*bw_i;            % current loop, 1 kHz
 bw_w = 2*pi*5;     Kp_w = Jtot*bw_w/Kt;  Ki_w = Kp_w*bw_w/10;  % speed loop, 5 Hz
 
-% ---- Battery (SA88 200S200P, 1-RC ECM) ----
-Ns = 200; Np = 200; Cell_Cap = 3.5;         % [-] [-] [Ah]
+% ---- Battery (SA88 200S21P, 1-RC ECM) ----
+% Matches the flight model: load_vtol_dynamics_7000lb sets Ns=200, Np=21 and a
+% 10.5 Ah SA88 cell. Was 200P with a 3.5 Ah cell, which is the LG placeholder
+% the flight side dropped on 08/14/2026, and gave a pack 3.2 times the capacity
+% and a ninth of the resistance, so the bus never sagged.
+Ns = 200; Np = 21; Cell_Cap = 10.5;         % [-] [-] [Ah]
 here = fileparts(mfilename('fullpath'));
 D = load(fullfile(here,'..','..','src','FullScale','parameters','SA88_25_Degree.mat'));
 [soc_bp, iSort] = sort(D.SOC_bp(:)/100);
@@ -49,4 +56,4 @@ tau_dc = 1e-4;     % [s] DC-link filter time constant
 Ts_solver = 2e-5;  % [s] fixed step
 StopTime  = 10;    % [s]
 
-fprintf('PMSM+SA88 data loaded: Kt=%.3f, %.0fV, %.0fAh\n', Kt, Ns*mean(ocv_cell), Cap_pack);
+fprintf('PMSM+SA88 data loaded: Kt=%.3f, %.0fV, %.0fAh (%dS%dP)\n', Kt, Ns*mean(ocv_cell), Cap_pack, Ns, Np);
