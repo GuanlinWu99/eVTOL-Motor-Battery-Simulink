@@ -21,7 +21,7 @@ k_drag    = 0.1974;                        % [N*m*s^2] rotor drag  T = k_drag*w^
 w_ref_val = [87.2; 87.4; 87.2; 87.4];      % [rad/s]   per-rotor hover speed refs (~832 rpm)
 
 % ---- Flight integration (PMSM_Drive), 3.9 m rotor ----
-Jm_flight  = 0.0002;                        % [kg*m^2] tiny for spin-up authority (physical ~0.09; needs motorctrl.p~180 instead)
+Jm_flight  = 0.09;                          % [kg*m^2] physical (shaft 0.009 + prop 0.08)
 Vdc_fixed  = 720;                           % [V]      DC bus (low-speed motor is not voltage-limited)
 RPMMAX     = 1500;                          % [rpm]    max motor speed (normalises Rotor Assembly.N)
 trqR_hover = [1500; 1505; 1500; 1505];      % [N*m]    hover torque (standalone test)
