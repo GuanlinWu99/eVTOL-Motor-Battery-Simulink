@@ -1,18 +1,16 @@
 %% PMSM / inverter / SA88 parameters (base workspace).
 
-% ---- Motor (3.9 m direct-drive rotor: low-speed, high-torque) ----
-% Represents the system-level motor in VTOLDynamics (2769 Nm peak, <=1500 rpm,
-% 95% eff). The old high-speed Evolito cannot make ~1500 Nm at ~830 rpm.
-% Swap for a specific target motor when available.
-Rs   = 0.015;      % [Ohm]    stator resistance / phase
-Ld   = 300e-6;     % [H]      d-axis inductance (large low-speed machine)
-Lq   = 300e-6;     % [H]      q-axis inductance
-psim = 0.092;      % [Wb]     PM flux linkage (high, for high torque)
-p    = 20;         % [-]      pole pairs (multi-pole direct drive)
+% ---- Motor: Evolito D1500 x2 stacked per rotor (axial flux, ~80 kg, <=2500 rpm) ----
+% Ratings ~2880 Nm peak / ~540 kW at 720V; Rs/Ld/psim/p are ESTIMATES (Evolito unpublished).
+Rs   = 0.010;      % [Ohm]    stator resistance / phase (est, large axial-flux)
+Ld   = 200e-6;     % [H]      d-axis inductance (est)
+Lq   = 200e-6;     % [H]      q-axis inductance (est, non-salient)
+psim = 0.16;       % [Wb]     PM flux (est; keeps back-EMF < 720/sqrt3 up to 1500 rpm)
+p    = 15;         % [-]      pole pairs (est, high-pole axial flux)
 Bm   = 1e-3;       % [N*m*s]  viscous damping
 Jtot = 2.0;        % [kg*m^2] motor+rotor inertia (standalone testbench)
-Imax = 1000;       % [A]      peak current limit (2769 Nm / Kt ~ 1003 A)
-Kt   = 1.5*p*psim; % [Nm/A]   torque constant = 2.76
+Imax = 800;        % [A]      peak current (Kt*Imax = 2880 Nm peak, covers 2769)
+Kt   = 1.5*p*psim; % [Nm/A]   torque constant = 3.6
 
 % ---- Rotor load / operating point (3.9 m rotor, MTOW 5600 lb) ----
 % k_drag = Cq*rho*A*R^3 ; Cq=8/pi^3*0.007048, A=pi*(3.9/2)^2, R=1.95, rho=1.225.
