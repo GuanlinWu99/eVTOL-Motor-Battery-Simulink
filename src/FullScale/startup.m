@@ -52,6 +52,7 @@ iniR        =   0;
 
 %... Initialize eVTOL landing gear model
 load("contact.mat")
+pmsm_batt_testbench_data;
 
 %... Load bus interfaces for controller
 load_ctrl_interface();
@@ -152,12 +153,7 @@ end
 
 uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature, BATTERY_NP);
 
-% Landing descent speed. This was 'if Profile == 8' and scaled all four
-% vertical gains. Only P_Z matters here. The Waypoint Follower uses a fixed
-% 3 m lookahead and the descent rate is P_Z times its vertical part, so the
-% aircraft tracks the commanded altitude to about 2.6 m RMSE and the inner
-% loop is not the limit. Measured on P4 over a common 60 to 10 m window,
-% the descent rate is 1.12 m/s at the base gain and 1.58 m/s here.
+
 if eVTOL_MTOW == 7000
     VTOLcontrolGains.P_Z  = 1.5 * VTOLcontrolGains.P_Z;
 end
