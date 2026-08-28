@@ -128,11 +128,36 @@ $$i_a=-i_q\sin\theta_e,\quad i_{b,c}=-i_q\sin\!\left(\theta_e\mp\tfrac{2\pi}{3}\
 
 Energy-consistent with the shaft: $\tfrac{3}{2}E_b i_q=\tfrac{3}{2}\omega_e\psi_m i_q=T_e\omega_m$.
 
-**Validation:** against the detailed in-loop model the reconstructed $i_q$ agreed
-to **2.1 %** (831.9 A vs 830.9 A at hover), with matching waveform and RMS
-envelope. That figure was measured with the earlier D500-class parameter set and
-has not been repeated since the motor changed to the D1500 pair of section 10, so
-it should be re-run before it is quoted.
+**Validation.** Measured on a 1.0 s takeoff run of the integrated model, with the
+D1500 pair of section 10 and the 200S21P pack, by logging the drive's own $i_q$
+and comparing it against $T_{drag}/K_t$ on the same run.
+
+| Window | detailed $i_q$ | reconstructed | error |
+|---|---|---|---|
+| settled, t > 0.90 s | 628.5 A mean | 628.3 A | −0.16 A, **0.026 %** |
+| peak over the run | 631.6 A | 631.4 A | −0.2 A |
+| whole run, spin-up included | 562.7 A mean | 560.0 A | rms 10.1 A, worst −61.7 A |
+
+The reconstruction is exact where it matters and wrong only during fast
+acceleration, because $T_{drag}$ stands in for $T_e$ and the two differ by the
+inertia term:
+
+$$T_e = T_{drag} + B_m\omega + J\frac{d\omega}{dt}$$
+
+The worst point is t = 0.010 s, 23 rpm into the spin-up at 944 rad/s², where the
+drive draws 75.3 A (271 N·m) against 49 N·m of rotor drag. $J\,d\omega/dt$ accounts
+for 85 N·m of the gap. The rest is not fully explained and is most likely the
+four speed filters on the feedback path plus the current-loop transient, so treat
+the transient error as a bound rather than a model.
+
+None of this affects a mission figure. Hover and cruise are quasi-steady, and the
+peak current agrees to 0.2 A, so both the envelope and the battery sizing that
+follows from it are safe. Only low-current fast transients read low, and they set
+no limit.
+
+An earlier version of this file claimed 2.1 % from 831.9 A against 830.9 A. Those
+two numbers differ by 0.12 %, not 2.1 %, and they belong to the D500-class
+parameter set. The table above replaces them.
 
 ---
 

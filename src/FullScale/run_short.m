@@ -73,8 +73,8 @@ for zzk = 1:min(numel(ph.Outport),numel(pdnames))
 end
 
 try, Simulink.sdi.clear; catch, end                 % free C-drive SDI archive
-set_param(cfgTop,'StopTime','0.4');
-fprintf('\n>>> running 0.4 s sim (Jm_flight=%.4g)...\n', Jm_flight);
+set_param(cfgTop,'StopTime','1.0');
+fprintf('\n>>> running 1.0 s sim (Jm_flight=%.4g)...\n', Jm_flight);
 tic; outTuned = sim(mdl); fprintf('sim wall time: %.0f s\n', toc);
 
 %% ===== report =====
@@ -126,6 +126,25 @@ catch e
 end
 
 % save compact for plotting
+% validation set for section 9 of PMSM_INVERTER_EQUATIONS.md: the detailed iq
+% against the algebraic reconstruction iq = Tdrag/Kt on the same run.
+try
+    ls = outTuned.get('logsout');
+    V.t_det = ls.getElement('pd_Idq').Values.Time;
+    V.idq   = ls.getElement('pd_Idq').Values.Data;      % [id1 iq1 id2 iq2 ...]
+    V.t_drg = outTuned.Rotor1_Drag_Tq.Time;
+    V.drag  = [squeeze(outTuned.Rotor1_Drag_Tq.Data(:)) squeeze(outTuned.Rotor2_Drag_Tq.Data(:)) ...
+               squeeze(outTuned.Rotor3_Drag_Tq.Data(:)) squeeze(outTuned.Rotor4_Drag_Tq.Data(:))];
+    V.rpm   = [squeeze(outTuned.Rotor1_RPM.Data(:)) squeeze(outTuned.Rotor2_RPM.Data(:)) ...
+               squeeze(outTuned.Rotor3_RPM.Data(:)) squeeze(outTuned.Rotor4_RPM.Data(:))];
+    V.t_rpm = outTuned.Rotor1_RPM.Time;
+    V.Kt = Kt; V.p = p; V.psim = psim; V.Jm = Jm_flight; V.Bm = Bm;
+    save('/Volumes/PortableSSD/files/maltab/kiat_pmsm/recon_validation.mat','V','-v7.3');
+    fprintf('saved recon_validation.mat\n');
+catch e
+    fprintf(2,'validation save failed: %s\n', e.message);
+end
+
 R.t=outTuned.tout;
 R.rpm=[g('Rotor1_RPM') g('Rotor2_RPM') g('Rotor3_RPM') g('Rotor4_RPM')];
 try, R.drag=[g('Rotor1_Drag_Tq') g('Rotor2_Drag_Tq') g('Rotor3_Drag_Tq') g('Rotor4_Drag_Tq')]; catch, end
