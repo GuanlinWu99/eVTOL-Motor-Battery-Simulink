@@ -8,9 +8,15 @@
 
 %% Read Simulation 
 Time                   =   outTuned.Rotor1_RPM_Reference.Time;
-Time_motor             =   outTuned.Motor1_Current.Time;
+Time_motor             =   outTuned.pmsm_Idc.Time(:);
 %Time_torque           =   outTuned.Rotor1_Drag_Tq.Time;
-Time_battery           =   outTuned.Battery_Data.Batt.SOC____.Time;
+% pack signals from the PMSM drive logs, the Batt bus is gone
+bt   = outTuned.pmsm_Vdc.Time(:);
+bv   = outTuned.pmsm_Vdc.Data(:);
+bi   = sum(outTuned.pmsm_Idc.Data,2);                               % per-motor -> pack
+bsoc = interp1(outTuned.pmsm_SOC.Time(:),outTuned.pmsm_SOC.Data(:),bt,'linear','extrap')*100;
+bcr  = bi/uavParams.Battery_Pack_Capacity;
+Time_battery           =   bt;
 Time_flight            =   outTuned.UAV_State.Xe.Time;
 
 positionFeedbackData   =   squeeze(outTuned.PositionCmdFdbk.signals.values);
@@ -25,29 +31,33 @@ Rotor2_RPM             =   outTuned.Rotor2_RPM.Data;
 Rotor3_RPM             =   outTuned.Rotor3_RPM.Data;
 Rotor4_RPM             =   outTuned.Rotor4_RPM.Data;
 
-Motor1_Current         =   outTuned.Motor1_Current.Data;
-Motor2_Current         =   outTuned.Motor2_Current.Data;
-Motor3_Current         =   outTuned.Motor3_Current.Data;
-Motor4_Current         =   outTuned.Motor4_Current.Data;
+% Motor#_* replaced by the PMSM drive logs; Vdc is the shared bus
+Idc = outTuned.pmsm_Idc.Data;  Vdc = outTuned.pmsm_Vdc.Data(:);
+if size(Idc,2) < 4, Idc = repmat(Idc(:,1)/4,1,4); end
 
-Motor1_Voltage         =   outTuned.Motor1_Voltage.Data;
-Motor2_Voltage         =   outTuned.Motor2_Voltage.Data;
-Motor3_Voltage         =   outTuned.Motor3_Voltage.Data;
-Motor4_Voltage         =   outTuned.Motor4_Voltage.Data;
+Motor1_Current         =   Idc(:,1);
+Motor2_Current         =   Idc(:,2);
+Motor3_Current         =   Idc(:,3);
+Motor4_Current         =   Idc(:,4);
 
-Motor1_Power           =   outTuned.Motor1_Power.Data;
-Motor2_Power           =   outTuned.Motor2_Power.Data;
-Motor3_Power           =   outTuned.Motor3_Power.Data;
-Motor4_Power           =   outTuned.Motor4_Power.Data;
+Motor1_Voltage         =   Vdc;
+Motor2_Voltage         =   Vdc;
+Motor3_Voltage         =   Vdc;
+Motor4_Voltage         =   Vdc;
+
+Motor1_Power           =   Vdc.*Idc(:,1)/1000;      % [kW]
+Motor2_Power           =   Vdc.*Idc(:,2)/1000;      % [kW]
+Motor3_Power           =   Vdc.*Idc(:,3)/1000;      % [kW]
+Motor4_Power           =   Vdc.*Idc(:,4)/1000;      % [kW]
 
 % Motor1_Drag_Tq       =   outTuned.Rotor1_Drag_Tq.Data;
 % Motor2_Drag_Tq         =   outTuned.Rotor2_Drag_Tq.Data;
 % Motor3_Drag_Tq         =   outTuned.Rotor3_Drag_Tq.Data;
 % Motor4_Drag_Tq         =   outTuned.Rotor4_Drag_Tq.Data;
 
-Battery_SOC            =   outTuned.Battery_Data.Batt.SOC____.Data;
-Battery_Crate          =   outTuned.Battery_Data.Batt.C_rate.Data;
-Battery_Current        =   outTuned.Battery_Data.Batt.Current__A_.Data;
+Battery_SOC            =   bsoc;
+Battery_Crate          =   bcr;
+Battery_Current        =   bi;
 
 v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
 v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
@@ -75,16 +85,18 @@ Travel_Distance = positionFeedbackData(4,:);
 % so the mode-interval matrices below stay well-formed and the plots (incl.
 % the battery curves) still render. When all 4 transitions are present the
 % values are identical to the original code.
-t_scale = size(outTuned.UAV_State.Vb.Data,3)/size(outTuned.Flight_Mode.Data,1)*0.001;
-T_end   = size(outTuned.UAV_State.Vb.Data,3)*0.001;   % final sim time [s]
-D_end   = Travel_Distance(end);                        % final travel distance
+% use the logged time vectors; the three signals are no longer all at Ts
+t_mode  = outTuned.Flight_Mode.Time(:);
+t_pos   = outTuned.PositionCmdFdbk.time(:);
+T_end   = outTuned.UAV_State.Vb.Time(end);
+D_end   = Travel_Distance(end);
 nT      = numel(transitions);
 
 Tvec = [T_end T_end T_end T_end];
 Dvec = [D_end D_end D_end D_end];
 for i = 1:min(nT,4)
-    Tvec(i) = transitions(i).Index * t_scale;
-    Dvec(i) = Travel_Distance(transitions(i).Index);
+    Tvec(i) = t_mode(transitions(i).Index);
+    Dvec(i) = interp1(t_pos, Travel_Distance(:), Tvec(i), 'linear', 'extrap');   % own time base
 end
 T1 = Tvec(1); T2 = Tvec(2); T3 = Tvec(3); T4 = Tvec(4);   % Hover->Tr, Tr->FW, FW->Tr, Tr->Hover
 D1 = Dvec(1); D2 = Dvec(2); D3 = Dvec(3); D4 = Dvec(4);
@@ -205,17 +217,13 @@ end
 % xlabel('Time (s)'); ylabel('(Nm)'); legend('Rotor 4'); title('Motor4 Drag Torque')
 
 %% [3] Battery Pack Electrical Performance with Different Background Color
-L            = length(outTuned.Battery_Data.Batt.Voltage__V_.Time);
-Pack_Power   = outTuned.Battery_Data.Batt.Voltage__V_.Data .* outTuned.Battery_Data.Batt.Current__A_.Data;
-Pack_Energy  = zeros(L,1);
+L            = numel(bt);
+Pack_Power   = bv .* bi;
 Font         = 13;
 Transparency = 0.6;
 Line_Width   = 3;
 
-for i = 2 : length(outTuned.Battery_Data.Batt.Voltage__V_.Time)
-    Energy_tmp     = Pack_Power(i)*0.001;
-    Pack_Energy(i) = Energy_tmp + Pack_Energy(i-1); 
-end
+Pack_Energy  = cumtrapz(bt, Pack_Power);            % [J], step is no longer Ts
 
 % % This is for calculating SOP
 % Vmin       = 2.5 * 200;
@@ -261,7 +269,7 @@ else
     SOC_Title     = 'SOC';
     Energy_Title  = 'Cumulative Energy Consumption';
 end
-SOC_Plot    = outTuned.Battery_Data.Batt.SOC____.Data - Pre_Cond_SOC;
+SOC_Plot    = bsoc - Pre_Cond_SOC;
 Energy_Plot = Pack_Energy/(3.6*10^6) + Pre_Cond_kWh;
 
 if ~exist('AX_SOC','var'),     AX_SOC     = [20 100];  end
@@ -272,7 +280,7 @@ if ~exist('AX_POWER','var'),   AX_POWER   = [0 2500];  end
 if ~exist('AX_ENERGY','var'),  AX_ENERGY  = [0 150];   end
 
 subplot(3,3,1)
-plot(outTuned.Battery_Data.Batt.SOC____.Time, SOC_Plot,'LineWidth',Line_Width); grid on;
+plot(bt, SOC_Plot,'LineWidth',Line_Width); grid on;
 title(SOC_Title,'FontSize',Font); 
 xlabel('Time (s)','FontSize',12);
 ylabel('(%)','FontSize',12); 
@@ -280,7 +288,7 @@ xlim([0 Time(end)]);
 ylim(AX_SOC)
 
 subplot(3,3,2)
-plot(outTuned.Battery_Data.Batt.C_rate.Time, outTuned.Battery_Data.Batt.C_rate.Data,'LineWidth',Line_Width); grid on; 
+plot(bt, bcr,'LineWidth',Line_Width); grid on;
 title('C-rate','FontSize',Font);  
 xlabel('Time (s)','FontSize',12);
 ylabel('(-)','FontSize',12);
@@ -288,7 +296,7 @@ xlim([0 Time(end)])
 ylim(AX_CRATE)
 
 subplot(3,3,3)
-plot(outTuned.Battery_Data.Batt.Current__A_.Time, outTuned.Battery_Data.Batt.Current__A_.Data,'LineWidth',Line_Width); grid on; 
+plot(bt, bi,'LineWidth',Line_Width); grid on;
 title('Current','FontSize',Font);  
 xlabel('Time (s)','FontSize',12); 
 ylabel('(A)','FontSize',12);
@@ -296,7 +304,7 @@ xlim([0 Time(end)])
 ylim(AX_CURRENT)
 
 subplot(3,3,4)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, outTuned.Battery_Data.Batt.Voltage__V_.Data,'LineWidth',Line_Width); grid on;
+plot(bt, bv,'LineWidth',Line_Width); grid on;
 title('Voltage','FontSize',Font);  
 xlabel('Time (s)','FontSize',12); 
 ylabel('(V)','FontSize',12);
@@ -304,7 +312,7 @@ xlim([0 Time(end)])
 ylim(AX_VOLTAGE)
 
 subplot(3,3,5)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Pack_Power/1000,'LineWidth',Line_Width); grid on;
+plot(bt, Pack_Power/1000,'LineWidth',Line_Width); grid on;
 title('Required Power','FontSize',Font); 
 xlabel('Time (s)','FontSize',12);  
 ylabel('(kW)','FontSize',12); 
@@ -312,7 +320,7 @@ xlim([0 Time(end)])
 ylim(AX_POWER)
 
 subplot(3,3,6)
-plot(outTuned.Battery_Data.Batt.Voltage__V_.Time, Energy_Plot,'LineWidth',Line_Width); grid on;
+plot(bt, Energy_Plot,'LineWidth',Line_Width); grid on;
 title(Energy_Title,'FontSize',Font);  
 xlabel('Time (s)','FontSize',12);
 ylabel('(kWh)','FontSize',12);
@@ -475,6 +483,9 @@ air_spd = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:), [], 1).^2 + ...
                reshape(outTuned.UAV_State.Vb.Data(:,2,:), [], 1).^2 + ...
                reshape(outTuned.UAV_State.Vb.Data(:,3,:), [], 1).^2)/const.kts2mps;
 
+% Vb/PositionCmdFdbk no longer 5:1, so resample instead of a fixed stride
+air_spd_pos = interp1(outTuned.UAV_State.Vb.Time(:), air_spd, t_pos, 'linear', 'extrap').';
+
 figure('Units','normalized','OuterPosition',[0.1 0.1 0.9 0.6], 'Color','w'); 
 
 subplot(2,1,1);
@@ -491,7 +502,7 @@ title('Flight Trajectory in 2D Vertical Plane', 'FontSize', Font, 'FontWeight', 
 
 subplot(2,1,2);
 plot(ref_air_spd(1,:), ref_air_spd(2,:), 'LineWidth', Line_Width, 'LineStyle',"--",'Color',H(7)); hold on; grid on; box on; 
-plot(positionFeedbackData(4,:), air_spd(1:5:end,:), 'LineWidth', 1.5,'Color',H(1));
+plot(positionFeedbackData(4,:), air_spd_pos, 'LineWidth', 1.5,'Color',H(1));
 xlabel('Distance (North, m)', 'FontSize', 12); 
 ylabel('Airspeed (kts)', 'FontSize', 12); 
 xlim([0 max(positionFeedbackData(4,:))+50]);
@@ -664,11 +675,10 @@ Imax_dis   = 22.6*200;
 R0_ref     = [];      
 
 % ========= Pull data from outTuned ========= %
-t = outTuned.Battery_Data.Batt.Voltage__V_.Time(:);
-V = outTuned.Battery_Data.Batt.Voltage__V_.Data(:);
-I = outTuned.Battery_Data.Batt.Current__A_.Data(:);
-SOC = outTuned.Battery_Data.Batt.SOC____.Data(:);
-Voc = outTuned.Battery_Data.Batt.signal7.Data(:);
+t = bt;
+V = bv;
+I = bi;
+SOC = bsoc;
 % Temp = outTuned.Battery_Data.Batt.Temperature.Data(:);
 SOC = SOC/100;
 dt = [0; diff(t)];                                                          % [s]
@@ -686,6 +696,7 @@ C1                                        = 136.29;
 C2                                        = 872.87;
 Tau1                                      = R1*C1;
 R                                      = ones(size(I)) * ((Ns/Np)*R0   +   (Ns/Np)*R1  + (Ns/Np)*R2);             % Battery pack resistance[Ohm]
+Voc = V + I .* R;                                                           % no OCV tap, terminal + IR
 % Voc                                       = 800;%V + I .* R;                     % approximate ocv = terminal voltage + I*Ruse
 % Not violate minimum voltage
 Iv_dis = max((Voc - Vmin) ./ R, 0);                                         % 【Ref】Review of State of Power Estimation for Li-Ion Batteries:

@@ -203,9 +203,10 @@ if uavParams.Temperature == 20
 end
 
 %% Run Simulink
+set_param(mdl,'SimulationMode','accelerator'); 
 outTuned = sim(mdl);
 filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
-save(filename, 'outTuned', 'TransitionMission', 'uavParams', 'controlParams', 'const');
+save(filename, 'outTuned', 'TransitionMission', 'uavParams', 'controlParams', 'const', '-v7.3');
 
 %% Plot Simulation Plots
 switch Profile
