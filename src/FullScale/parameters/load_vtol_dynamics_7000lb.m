@@ -232,4 +232,43 @@ uavParams.DCDCConv.Resistance_Losses         = 0.0188;                     % [Oh
 uavParams.DCDCConv.Kp                        = 0.01;                        % [-] output voltage proportional controller
 uavParams.DCDCConv.Ki                        = 10;                          % [-] output voltage integral controller
 uavParams.DCDCConv.MinVin                    = 50;                          % [V] converter stops below this input voltage
+
+% ...PMSM drive parameters
+% Blocks inside PMSM_Drive resolve these by name, so they go to the base workspace.
+% Motor is two Evolito D1500 stacked per rotor; Rs, Ld, Lq, psim and p are estimates,
+% Evolito publishes only the ratings.
+Rs        = 0.010;                      % [Ohm]     stator resistance / phase
+Ld        = 200e-6;                     % [H]       d-axis inductance
+Lq        = 200e-6;                     % [H]       q-axis, non-salient
+psim      = 0.16;                       % [Wb]      PM flux linkage
+p         = 15;                         % [-]       pole pairs
+Kt        = 1.5*p*psim;                 % [Nm/A]    torque constant, 3.6
+Bm        = 1e-3;                       % [N*m*s]   viscous damping
+Imax      = 800;                        % [A]       Kt*Imax = 2880 Nm peak
+Jm_flight = 0.09;                       % [kg*m^2]  shaft 0.009 + prop 0.08
+RPMMAX    = 1500;                       % [rpm]     normalises Rotor Assembly.N
+bw_i      = 2*pi*1000;                  % [rad/s]   current-loop bandwidth
+Kp_i      = Ld*bw_i;
+Ki_i      = Rs*bw_i;
+tau_dc    = 1e-4;                       % [s]       DC-link filter time constant
+SOC0      = 0.90;                       % [-]       initial pack SOC
+
+% Pack tables for the drive's 1-RC battery, off the same temperature-corrected cell
+% data as uavParams above. Lookup breakpoints have to rise, SOC_bp does not.
+[soc_bp, iSort] = sort(soc(:));
+OCV_pack  = Ns*col(Voltage, iSort);     % [V]
+R0_pack   = (Ns/Np)*col(R0, iSort);     % [Ohm]
+R1_pack   = (Ns/Np)*col(R1, iSort);     % [Ohm]
+C1_pack   = (Np/Ns)*col(C1, iSort);     % [F]
+Cap_pack  = Np*Norminal_Capacity;       % [Ah]
+
+for v = {'Rs','Ld','Lq','psim','p','Kt','Bm','Imax','Jm_flight','RPMMAX','bw_i', ...
+         'Kp_i','Ki_i','tau_dc','SOC0','soc_bp','OCV_pack','R0_pack','R1_pack', ...
+         'C1_pack','Cap_pack'}
+    assignin('base', v{1}, eval(v{1}));
+end
+end
+
+function y = col(x, iSort)
+y = reshape(x, [], 1);  y = y(iSort);
 end

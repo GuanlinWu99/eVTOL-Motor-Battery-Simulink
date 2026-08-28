@@ -52,7 +52,6 @@ iniR        =   0;
 
 %... Initialize eVTOL landing gear model
 load("contact.mat")
-pmsm_batt_testbench_data;
 
 %... Load bus interfaces for controller
 load_ctrl_interface();
