@@ -6,6 +6,10 @@ clear all; close all; clear mex;
 %% mac: no MATLAB project file here, set the paths explicitly
 W='/Volumes/PortableSSD/files/maltab/kiat_pmsm';
 addpath(genpath([W '/src'])); addpath([W '/models']); addpath([W '/models/Motor_batt']);
+% src/FullScale/full_scale holds a stale copy of setupTransitionGuidanceMission_mod
+% that loads a 3600 m demo mission instead of the profile. genpath puts it ahead of
+% src/full_scale, so prepend the good directory to win.
+addpath([W '/src/full_scale']);
 addpath([W '/data']); addpath(genpath([W '/utilities'])); addpath([W '/steps']);
 cd(W);
 
