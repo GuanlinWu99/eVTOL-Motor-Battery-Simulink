@@ -166,15 +166,16 @@ Cell_Mass                                    = 0.0965;   % [kg] per cell
 %  25/30/35/40 °C (3C), over the SOC ≥ 30% range to avoid low-SOC data noise. Slope = Ea/R_g gives Ea_R0 = 1.23, Ea_R1 = 3.34, Ea_C1 = 3.44
 %  kJ/mol. （2026/06/14 Guanlin Wu）
 
+here                                         = fileparts(mfilename('fullpath'));   % sheets sit here, not in the cwd
 switch target_temperature
     case 20
-        load("src/FullScale/parameters/SA88_25_Degree.mat");
+        load(fullfile(here,"SA88_25_Degree.mat"));
         T_ref_K                              = 25 + 273.15;
     case 25
-        load("src/FullScale/parameters/SA88_25_Degree.mat");
+        load(fullfile(here,"SA88_25_Degree.mat"));
         T_ref_K                              = 25 + 273.15;
     case 45
-        load("src/FullScale/parameters/SA88_40_Degree.mat");
+        load(fullfile(here,"SA88_40_Degree.mat"));
         T_ref_K                              = 40 + 273.15;
     otherwise
         error('Unsupported target_temperature = %g degC (expected 20, 25, or 45).', target_temperature);
@@ -233,10 +234,8 @@ uavParams.DCDCConv.Kp                        = 0.01;                        % [-
 uavParams.DCDCConv.Ki                        = 10;                          % [-] output voltage integral controller
 uavParams.DCDCConv.MinVin                    = 50;                          % [V] converter stops below this input voltage
 
-% ...PMSM drive parameters
-% Blocks inside PMSM_Drive resolve these by name, so they go to the base workspace.
-% Motor is two Evolito D1500 stacked per rotor; Rs, Ld, Lq, psim and p are estimates,
-% Evolito publishes only the ratings.
+% ...PMSM Drive Parameters
+% Evolito D1500 x2 per rotor; Rs, Ld, Lq, psim, p are estimates, only ratings published.
 Rs        = 0.010;                      % [Ohm]     stator resistance / phase
 Ld        = 200e-6;                     % [H]       d-axis inductance
 Lq        = 200e-6;                     % [H]       q-axis, non-salient
@@ -253,8 +252,7 @@ Ki_i      = Rs*bw_i;
 tau_dc    = 1e-4;                       % [s]       DC-link filter time constant
 SOC0      = 0.90;                       % [-]       initial pack SOC
 
-% Pack tables for the drive's 1-RC battery, off the same temperature-corrected cell
-% data as uavParams above. Lookup breakpoints have to rise, SOC_bp does not.
+% 1-RC pack tables off the corrected cell data; breakpoints must rise, SOC_bp does not
 [soc_bp, iSort] = sort(soc(:));
 OCV_pack  = Ns*col(Voltage, iSort);     % [V]
 R0_pack   = (Ns/Np)*col(R0, iSort);     % [Ohm]

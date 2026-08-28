@@ -1,6 +1,6 @@
 %% PMSM / inverter / SA88 parameters (base workspace).
 
-% ---- Motor: Evolito D1500 x2 stacked per rotor (axial flux, ~80 kg, <=2500 rpm) ----
+% ---- Motor: Evolito D1500 x2 stacked per rotor ----
 % Ratings ~2880 Nm peak / ~540 kW at 720V; Rs/Ld/psim/p are ESTIMATES (Evolito unpublished).
 Rs   = 0.010;      % [Ohm]    stator resistance / phase (est, large axial-flux)
 Ld   = 200e-6;     % [H]      d-axis inductance (est)
@@ -12,13 +12,13 @@ Jtot = 2.0;        % [kg*m^2] motor+rotor inertia (standalone testbench)
 Imax = 800;        % [A]      peak current (Kt*Imax = 2880 Nm peak, covers 2769)
 Kt   = 1.5*p*psim; % [Nm/A]   torque constant = 3.6
 
-% ---- Rotor load / operating point (3.9 m rotor, MTOW 5600 lb) ----
+% ---- Rotor load ----
 % k_drag = Cq*rho*A*R^3 ; Cq=8/pi^3*0.007048, A=pi*(3.9/2)^2, R=1.95, rho=1.225.
 % Hover per rotor: ~832 rpm (87.2 rad/s), ~1500 Nm, ~131 kW.
 k_drag    = 0.1974;                        % [N*m*s^2] rotor drag  T = k_drag*w^2
 w_ref_val = [87.2; 87.4; 87.2; 87.4];      % [rad/s]   per-rotor hover speed refs (~832 rpm)
 
-% ---- Flight integration (PMSM_Drive), 3.9 m rotor ----
+% ---- Flight integration ----
 Jm_flight  = 0.09;                          % [kg*m^2] physical (shaft 0.009 + prop 0.08)
 Vdc_fixed  = 690;                           % [V]      NOT used by the flight integration. PMSM_Drive
                                             %          has its own Battery subsystem: Total_Idc sums the
@@ -31,11 +31,7 @@ trqR_hover = [1500; 1505; 1500; 1505];      % [N*m]    hover torque (standalone 
 bw_i = 2*pi*1000;  Kp_i = Ld*bw_i;  Ki_i = Rs*bw_i;            % current loop, 1 kHz
 bw_w = 2*pi*5;     Kp_w = Jtot*bw_w/Kt;  Ki_w = Kp_w*bw_w/10;  % speed loop, 5 Hz
 
-% ---- Battery (SA88 200S21P, 1-RC ECM) ----
-% Matches the flight model: load_vtol_dynamics_7000lb sets Ns=200, Np=21 and a
-% 10.5 Ah SA88 cell. Was 200P with a 3.5 Ah cell, which is the LG placeholder
-% the flight side dropped on 08/14/2026, and gave a pack 3.2 times the capacity
-% and a ninth of the resistance, so the bus never sagged.
+% ---- Battery ----
 Ns = 200; Np = 21; Cell_Cap = 10.5;         % [-] [-] [Ah]
 here = fileparts(mfilename('fullpath'));
 D = load(fullfile(here,'..','..','src','FullScale','parameters','SA88_25_Degree.mat'));
