@@ -10,7 +10,7 @@
 % 6. Completed Arrhenius relation for battery parameter fitting (04/15/2026)     %
 % 7. Completed the P8 flight profile (most critical case) (05/11/2026)           %
 % 8. Rotor diameter increased to 3.9 m and powertrain rescaled (08/09/2026)      %
-% 9. One battery pack for all MTOW via BATTERY_NP (08/12/2026)                   %
+% 9. One 200S21P battery pack for all MTOW (08/12/2026)                          %
 % 10. Switched the cell to the Amprius SA88 data sheet values (08/14/2026)       %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -72,7 +72,6 @@ motorctrl.d  = 0;
 motorctrl.n  = 100;
 Limit        = 700;  % [Nm] saturation of the motor speed PID correction
 
-BATTERY_NP = 21;                      % [-] cells in parallel, 0 = by MTOW
 
 % P1, P2, P3 : Short Distance (8.2 NM)
 % P4, P5, P9, P10 : Middle Distance (16 NM)
@@ -150,7 +149,7 @@ elseif (Wind_Speed == 7) && (eVTOL_MTOW == 7000)
     VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
 end
 
-uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature, BATTERY_NP);
+uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature);
 
 
 if eVTOL_MTOW == 7000

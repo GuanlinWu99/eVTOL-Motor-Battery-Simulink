@@ -7,9 +7,8 @@
 %                           3) battery pack spec                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature, Np_override)
+function uavParams = load_vtol_dynamics_7000lb(const, Profile, eVTOL_MTOW, target_temperature)
 
-if nargin < 5, Np_override = 0; end
 
 %% Define Aerodynamics 
 % ... Load custom aerodynamic coefficients from openVSPaero
@@ -149,15 +148,7 @@ uavParams.minSpoiler            =   0*const.deg2rad;
 Q_flat                                       = 4500*(eVTOL_MTOW/6020);  % [Nm] flat torque limit
 
 Ns                                           = 200;                         % [-] cells in series; sets pack voltage
-switch eVTOL_MTOW
-    case 7000
-        Np                                   = 28;                          % [-] cells in parallel; sets capacity and splits the current
-    otherwise
-        Np                                   = 21;                          % [-] cells in parallel; sets capacity and splits the current
-end
-if Np_override > 0
-    Np                                       = Np_override;
-end
+Np                                           = 21;                          % [-] cells in parallel; 200S21P for every MTOW
 Norminal_Capacity                            = 10.5;                        % [Ah] per cell
 Norminal_Voltage                             = 3.45;                        % [V] per cell
 Cell_Mass                                    = 0.0965;   % [kg] per cell
