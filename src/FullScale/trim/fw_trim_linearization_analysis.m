@@ -20,7 +20,7 @@
 %.. trim condition computation
 %.. flight conditions
 % EAS_trim    =   60*const.kts2mps;                                         %.. [m/s] equivalent air speed for trim
-% H_trim      =	3000*const.ft2m;                                            %.. [m] trim altitude
+% H_trim      =   3000*const.ft2m;                                            %.. [m] trim altitude
 [~, a, ~, rho]      =   atmosisa(H_trim);                                   %.. [kg/m^3] air density at trim altitude
 [~, ~, ~, rho0]     =   atmosisa(0);                                        %.. [kg/m^3] air density at sea level
 vt_trim     =	EAS_trim/sqrt(rho/rho0);                                    %.. [m/s] conversion to true air speed
@@ -54,8 +54,8 @@ options(14) =   1e5;
 
 %.. trim
 %.. initial guess for inputs
-%.. u = [thr(1) dE(2)   dA(3)   dR(4)]
-u0  =   [0.6    0       0       0]';
+%.. u = [fwd_thr(1)   rwd_thr(2)  tilt(3)  dA(4)  dE(5)  dR(6)]
+u0  =   [0.4    0    0    0    0    0]';
 
 %.. initial guess/constraints for trim states
 %.. x = [vt(1)      aoa(2)      aos(3)  phi/theta/psi(4:6)  p/q/r(7:9)  speed/roc/ctc]
@@ -67,17 +67,23 @@ y0  =	[vt_trim	alpha_trim 	0       0 0 heading_trim    0 0 0	    0 0 0]';
 x_const     =   [1 3 4 6 7 8 9 10 11 12];
 y_const     =   [1 3 4 6 7 8 9 10 11 12];
 dx_const    =   1:12;
-u_const     =   [3 4];
+u_const     =   [2 3 4 6];
 
 [x_trim, u_trim, y_trim, xd_trim, options]  =   trim('fw_trim_VTAOAS', x0, u0, y0, x_const, u_const, y_const, dx0, dx_const, options);
 
 %.. display trim results
 disp('================== Trim Results ==================');
-fprintf('    dth_trim                 =  %10.4f  (%%) \n', u_trim(1)*100);
-fprintf('    rotor_speed_trim         =  %10.4f  (RPM)  \n', u_trim(1)*uavParams.motor.RPMMAX);
-fprintf('    elevator_trim            =  %10.4f  (deg) \n', u_trim(2)*const.rad2deg);
-fprintf('    aileron_trim             =  %10.4f  (deg) \n', u_trim(3)*const.rad2deg);
-fprintf('    rudder_trim              =  %10.4f  (deg) \n', u_trim(4)*const.rad2deg);
+fprintf('    fwd_dth_trim             =  %10.4f  (%%) \n', u_trim(1)*100);
+fprintf('    fwd_rotor_speed_trim     =  %10.4f  (RPM)  \n', u_trim(1)*uavParams.motor.RPMMAX);
+fprintf('    fwd_thrust_trim          =  %10.4f  (N)  \n', uavParams.rotor.Ct*(u_trim(1)*uavParams.motor.RPMMAX/60*2*pi)^2);
+fprintf('    rwd_dth_trim             =  %10.4f  (%%) \n', u_trim(2)*100);
+fprintf('    rwd_rotor_speed_trim     =  %10.4f  (RPM)  \n', u_trim(2)*uavParams.motor.RPMMAX);
+fprintf('    rwd_thrust_trim          =  %10.4f  (N)  \n', uavParams.rotor.Ct*(u_trim(2)*uavParams.motor.RPMMAX/60*2*pi)^2);
+fprintf('    elevator_trim            =  %10.4f  (deg) \n', u_trim(5)*const.rad2deg);
+fprintf('    aileron_trim             =  %10.4f  (deg) \n', u_trim(4)*const.rad2deg);
+fprintf('    rudder_trim              =  %10.4f  (deg) \n', u_trim(6)*const.rad2deg);
+fprintf('    tilt_trim                =  %10.4f  (deg) \n', u_trim(3)*(pi/2)*const.rad2deg);
+fprintf('    flap_trim                =  %10.4f  (deg) \n', flap_trim*const.rad2deg);
 fprintf('    trim_speed (true)        =  %10.4f  (km/h) \n', x_trim(1)*const.mps2kph);
 fprintf('                             =  %10.4f  (m/s) \n', x_trim(1));
 fprintf('                             =  %10.4f  (kts) \n', x_trim(1)*const.mps2kts);

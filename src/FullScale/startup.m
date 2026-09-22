@@ -1,27 +1,45 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% topic: start up script for simulator                                   %
-% author(s): minhyun                                                     %
-% description:                                                           %
-% 1.                                                                     %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Topic: start up script for tilt-rotor eVTOL MATLAB/Simulink simulator          %
+% Author(s): Minhyun, Sounghwan, and Guanlin                                     %
+% Description and updates (08/25/2026):                                          %
+% 1. Include drag torque calculation in the powertrain                           %
+% 2. Upgrade battery pack in the powertrain                                      %
+% 3. Changed from Variable-Type to Fixed-Type Ts = 0.001 (09/26/2025)            %
+% 4. Included flaps and spoilers (11/13/2025)                                    %
+% 5. Replacement of Prof. Jung's group 2RC-ECM battery model (04/01/2026)        %
+% 6. Completed Arrhenius relation for battery parameter fitting (04/15/2026)     %
+% 7. Completed the P8 flight profile (most critical case) (05/11/2026)           %
+% 8. Rotor diameter increased to 3.9 m and powertrain rescaled (08/09/2026)      %
+% 9. One battery pack for all MTOW via BATTERY_NP (08/12/2026)                   %
+% 10. Switched the cell to the Amprius SA88 data sheet values (08/14/2026)       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%.. clear workspace, command window and close fiugres
-clear all;
-clc;
-close all;
-cleanup;
+%% ... Clear workspace, command window and close figures
+bdclose('all')
+clear all; close all; clear mex;
+cleanup; clc; 
 
-%.. load the model
-mdl     =   'VTOLTiltrotor';
+%% ... Load eVTOL model
+mdl ='VTOLTiltrotor';
 load_system(mdl);
 
-%.. define the aircraft modes of flight
-% Simulink.clearIntEnumType('flightState');
-Simulink.defineIntEnumType('flightState',...
-{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3],...
-'StorageType','uint8');
+cfgRefTop    = getActiveConfigSet('VTOLTiltrotor');         % mdl = 'VTOLTiltrotor'
+cfgTop       = getRefConfigSet(cfgRefTop);
+set_param(cfgTop,'SolverType','Fixed-step','Solver','ode4');
+Ts           = 0.001;                                       % [s] sample time
+mdlSub       = 'VTOLDynamics';
+load_system(mdlSub);
+cfgSubActive = getActiveConfigSet(mdlSub);
 
-%.. initialize simulator: velocity defined later
+%% ... Define the aircraft modes of flight
+Simulink.defineIntEnumType('flightState',{'Hover','Transition','FixedWing','BackTransition'},[0;1;2;3],'StorageType','uint8');
+
+% Hover mode : 0
+% Transition mode : 1
+% Fixedwing mode : 2
+% Back Transition mode : 3
+
+%% ... Initialize simulator: velocity defined later
 xGround     =   0;
 yGround     =   0;
 zGround     =   0;
@@ -32,294 +50,171 @@ iniP        =   0;
 iniQ        =   0;
 iniR        =   0;
 
-%.. initialize landing gear model
-load("data\contact.mat")
-% contact = struct('spring', 1.28931184836e5, 'vd', 0.02, ...
-%                  'slidingFriction', 0.8, 'rollingFriction', 0.2, ...
-%                  'gLimit', 100);
+%... Initialize eVTOL landing gear model
+load("contact.mat")
 
-%.. load bus interfaces for controller
+%... Load bus interfaces for controller
 load_ctrl_interface();
 
-%.. load bus interfaces for plant
+%... Load bus interfaces for plant
 load_digital_twin_interface;
 
-%.. load constants
-const           =   load_const();
+%... Initialize Control and Guidance gains for Tiltrotor
+load_controller_gains;
 
-%.. set up vtol dynamics parameters
-uavParams       =   load_vtol_dynamics_7000lb(const);
+%... Load constants
+const = load_const();
 
-%.. load controller parameters
-controlParams   =   load_controller_parameters(uavParams, const);
+% ... Call motor speed PID controller gains
+motorctrl.p  = 2.28;
+motorctrl.i  = 0.001;
+motorctrl.d  = 0;
+motorctrl.n  = 100;
+Limit        = 700;                    % [Nm] saturation of the motor speed PID correction
 
-% Flag to enable/disable visualization
-% Visualization = 1;
-% Disable Wind
-Wind=0;
-% Disable Sensors
-SensorType=0;
-% Setup tuning flag
-TuningMode = 0;
-Deployment = false;
-% Initialize Control and Guidance gains for Tiltrotor
-exampleHelperInitializeVTOLGains_m;
-% Initialize initial velocity
-vIni = 0*const.kts2mps;%0;
+BATTERY_NP  = 21;                      % [-] cells in parallel, 0 = by MTOW
+
+% P1, P2, P3 : Short Distance (8.2 NM)
+% P4, P5, P9, P10 : Middle Distance (16 NM)
+% P6, P7, P8 : Long Distance (23 NM)
+% P11 : Test profile
+
+%... Flight profile
+Profile = 1;
+
+%... Set up VTOL dynamics parameters
+switch Profile
+    case {1,2,6}
+        eVTOL_MTOW = 5600;      % [lbs]
+    case {9,10}
+        eVTOL_MTOW = 6020;      % [lbs]
+    case {3,4,5,7,8}
+        eVTOL_MTOW = 7000;      % [lbs]
+    case 11
+        eVTOL_MTOW = 5600;      % [lbs]
+end
+
+%... Operating temperature
+switch Profile
+    case {1,3,7,10}
+        target_temperature = 20;
+    case {4,11}
+        target_temperature = 25;
+    case{2,5,6,8,9}
+        target_temperature = 45;    
+end
+
+%... 10 Knots = 5 m/s (Moderate Crosswind)
+%... 15 Knots = 7 m/s (Most Strong Crosswind)
+switch Profile
+    case {1,4,5,7}
+        Wind = 0;            % Disable Crosswind function
+        Wind_Speed = 0;      % Wind velocity [m/s]
+    case {3,6}               
+        Wind = 1;            % Active Crosswind function   
+        Wind_Speed = 5;      % Wind velocity [m/s] 
+    case {2,8,9,10}       
+        Wind = 1;            % Active Crosswind function
+        Wind_Speed = 7;      % Wind velocity [m/s]
+    case 11
+        Wind = 1;     
+        Wind_Speed = 5;
+end
+
+if Wind_Speed == 0
+%% No Wind
+    Yaw_Wind_Moment = 0;
+
+%% Moderate Wind
+elseif (Wind_Speed == 5) && (eVTOL_MTOW == 5600)
+    Yaw_Wind_Moment = 1400;
+elseif (Wind_Speed == 5) && (eVTOL_MTOW == 6020)
+    Yaw_Wind_Moment = 2500;
+    VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
+    VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
+elseif (Wind_Speed == 5) && (eVTOL_MTOW == 7000)
+    Yaw_Wind_Moment = 3500;
+    VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
+    VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
+
+%% Strong Wind (To be updated...)
+elseif (Wind_Speed == 7) && (eVTOL_MTOW == 5600)
+    Yaw_Wind_Moment = 3000;
+elseif (Wind_Speed == 7) && (eVTOL_MTOW == 6020)
+    Yaw_Wind_Moment = 3000;
+    VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
+    VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
+elseif (Wind_Speed == 7) && (eVTOL_MTOW == 7000)
+    Yaw_Wind_Moment = 3000;
+    VTOLcontrolGains.P_YAW_RATE = VTOLcontrolGains.P_YAW_RATE * 1;
+    VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
+end
+
+uavParams = load_vtol_dynamics_7000lb(const, eVTOL_MTOW, target_temperature, BATTERY_NP);
+
+if eVTOL_MTOW == 7000
+    VTOLcontrolGains.P_Z  = 1.5 * VTOLcontrolGains.P_Z;
+end
+
+%% Other setting...
+%... Load controllercontrolParams.TiltScheduleRate parameters
+controlParams           =   load_controller_parameters(uavParams, const);
+
+%... Flag to enable/disable visualization
+Visualization           =   1;
+
+%... Disable Sensors
+SensorType              =   0;
+
+%... Setup tuning flag
+TuningMode              =   0;
+Deployment              =   false;
+
+%... Initialize initial velocity
+vIni = 0*const.kts2mps;
 disp("Initialized VTOL model.")
-% Initialize hover configuration
+
+%... Initialize hover configuration
 setupHoverConfiguration_mod
-% setupFixedWingConfiguration_mod
-% setupHoverGuidanceMission_mod
-setupTransitionGuidanceMission_mod
-% setupFixedWingGuidanceMission_mod
+setupTransitionGuidanceMission_mod;
 
-transition_throttle = 0.2;
-
-% Setup configuration set
+%... Setup configuration set
 configObj = getActiveConfigSet('VTOLAutopilotController');
 set_param(configObj, 'SourceName', 'VTOLConfiguration');
+transition_throttle = 0.2;
 
-%% Run SIMULINK
+%% Display eVTOL Mission Profiles
+fprintf('\n')
+disp(['✅ Flight Profile: P', num2str(Profile)]);
+disp(['📍 Travel Distance: ', num2str(TransitionMission(end).position(1)), ' (m)']);
+disp(['🕒 Total Simulation Time: ', num2str(Total_sim_time), ' (s)']);
+disp(['🛩️ eVTOL MTOW: ', num2str(eVTOL_MTOW), ' (lbs)']);
+disp(['🌪️ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
+disp(['🔋 Battery Pack Capacity: ', num2str((uavParams.Battery_Pack_Capacity*uavParams.Battery_Pack_Voltage)/1000), ' (kWh)']);
+disp(['⚡ Battery Pack Voltage: ', num2str(uavParams.Battery_Pack_Voltage), ' (V)']);
+disp(['🌡️ Operation Temperature: ', num2str(uavParams.Temperature), ' (°C)']);
+
+if uavParams.Temperature == 20
+    Pre_Conditioning_Energy = uavParams.Battery_Pack_Mass*950*50/3.6e6;           % [kWh]
+    disp(['🎯 Pre-Conditioning from -30 °C to 20 °C ... ', num2str(Pre_Conditioning_Energy), ' (kWh)', ' is required.']);
+    fprintf('\n')
+end
+
+%% Run Simulink
+keyboard;
+set_param(mdl,'SimulationMode','accelerator'); 
 outTuned = sim(mdl);
+keyboard;
 
-%% Plot results
-% exampleHelperPlotHoverControlTrackingResults(outTuned);
-% EVTOL_Plots_update(outTu ned)
+filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
+save(filename, 'outTuned', 'TransitionMission', 'uavParams', 'controlParams', 'const', '-v7.3');
 
+%% Plot Simulation Plots
+switch Profile
+    case 11
+    Simulation_Plot_Debugging();      
+    otherwise
+    %Simulation_Plot();
+    Simulation_Plot_Cleaned();
+end
 
-% figure
-% hold on
-% plot3(outTuned.UAV_State.Xe.Data(1,:),-outTuned.UAV_State.Xe.Data(2,:),-outTuned.UAV_State.Xe.Data(3,:),'LineWidth',2)
-% plot3([0, 0, 20, 1000, 4000, 8000, 10000, 15000, 17000],-[0, 0, 0, 0, 0, 0, 0, 0, 0],-[0, -100, -100, -150, -1000, -1000, -1000, -100, -100],'LineWidth',1.5,'LineStyle','--')
-% hold off
-% grid on
-% xlabel('North (m)')
-% ylabel('West (m)')
-% zlabel('Up (m)')
-% legend('UAV-3D Trajectory', 'P4-profile (Modified)')
-% ylim([-250, 250])
-% title('eVTOL trajectory (P4 profile)')
-% 
-% v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
-% v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
-% v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1])./reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
-% 
-% figure
-% subplot(3,1,1)
-% hold on
-% plot(outTuned.UAV_State.airspeed.Time, outTuned.UAV_State.airspeed.Data, 'Linewidth', 1.5)
-% hold off
-% grid on
-% ylabel('Airspeed (m/s)')
-% title('eVTOL AirData (P4 profile)')
-% subplot(3,1,2)
-% plot(outTuned.UAV_State.airspeed.Time, atand(v1./v2), 'Linewidth', 1.5)
-% hold off
-% grid on
-% ylim([-5 35])
-% ylabel('AoA (deg)')
-% subplot(3,1,3)
-% plot(outTuned.UAV_State.airspeed.Time, atand(v3), 'Linewidth', 1.5)
-% hold off
-% grid on
-% ylim([-20 20])
-% ylabel('AoS (deg)')
-% xlabel('Time (sec)')
-% 
-% figure
-% subplot(3,1,1)
-% hold on
-% plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
-% hold off
-% grid on
-% ylabel('Roll (deg)')
-% ylim([-30 30])
-% title('eVTOL Attitude (P4 profile)')
-% subplot(3,1,2)
-% plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
-% hold off
-% grid on
-% ylabel('Pitch (deg)')
-% ylim([-40 40])
-% subplot(3,1,3)
-% plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
-% hold off
-% grid on
-% ylabel('Yaw (deg)')
-% ylim([-30 30])
-% xlabel('Time (sec)')
-% 
-% figure
-% subplot(2,1,1)
-% hold on
-% plot(outTuned.UAV_State.RotorParameters.w1.Time, outTuned.UAV_State.RotorParameters.w1.Data, 'Linewidth', 1.5)
-% plot(outTuned.UAV_State.RotorParameters.w2.Time, outTuned.UAV_State.RotorParameters.w2.Data, 'Linewidth', 1.5,'LineStyle','--')
-% hold off
-% grid on
-% ylabel('Rotor SPD (rad/s)')
-% legend('1: front/right','2: front/left')
-% title('eVTOL Rotor Speed (P4 profile)')
-% subplot(2,1,2)
-% hold on
-% plot(outTuned.UAV_State.RotorParameters.w3.Time, outTuned.UAV_State.RotorParameters.w3.Data, 'Linewidth', 1.5)
-% plot(outTuned.UAV_State.RotorParameters.w4.Time, outTuned.UAV_State.RotorParameters.w4.Data, 'Linewidth', 1.5,'LineStyle','--')
-% hold off
-% grid on
-% ylabel('Rotor SPD (rad/s)')
-% legend('3: rear/left','4: rear/right')
-% xlabel('Time (sec)')
-
-figure
-hold on
-plot3(outTuned.UAV_State.Xe.Data(1,:),-outTuned.UAV_State.Xe.Data(2,:),-outTuned.UAV_State.Xe.Data(3,:),'LineWidth',2)
-% plot3([0, 0, 20, 1000, 4000, 8000, 10000, 15000, 17000],-[0, 0, 0, 0, 0, 0, 0, 0, 0],-[0, -100, -100, -150, -1000, -1000, -1000, -100, -100],'LineWidth',1.5,'LineStyle','--')
-hold off
-grid on
-xlabel('North (m)')
-ylabel('West (m)')
-zlabel('Up (m)')
-% legend('UAV-3D Trajectory', 'P4-profile (Modified)')
-ylim([-250, 250])
-% title('eVTOL trajectory (P4 profile)')
-
-figure
-ax1(1) = subplot(4,1,1)
-hold on
-plot(outTuned.UAV_State.RotorParameters.Tilt1.Time, outTuned.UAV_State.RotorParameters.Tilt1.Data/pi*180, 'Linewidth', 1.5)
-plot(outTuned.UAV_State.RotorParameters.Tilt2.Time, outTuned.UAV_State.RotorParameters.Tilt2.Data/pi*180, 'Linewidth', 1.5, 'LineStyle', '--')
-hold off
-grid on
-ylabel('Tilt (deg)')
-ax1(2) = subplot(4,1,2)
-hold on
-plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(1,:,:),[size(outTuned.UAV_State.Euler.Data(1,:,:),3),1])/pi*180, 'Linewidth', 1.5)
-plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(2,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', 1.5)
-plot(outTuned.UAV_State.Euler.Time, reshape(outTuned.UAV_State.Euler.Data(3,:,:),[size(outTuned.UAV_State.Euler.Data(2,:,:),3),1])/pi*180, 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('Euler (deg)')
-ax1(3) = subplot(4,1,3)
-hold on
-plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]), 'Linewidth', 1.5)
-plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,2,:),3),1]), 'Linewidth', 1.5)
-plot(outTuned.UAV_State.Vb.Time, reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,3,:),3),1]), 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('Vb (m/s)')
-ax1(4) = subplot(4,1,4)
-hold on
-plot(outTuned.UAV_State.RotorParameters.w1.Time, outTuned.UAV_State.RotorParameters.w1.Data, 'Linewidth', 1.5,'LineStyle','-')
-plot(outTuned.UAV_State.RotorParameters.w2.Time, outTuned.UAV_State.RotorParameters.w2.Data, 'Linewidth', 1.5,'LineStyle','--')
-plot(outTuned.UAV_State.RotorParameters.w3.Time, outTuned.UAV_State.RotorParameters.w3.Data, 'Linewidth', 1.5,'LineStyle','-')
-plot(outTuned.UAV_State.RotorParameters.w4.Time, outTuned.UAV_State.RotorParameters.w4.Data, 'Linewidth', 1.5,'LineStyle','--')
-hold off
-grid on
-ylabel('w (rad/s)')
-xlabel('Time (sec)')
-linkaxes(ax1,'x')
-
-v1 = reshape(outTuned.UAV_State.Vb.Data(:,3,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
-v2 = sqrt(reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2+reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]).^2);
-v3 = reshape(outTuned.UAV_State.Vb.Data(:,2,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1])./reshape(outTuned.UAV_State.Vb.Data(:,1,:),[size(outTuned.UAV_State.Vb.Data(:,1,:),3),1]);
-
-figure
-ax2(1) = subplot(4,1,1)
-hold on
-plot(outTuned.UAV_State.airspeed.Time, outTuned.UAV_State.airspeed.Data, 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('Air SPD (m/s)')
-ax2(2) = subplot(4,1,2)
-hold on
-plot(outTuned.UAV_State.airspeed.Time, atand(v1./v2), 'Linewidth', 1.5)
-plot(outTuned.UAV_State.airspeed.Time, atand(v3), 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('AOA/AOS (deg)')
-ax2(3) = subplot(4,1,3)
-hold on
-plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(3,:,:),[size(outTuned.UAV_State.Xe.Data(3,:,:),3),1]), 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('Z (m)')
-ax2(4) = subplot(4,1,4)
-hold on
-plot(outTuned.UAV_State.aileron.Time, outTuned.UAV_State.aileron.Data*const.rad2deg, 'Linewidth', 1.5)
-plot(outTuned.UAV_State.elevator.Time, outTuned.UAV_State.elevator.Data*const.rad2deg, 'Linewidth', 1.5)
-plot(outTuned.UAV_State.rudder.Time, outTuned.UAV_State.rudder.Data*const.rad2deg, 'Linewidth', 1.5)
-hold off
-grid on
-ylim([-30 30])
-legend('AIL','ELE','RUD')
-ylabel('CtrlSurf (deg)')
-linkaxes(ax2,'x')
-
-figure
-ax3(1) = subplot(4,1,1)
-hold on
-plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(1,:,:),[size(outTuned.UAV_State.Xe.Data(1,:,:),3),1]), 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('X (m)')
-ax3(2) = subplot(4,1,2)
-hold on
-plot(outTuned.UAV_State.Xe.Time, reshape(outTuned.UAV_State.Xe.Data(2,:,:),[size(outTuned.UAV_State.Xe.Data(2,:,:),3),1]), 'Linewidth', 1.5)
-hold off
-grid on
-ylabel('Y (m)')
-ylim([-5, 5])
-ax3(3) = subplot(4,1,3)
-hold on
-hold off
-grid on
-ylabel('')
-ax3(4) = subplot(4,1,4)
-hold on
-hold off
-grid on
-ylabel('')
-linkaxes(ax3,'x')
-
-% subplot(3,1,2)
-% 
-% hold off
-% grid on
-% ylim([-5 35])
-% ylabel('AoA (deg)')
-% subplot(3,1,3)
-% hold off
-% grid on
-% ylim([-20 20])
-% ylabel('AoS (deg)')
-% xlabel('Time (sec)')
-
-
-% TransitionMission = struct;
-% TransitionMission(1).mode = 1;
-% TransitionMission(1).position = [0; 0; 0];
-% TransitionMission(1).params = [0; 0; 0; 0];
-% TransitionMission(2).mode = 2;
-% TransitionMission(2).position = [0; 0; -100];
-% TransitionMission(2).params = [0; 0; 0; 0];
-% TransitionMission(3).mode = 2;
-% TransitionMission(3).position = [20; 0; -100];
-% TransitionMission(3).params = [0; 0; 0; 0];
-% TransitionMission(4).mode = 6;
-% TransitionMission(4).position = [1;1;1];
-% TransitionMission(4).params = [1; 1; 1; 1];
-% TransitionMission(5).mode = 2;
-% TransitionMission(5).position = [1000; 0; -150];
-% TransitionMission(5).params = [0; 0; 0; 0];
-% TransitionMission(6).mode = 2;
-% TransitionMission(6).position = [8000; 0; -1000];
-% TransitionMission(6).params = [0; 0; 0; 0];
-% TransitionMission(7).mode = 2;
-% TransitionMission(7).position = [10000; 0; -1000];
-% TransitionMission(7).params = [0; 0; 0; 0];
-% TransitionMission(8).mode = 2;
-% TransitionMission(8).position = [15000; 0; -100];
-% TransitionMission(8).params = [0; 0; 0; 0];
-% TransitionMission(9).mode = 2;
-% TransitionMission(9).position = [17000; 0; -100];
-% TransitionMission(9).params = [0; 0; 0; 0];
