@@ -72,8 +72,6 @@ motorctrl.d  = 0;
 motorctrl.n  = 100;
 Limit        = 700;                    % [Nm] saturation of the motor speed PID correction
 
-BATTERY_NP  = 21;                      % [-] cells in parallel, 0 = by MTOW
-
 % P1, P2, P3 : Short Distance (8.2 NM)
 % P4, P5, P9, P10 : Middle Distance (16 NM)
 % P6, P7, P8 : Long Distance (23 NM)
@@ -150,7 +148,7 @@ elseif (Wind_Speed == 7) && (eVTOL_MTOW == 7000)
     VTOLcontrolGains.D_YAW_RATE = VTOLcontrolGains.D_YAW_RATE * 1;
 end
 
-uavParams = load_vtol_dynamics_7000lb(const, eVTOL_MTOW, target_temperature, BATTERY_NP);
+uavParams = load_vtol_dynamics_7000lb(const, eVTOL_MTOW, target_temperature);
 
 if eVTOL_MTOW == 7000
     VTOLcontrolGains.P_Z  = 1.5 * VTOLcontrolGains.P_Z;
@@ -201,12 +199,29 @@ if uavParams.Temperature == 20
 end
 
 %% Run Simulink
-keyboard;
 set_param(mdl,'SimulationMode','accelerator'); 
+
+LOG_DEC = 500;         % 500 × 20 µs = 10 ms
+for m = {mdl, mdlSub}  % VTOLTiltrotor, VTOLDynamics
+  load_system(m{1});
+  b = find_system(m{1}, 'LookUnderMasks','all', 'FollowLinks','on', 'MatchFilter', @Simulink.match.allVariants, 'BlockType', 'ToWorkspace');
+  for i = 1:numel(b)
+    if str2double(get_param(b{i},'Decimation')) <= 2
+      set_param(b{i}, 'Decimation', num2str(LOG_DEC));
+    end
+  end
+end
+set_param(cfgTop, 'Decimation', num2str(LOG_DEC));   
+
 outTuned = sim(mdl);
 keyboard;
 
-filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
+switch uavParams.Battery_Cell.type
+    case 1
+        filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d_SA88.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
+    case 2
+        filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d_LG.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
+end
 save(filename, 'outTuned', 'TransitionMission', 'uavParams', 'controlParams', 'const', '-v7.3');
 
 %% Plot Simulation Plots
@@ -215,6 +230,7 @@ switch Profile
     Simulation_Plot_Debugging();      
     otherwise
     %Simulation_Plot();
-    Simulation_Plot_Cleaned();
+    %Simulation_Plot_Cleaned();
+    Simulation_Compare();
 end
 

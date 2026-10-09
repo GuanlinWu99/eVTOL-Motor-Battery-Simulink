@@ -7,7 +7,7 @@
 %                           3) battery pack spec                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function uavParams = load_vtol_dynamics_7000lb(const, eVTOL_MTOW, target_temperature, Np_override)
+function uavParams = load_vtol_dynamics_7000lb(const, eVTOL_MTOW, target_temperature)
 
 if nargin < 5, Np_override = 0; end
 
@@ -175,7 +175,6 @@ uavParams.rotor.J_array = [0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80,
 uavParams.rotor.Ct_array = [0.014733, 0.013500, 0.012100, 0.010600, 0.009000, 0.007300, 0.005500, 0.003800, 0.002200, 0.000800, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000];
 
 % Torque Coefficient (CQ) in Rotor Convention
-%uavParams.rotor.Cq_array = [0.0018185, 0.001750, 0.001650, 0.001500, 0.001320, 0.001100, 0.000880, 0.000650, 0.000450, 0.000280, 0.000150, 0.000050, 0.000000, 0.000000, 0.000000, 0.000000];
 uavParams.rotor.Cq_array = [0.0018185, 0.001750, 0.001650, 0.001500, 0.001350, 0.001180, 0.001000, 0.000810, 0.000610, 0.000400, 0.000220, 0.000080, 0.000000, 0.000000, 0.000000, 0.000000];
 
 uavParams.rotor.N               =   3;                                      % [-] number of blades
@@ -208,74 +207,153 @@ uavParams.minSpoiler            =   0*const.deg2rad;
 
 %% [2] Battery & Motor parameters
 % ...Battery Parameters
-Q_flat                                       = 4500*(eVTOL_MTOW/6020);  % [Nm] flat torque limit
 
-Ns                                           = 200;                         % [-] cells in series; sets pack voltage
-switch eVTOL_MTOW
-    case 7000
-        Np                                   = 28;                          % [-] cells in parallel; sets capacity and splits the current
-    otherwise
-        Np                                   = 21;                          % [-] cells in parallel; sets capacity and splits the current
-end
-if Np_override > 0
-    Np                                       = Np_override;
-end
-Norminal_Capacity                            = 10.5;                        % [Ah] per cell
-Norminal_Voltage                             = 3.45;                        % [V] per cell
-Cell_Mass                                    = 0.0965;                      % [kg] per cell
+% "KENCOA_SA-88" 1-RC model from KENCOA
+% "Prof_Jung_LG" 2-RC model from Prof. Jung's Group
+
+Battery_Type                    = "KENCOA_SA-88";
+
+Q_flat                          = 4500*(eVTOL_MTOW/6020);                   % [Nm] flat torque limit
+here                            = fileparts(mfilename('fullpath'));         % sheets sit here, not in the cwd
 
 %  Each 1-RC parameter's activation energy was obtained by fitting ln(parameter) versus 1/T (Arrhenius form) across the SA-88 sheets at
-%  25/30/35/40 °C (3C), over the SOC ≥ 30% range to avoid low-SOC data noise. Slope = Ea/R_g gives Ea_R0 = 1.23, Ea_R1 = 3.34, Ea_C1 = 3.44
-%  kJ/mol. （2026/06/14 Guanlin Wu）
+%  25/30/35/40 °C (3C), over the SOC ≥ 30% range to avoid low-SOC data noise. 
+%  Slope = Ea/R_g gives Ea_R0 = 1.23, Ea_R1 = 3.34, Ea_C1 = 3.44 kJ/mol. （2026/06/14 Guanlin Wu）
 
-here = fileparts(mfilename('fullpath'));                                    % sheets sit here, not in the cwd
-switch target_temperature
-    case 20
-        load(fullfile(here,"SA88_25_Degree.mat"));
-        T_ref_K = 25 + 273.15;
-    case 25
-        load(fullfile(here,"SA88_25_Degree.mat"));
-        T_ref_K = 25 + 273.15;
-    case 45
-        load(fullfile(here,"SA88_40_Degree.mat"));
-        T_ref_K = 40 + 273.15;
-    otherwise
-        error('Unsupported target_temperature = %g degC (expected 20, 25, or 45).', target_temperature);
+%  Each "SA88_25_Degree.mat" contains the following:
+%  C1_table (29x1)
+%  OCV_table
+%  R1_table
+%  Rs_table
+%  SOC_bp
+%  SOC_ocv
+%  tau1_table
+
+% Target battery pack spec: 690 V, 152 kWh (SA-88 pouch cell reference)
+
+switch Battery_Type
+    % KENCOA SA-88 1-RC model
+    case "KENCOA_SA-88"   
+        BatteryRCOrder                        = 1; 
+        
+        Ns                                    = 200;                        % [-] cells in series; sets pack voltage
+        switch eVTOL_MTOW
+            case 7000
+                Np                            = 21;                         % [-] cells in parallel; sets capacity and splits the current
+            otherwise
+                Np                            = 21;                         % [-] cells in parallel; sets capacity and splits the current
+        end        
+        
+        Norminal_Capacity                     = 10.5;                       % [Ah] per cell
+        Norminal_Voltage                      = 3.45;                       % [V] per cell
+        Cell_Mass                             = 0.0965;                     % [kg] per cell
+        switch target_temperature
+            case 20
+                load(fullfile(here,"SA88_25_Degree.mat"));
+                T_ref_K = 25 + 273.15;
+            case 25
+                load(fullfile(here,"SA88_25_Degree.mat"));
+                T_ref_K = 25 + 273.15;
+            case 45
+                load(fullfile(here,"SA88_40_Degree.mat"));
+                T_ref_K = 40 + 273.15;
+            otherwise
+                error('Unsupported target_temperature = %g degC (expected 20, 25, or 45).', target_temperature);
+        end
+        Ea_R0                                 = 1.23;                                % [kJ/mol] from R0(T) fit
+        Ea_R1                                 = 3.34;                                % [kJ/mol] from R1(T) fit
+        Ea_C1                                 = 3.44;                                % [kJ/mol] from C1(T) fit
+        R_gas                                 = 8.314462618;                         % [J/(mol*K)] gas constant
+        T_target_K                            = target_temperature + 273.15;         % [K]
+        delta                                 = 1/T_target_K - 1/T_ref_K;            % [1/K]
+        k_R0                                  = exp( (1000*Ea_R0/R_gas) * delta );   % [-] 1000 converts kJ/mol -> J/mol
+        k_R1                                  = exp( (1000*Ea_R1/R_gas) * delta );   % [-]
+        k_C1                                  = exp(-(1000*Ea_C1/R_gas) * delta );   % [-] sign flipped: C1 rises with T
+        
+        soc                                   = SOC_bp / 100;                        % [%] -> 0...1.0 fraction
+        Voltage                               = OCV_table';   
+        R0                                    = k_R0 * Rs_table;
+        R1                                    = k_R1 * R1_table;
+        C1                                    = k_C1 * C1_table;
+        Tau1                                  = R1 .* C1;            
+
+        uavParams.Battery_Cell.SOC            = soc';                       % [-] 0..1; breakpoints for the tables below
+        uavParams.Battery_Cell.Emo            = Voltage*Ns;                 % [V] pack open-circuit voltage
+        uavParams.Battery_Cell.R0             = (Ns/Np)*R0;                 % [Ohm] ohmic resistance
+        uavParams.Battery_Cell.R1             = (Ns/Np)*R1;                 % [Ohm] polarisation resistance of the single RC branch
+        uavParams.Battery_Cell.C1             = (Np/Ns)*C1;                 % [F] polarisation capacitance
+        uavParams.Battery_Cell.Tau1           = Tau1;                       % [s] R1*C1; relaxation time of the RC branch
+        uavParams.Capacity                    = Norminal_Capacity;          % [Ah] per cell; the block scales by Np internally
+        uavParams.Temperature                 = target_temperature;         % [degC] fixed input, not a state; no self-heating is modelled
+        uavParams.Ns                          = Ns;
+        uavParams.Np                          = Np;
+        
+        uavParams.Battery_Cell.Mass           = Cell_Mass;                  % [kg] per cell
+        uavParams.Battery_Pack_Voltage        = Ns*Norminal_Voltage;
+        uavParams.Battery_Pack_Capacity       = Np*Norminal_Capacity;
+        uavParams.Battery_Pack_Mass           = Ns*Np*Cell_Mass;            % [kg] cells only
+        uavParams.Battery_Cell.init_SOC       = 0.95;                       % [-] 0..1; 0.95 is the top of the SOC breakpoint table
+        
+    % Prof' Jung LG-Chem 2RC model
+    case "Prof_Jung_LG"
+        BatteryRCOrder                        = 2;
+        
+        Ns                                    = 192;                        % [-] cells in series; sets pack voltage 
+        switch eVTOL_MTOW
+            case 7000
+                Np                            = 63;                         % [-] cells in parallel; sets capacity and splits the current
+            otherwise
+                Np                            = 63;                         % [-] cells in parallel; sets capacity and splits the current
+        end  
+        
+        Norminal_Capacity                     = 3.5;                        % [Ah] per cell
+        Norminal_Voltage                      = 3.6;                        % [V] per cell
+        Cell_Mass                             = 0.049;                      % [kg] per cell
+        switch target_temperature
+            case 20
+                load(fullfile(here,"LG_Chem_INR_18650_20_Degree.mat"));
+            case 25
+                load(fullfile(here,"LG_Chem_INR_18650_25_Degree.mat"));
+            case 35
+                load(fullfile(here,"LG_Chem_INR_18650_35_Degree.mat"));
+            case 45
+                load(fullfile(here,"LG_Chem_INR_18650_45_Degree.mat"));
+            otherwise
+                error('Unsupported target_temperature = %g degC (expected 20, 25, or 45).', target_temperature);
+        end
+
+        soc                                   = SOC_bp / 100;               % [%] -> 0...1.0 fraction
+        Voltage                               = OCV_table';   
+        R0                                    = Rs_table;
+        R1                                    = R1_table;
+        R2                                    = R2_table;
+        C1                                    = C1_table;        
+        C2                                    = C2_table;
+        Tau1                                  = tau1_table;
+        Tau2                                  = tau2_table;
+
+        uavParams.Battery_Cell.SOC            = soc';                       % [-] 0..1; breakpoints for the tables below
+        uavParams.Battery_Cell.Emo            = Voltage*Ns;                 % [V] pack open-circuit voltage
+        uavParams.Battery_Cell.R0             = (Ns/Np)*R0;                 % [Ohm] ohmic resistance
+        uavParams.Battery_Cell.R1             = (Ns/Np)*R1;                 % [Ohm] polarisation resistance of the single RC branch
+        uavParams.Battery_Cell.R2             = (Ns/Np)*R2;                 % [Ohm] polarisation resistance of the single RC branch
+        uavParams.Battery_Cell.C1             = (Np/Ns)*C1;                 % [F] polarisation capacitance
+        uavParams.Battery_Cell.C2             = (Np/Ns)*C2;                 % [F] polarisation capacitance
+        uavParams.Battery_Cell.Tau1           = Tau1;                       % [s] R1*C1; relaxation time of the RC branch
+        uavParams.Battery_Cell.Tau2           = Tau2;                       % [s] R1*C1; relaxation time of the RC branch
+        uavParams.Capacity                    = Norminal_Capacity;          % [Ah] per cell; the block scales by Np internally
+        uavParams.Temperature                 = target_temperature;         % [degC] fixed input, not a state; no self-heating is modelled
+        uavParams.Ns                          = Ns;
+        uavParams.Np                          = Np;
+        
+        uavParams.Battery_Cell.Mass           = Cell_Mass;                  % [kg] per cell
+        uavParams.Battery_Pack_Voltage        = Ns*Norminal_Voltage;
+        uavParams.Battery_Pack_Capacity       = Np*Norminal_Capacity;
+        uavParams.Battery_Pack_Mass           = Ns*Np*Cell_Mass;            % [kg] cells only
+        uavParams.Battery_Cell.init_SOC       = 0.95;                       % [-] 0..1; 0.95 is the top of the SOC breakpoint table
 end
 
-Ea_R0                                        = 1.23;                                % [kJ/mol] from R0(T) fit
-Ea_R1                                        = 3.34;                                % [kJ/mol] from R1(T) fit
-Ea_C1                                        = 3.44;                                % [kJ/mol] from C1(T) fit
-R_gas                                        = 8.314462618;                         % [J/(mol*K)] gas constant
-T_target_K                                   = target_temperature + 273.15;         % [K]
-delta                                        = 1/T_target_K - 1/T_ref_K;            % [1/K]
-k_R0                                         = exp( (1000*Ea_R0/R_gas) * delta );   % [-] 1000 converts kJ/mol -> J/mol
-k_R1                                         = exp( (1000*Ea_R1/R_gas) * delta );   % [-]
-k_C1                                         = exp(-(1000*Ea_C1/R_gas) * delta );   % [-] sign flipped: C1 rises with T
-
-soc                                          = SOC_bp / 100;                        % [%] -> 0...1.0 fraction
-Voltage                                      = OCV_table';   
-R0                                           = k_R0 * Rs_table;
-R1                                           = k_R1 * R1_table;
-C1                                           = k_C1 * C1_table;
-Tau1                                         = R1 .* C1;            
-
-uavParams.Battery_Cell.SOC                   = soc';                        % [-] 0..1; breakpoints for the tables below
-uavParams.Battery_Cell.Emo                   = Voltage*Ns;                  % [V] pack open-circuit voltage
-uavParams.Battery_Cell.R0                    = (Ns/Np)*R0;                  % [Ohm] ohmic resistance
-uavParams.Battery_Cell.R1                    = (Ns/Np)*R1;                  % [Ohm] polarisation resistance of the single RC branch
-uavParams.Battery_Cell.C1                    = (Np/Ns)*C1;                  % [F] polarisation capacitance
-uavParams.Battery_Cell.Tau1                  = Tau1;                        % [s] R1*C1; relaxation time of the RC branch
-uavParams.Capacity                           = Norminal_Capacity;           % [Ah] per cell; the block scales by Np internally
-uavParams.Temperature                        = target_temperature;          % [degC] fixed input, not a state; no self-heating is modelled
-uavParams.Ns                                 = Ns;
-uavParams.Np                                 = Np;
-
-uavParams.Battery_Cell.Mass                  = Cell_Mass;                   % [kg] per cell
-uavParams.Battery_Pack_Voltage               = Ns*Norminal_Voltage;
-uavParams.Battery_Pack_Capacity              = Np*Norminal_Capacity;
-uavParams.Battery_Pack_Mass                  = Ns*Np*Cell_Mass;             % [kg] cells only
-uavParams.Battery_Cell.init_SOC              = 0.95;                        % [-] 0..1; 0.95 is the top of the SOC breakpoint table
+uavParams.Battery_Cell.type                  = BatteryRCOrder;
 
 % ...eVTOL Motor Parameters
 uavParams.MotorElec.TorqSpdLUT.SpeedRPM      = [0 300 600 900 1200 1380 1500];   % [RPM] breakpoints, 0 to RPMMAX
@@ -298,37 +376,61 @@ uavParams.DCDCConv.MinVin                    = 50;                            % 
 
 % ...PMSM Drive Parameters
 % Evolito D1500 x2 per rotor; Rs, Ld, Lq, psim, p are estimates, only ratings published.
-Rs        = 0.010;                      % [Ohm]     stator resistance / phase
-Ld        = 200e-6;                     % [H]       d-axis inductance
-Lq        = 200e-6;                     % [H]       q-axis, non-salient
-psim      = 0.16;                       % [Wb]      PM flux linkage
-p         = 15;                         % [-]       pole pairs
-Kt        = 1.5*p*psim;                 % [Nm/A]    torque constant, 3.6
-Bm        = 1e-3;                       % [N*m*s]   viscous damping
-Imax      = 800;                        % [A]       Kt*Imax = 2880 Nm peak
-Jm_flight = 0.09;                       % [kg*m^2]  shaft 0.009 + prop 0.08
-RPMMAX    = 1500;                       % [rpm]     normalises Rotor Assembly.N
-bw_i      = 2*pi*1000;                  % [rad/s]   current-loop bandwidth
-Kp_i      = Ld*bw_i;
-Ki_i      = Rs*bw_i;
-tau_dc    = 1e-4;                       % [s]       DC-link filter time constant
-SOC0      = 0.90;                       % [-]       initial pack SOC
+Rs                                           = 0.010;                         % [Ohm]     stator resistance / phase
+Ld                                           = 200e-6;                        % [H]       d-axis inductance
+Lq                                           = 200e-6;                        % [H]       q-axis, non-salient
+psim                                         = 0.16;                          % [Wb]      PM flux linkage
+p                                            = 15;                            % [-]       pole pairs
+Kt                                           = 1.5*p*psim;                    % [Nm/A]    torque constant, 3.6
+Bm                                           = 1e-3;                          % [N*m*s]   viscous damping
+Imax                                         = 800;                           % [A]       Kt*Imax = 2880 Nm peak
+Jm_flight                                    = 0.09;                          % [kg*m^2]  shaft 0.009 + prop 0.08
+RPMMAX                                       = 1500;                          % [rpm]     normalises Rotor Assembly.N
+bw_i                                         = 2*pi*1000;                     % [rad/s]   current-loop bandwidth
+Kp_i                                         = Ld*bw_i;
+Ki_i                                         = Rs*bw_i;
+tau_dc                                       = 1e-4;                          % [s]       DC-link filter time constant
+SOC0                                         = 0.90;                          % [-]       initial pack SOC
 
+% ...Battery pack parameters (from SA-88 1-RC or Prof. Jung's Group 2RC)
 % 1-RC pack tables off the corrected cell data; breakpoints must rise, SOC_bp does not
-[soc_bp, iSort] = sort(soc(:));
-OCV_pack  = Ns*col(Voltage, iSort);     % [V]
-R0_pack   = (Ns/Np)*col(R0, iSort);     % [Ohm]
-R1_pack   = (Ns/Np)*col(R1, iSort);     % [Ohm]
-C1_pack   = (Np/Ns)*col(C1, iSort);     % [F]
-Cap_pack  = Np*Norminal_Capacity;       % [Ah]
 
-for v = {'Rs','Ld','Lq','psim','p','Kt','Bm','Imax','Jm_flight','RPMMAX','bw_i', ...
-         'Kp_i','Ki_i','tau_dc','SOC0','soc_bp','OCV_pack','R0_pack','R1_pack', ...
-         'C1_pack','Cap_pack'}
-    assignin('base', v{1}, eval(v{1}));
+switch Battery_Type
+    case "KENCOA_SA-88"   
+        [soc_bp, iSort]                      = sort(soc(:));
+        OCV_pack                             = Ns*col(Voltage, iSort);        % [V]
+        R0_pack                              = (Ns/Np)*col(R0, iSort);        % [Ohm]
+        R1_pack                              = (Ns/Np)*col(R1, iSort);        % [Ohm]
+        C1_pack                              = (Np/Ns)*col(C1, iSort);        % [F]
+        Cap_pack                             = Np*Norminal_Capacity;          % [Ah]
+
+        for v = {'BatteryRCOrder', ...
+                 'Rs','Ld','Lq','psim','p','Kt','Bm','Imax','Jm_flight','RPMMAX','bw_i', ...
+                 'Kp_i','Ki_i','tau_dc','SOC0','soc_bp','OCV_pack','R0_pack','R1_pack', ...
+                 'C1_pack','Cap_pack'}
+            assignin('base', v{1}, eval(v{1}));
+        end
+
+    case "Prof_Jung_LG"
+        [soc_bp, iSort]                      = sort(soc(:));
+        OCV_pack                             = Ns*col(Voltage, iSort);        % [V]
+        R0_pack                              = (Ns/Np)*col(R0, iSort);        % [Ohm]
+        R1_pack                              = (Ns/Np)*col(R1, iSort);        % [Ohm]
+        R2_pack                              = (Ns/Np)*col(R2, iSort);        % [Ohm]
+        C1_pack                              = (Np/Ns)*col(C1, iSort);        % [F]
+        C2_pack                              = (Np/Ns)*col(C2, iSort);        % [F]
+        Cap_pack                             = Np*Norminal_Capacity;          % [Ah]
+
+        for v = {'BatteryRCOrder', ...
+                 'Rs','Ld','Lq','psim','p','Kt','Bm','Imax','Jm_flight','RPMMAX','bw_i', ...
+                 'Kp_i','Ki_i','tau_dc','SOC0','soc_bp','OCV_pack','R0_pack','R1_pack','R2_pack', ...
+                 'C1_pack','C2_pack','Cap_pack'}
+            assignin('base', v{1}, eval(v{1}));
+        end
 end
+
 end
 
 function y = col(x, iSort)
-y = reshape(x, [], 1);  y = y(iSort);
+    y = reshape(x, [], 1);  y = y(iSort);
 end

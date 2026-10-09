@@ -16,7 +16,7 @@ Time_motor             =   outTuned.pmsm_Idc.Time(:);
 % pack signals from the PMSM drive logs, the Batt bus is gone
 bt                     =   outTuned.pmsm_Vdc.Time(:);
 bv                     =   outTuned.pmsm_Vdc.Data(:);
-bi                     =   sum(outTuned.pmsm_Idc.Data,2);                     % per-motor -> pack
+bi                     =   sum(outTuned.pmsm_Idc.Data,2);                   % per-motor -> pack
 bsoc                   =   interp1(outTuned.pmsm_SOC.Time(:),outTuned.pmsm_SOC.Data(:),bt,'linear','extrap')*100;
 bcr                    =   bi/uavParams.Battery_Pack_Capacity;
 Time_battery           =   bt;
