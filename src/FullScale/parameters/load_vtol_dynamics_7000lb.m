@@ -212,6 +212,7 @@ uavParams.minSpoiler            =   0*const.deg2rad;
 % "Prof_Jung_LG" 2-RC model from Prof. Jung's Group
 
 Battery_Type                    = "KENCOA_SA-88";
+InverterModel                   = 1;                                        % 1 PMSM + inverter, 0 BLDC + Abstract inverter
 
 Q_flat                          = 4500*(eVTOL_MTOW/6020);                   % [Nm] flat torque limit
 here                            = fileparts(mfilename('fullpath'));         % sheets sit here, not in the cwd
@@ -354,6 +355,7 @@ switch Battery_Type
 end
 
 uavParams.Battery_Cell.type                  = BatteryRCOrder;
+uavParams.InverterModel                      = InverterModel;
 
 % ...eVTOL Motor Parameters
 uavParams.MotorElec.TorqSpdLUT.SpeedRPM      = [0 300 600 900 1200 1380 1500];   % [RPM] breakpoints, 0 to RPMMAX
@@ -379,8 +381,8 @@ uavParams.DCDCConv.MinVin                    = 50;                            % 
 Rs                                           = 0.010;                         % [Ohm]     stator resistance / phase
 Ld                                           = 200e-6;                        % [H]       d-axis inductance
 Lq                                           = 200e-6;                        % [H]       q-axis, non-salient
-psim                                         = 0.16;                          % [Wb]      PM flux linkage
-p                                            = 15;                            % [-]       pole pairs
+psim                                         = 0.24;                          % [Wb]      PM flux linkage
+p                                            = 10;                            % [-]       pole pairs
 Kt                                           = 1.5*p*psim;                    % [Nm/A]    torque constant, 3.6
 Bm                                           = 1e-3;                          % [N*m*s]   viscous damping
 Imax                                         = 800;                           % [A]       Kt*Imax = 2880 Nm peak
@@ -404,7 +406,7 @@ switch Battery_Type
         C1_pack                              = (Np/Ns)*col(C1, iSort);        % [F]
         Cap_pack                             = Np*Norminal_Capacity;          % [Ah]
 
-        for v = {'BatteryRCOrder', ...
+        for v = {'BatteryRCOrder', 'InverterModel', ...
                  'Rs','Ld','Lq','psim','p','Kt','Bm','Imax','Jm_flight','RPMMAX','bw_i', ...
                  'Kp_i','Ki_i','tau_dc','SOC0','soc_bp','OCV_pack','R0_pack','R1_pack', ...
                  'C1_pack','Cap_pack'}
@@ -421,7 +423,7 @@ switch Battery_Type
         C2_pack                              = (Np/Ns)*col(C2, iSort);        % [F]
         Cap_pack                             = Np*Norminal_Capacity;          % [Ah]
 
-        for v = {'BatteryRCOrder', ...
+        for v = {'BatteryRCOrder', 'InverterModel', ...
                  'Rs','Ld','Lq','psim','p','Kt','Bm','Imax','Jm_flight','RPMMAX','bw_i', ...
                  'Kp_i','Ki_i','tau_dc','SOC0','soc_bp','OCV_pack','R0_pack','R1_pack','R2_pack', ...
                  'C1_pack','C2_pack','Cap_pack'}

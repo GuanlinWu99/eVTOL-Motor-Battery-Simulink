@@ -191,6 +191,8 @@ disp(['🌪️ Cross-Wind Speed: ', num2str(Wind_Speed), ' (m/s)']);
 disp(['🔋 Battery Pack Capacity: ', num2str((uavParams.Battery_Pack_Capacity*uavParams.Battery_Pack_Voltage)/1000), ' (kWh)']);
 disp(['⚡ Battery Pack Voltage: ', num2str(uavParams.Battery_Pack_Voltage), ' (V)']);
 disp(['🌡️ Operation Temperature: ', num2str(uavParams.Temperature), ' (°C)']);
+Drive_Name = ["BLDC + Abstract inverter", "PMSM + inverter"];
+disp(['⚙️ Motor Drive: ', char(Drive_Name(uavParams.InverterModel + 1))]);
 
 if uavParams.Temperature == 20
     Pre_Conditioning_Energy = uavParams.Battery_Pack_Mass*950*50/3.6e6;           % [kWh]
@@ -222,6 +224,7 @@ switch uavParams.Battery_Cell.type
     case 2
         filename = sprintf('P%d_MTOW_%d_Wind_%d_Temp_%d_LG.mat', Profile, eVTOL_MTOW, Wind_Speed, target_temperature);
 end
+if uavParams.InverterModel == 0, filename = strrep(filename, '.mat', '_NoInverter.mat'); end
 save(filename, 'outTuned', 'TransitionMission', 'uavParams', 'controlParams', 'const', '-v7.3');
 
 %% Plot Simulation Plots
